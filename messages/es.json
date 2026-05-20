@@ -1,0 +1,109 @@
+{
+  "common": {
+    "brand": "Kualisto",
+    "tagline": "Excelencia culinaria en el mar",
+    "continue": "Continuar",
+    "back": "Atrás",
+    "save": "Guardar",
+    "saving": "Guardando…",
+    "saved": "Guardado",
+    "login": "Iniciar sesión",
+    "logout": "Cerrar sesión",
+    "language": "Idioma"
+  },
+  "landing": {
+    "hero": "Su travesía, curada a la perfección",
+    "subtitle": "Planificación culinaria de lujo para una experiencia inolvidable en catamarán.",
+    "cta": "Comenzar su viaje"
+  },
+  "auth": {
+    "title": "Bienvenido a bordo",
+    "subtitle": "Ingrese su correo para recibir un enlace seguro de acceso.",
+    "email": "Correo electrónico",
+    "sendLink": "Enviar enlace mágico",
+    "checkEmail": "Revise su bandeja de entrada para el enlace de acceso."
+  },
+  "guest": {
+    "wizard": {
+      "steps": {
+        "details": "Detalles del viaje",
+        "menu": "Selección de menú",
+        "preferences": "Preferencias",
+        "bar": "Bar y bebidas"
+      },
+      "details": {
+        "title": "Detalles del viaje",
+        "subtitle": "Cuéntenos sobre su grupo para crear la experiencia perfecta.",
+        "adults": "Adultos",
+        "children": "Niños",
+        "crew": "Comidas de tripulación incluidas",
+        "crewNote": "La tripulación se ajusta automáticamente para grupos grandes.",
+        "startDate": "Fecha de inicio",
+        "endDate": "Fecha de fin",
+        "totalGuests": "{count} huéspedes a bordo"
+      },
+      "menu": {
+        "title": "Menú y categorías",
+        "subtitle": "Elija su experiencia culinaria. Cada detalle importa.",
+        "filterSeason": "Solo menús de temporada",
+        "showAll": "Ver todos los menús",
+        "tier1": "$ Fresco y Costero Casual",
+        "tier2": "$$ Mediterráneo y Bistro Premium",
+        "tier3": "$$$ Alta Cocina y Ultra Lujo",
+        "surprise": "Sorpréndeme — Sugerencia del Chef",
+        "custom": "Menú personalizado",
+        "selected": "Seleccionado"
+      },
+      "preferences": {
+        "title": "Preferencias y restricciones",
+        "subtitle": "Por huésped — las alergias se resaltan para nuestro chef.",
+        "allergies": "Alergias (no negociables)",
+        "allergiesPlaceholder": "ej. Mariscos, cacahuate, celíaco",
+        "dietary": "Restricciones dietéticas",
+        "proteins": "Preferencias de proteínas",
+        "dairy": "Preferencias de leches",
+        "mealSchedule": "Horarios y abundancia de comidas",
+        "breakfast": "Desayuno (AM)",
+        "lunch": "Comida (PM)",
+        "dinner": "Cena (PM)",
+        "snacks": "Botanas",
+        "heaviness": { "light": "Ligera", "moderate": "Moderada", "heavy": "Pesada" }
+      },
+      "bar": {
+        "title": "Bar y bebidas",
+        "subtitle": "Stock base incluido — solo se cobra lo consumido.",
+        "waters": "Aguas",
+        "natural": "Natural",
+        "mineral": "Mineral",
+        "sodas": "Refrescos",
+        "regular": "Regulares",
+        "diet": "Dieta / Zero",
+        "wines": "Vinos",
+        "reds": "Tintos",
+        "whites": "Blancos",
+        "roses": "Rosados",
+        "champagne": "Champagne",
+        "chefRecommendation": "Recomendación del Chef",
+        "houseByGlass": "Vino de la casa por copeo",
+        "byob": "Llevar su propio vino (descorche puede aplicar)"
+      }
+    }
+  },
+  "chef": {
+    "dashboard": "Operaciones",
+    "orders": "Órdenes en vivo",
+    "allergies": "Alergias críticas",
+    "stock": "Stock y consumo",
+    "costing": "Herramienta de costeo",
+    "downloadPdf": "Descargar menú PDF",
+    "initial": "Inicial",
+    "consumed": "Consumido",
+    "chargeable": "A cobrar"
+  },
+  "admin": {
+    "dashboard": "Administración",
+    "menus": "Catálogo de menús",
+    "guests": "Huéspedes",
+    "trips": "Viajes"
+  }
+}

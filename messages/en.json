@@ -1,0 +1,109 @@
+{
+  "common": {
+    "brand": "Kualisto",
+    "tagline": "Culinary excellence at sea",
+    "continue": "Continue",
+    "back": "Back",
+    "save": "Save",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "login": "Sign in",
+    "logout": "Sign out",
+    "language": "Language"
+  },
+  "landing": {
+    "hero": "Your voyage, curated to perfection",
+    "subtitle": "Luxury culinary planning for an unforgettable catamaran experience.",
+    "cta": "Begin your journey"
+  },
+  "auth": {
+    "title": "Welcome aboard",
+    "subtitle": "Enter your email to receive a secure sign-in link.",
+    "email": "Email address",
+    "sendLink": "Send magic link",
+    "checkEmail": "Check your inbox for the sign-in link."
+  },
+  "guest": {
+    "wizard": {
+      "steps": {
+        "details": "Trip details",
+        "menu": "Menu selection",
+        "preferences": "Preferences",
+        "bar": "Bar & beverages"
+      },
+      "details": {
+        "title": "Trip details",
+        "subtitle": "Tell us about your party so we can craft the perfect experience.",
+        "adults": "Adults",
+        "children": "Children",
+        "crew": "Crew meals included",
+        "crewNote": "Crew count adjusts automatically for larger parties.",
+        "startDate": "Start date",
+        "endDate": "End date",
+        "totalGuests": "{count} guests aboard"
+      },
+      "menu": {
+        "title": "Menu & pricing",
+        "subtitle": "Choose your culinary journey. Every detail matters.",
+        "filterSeason": "Seasonal menus only",
+        "showAll": "View all menus",
+        "tier1": "$ Fresh & Coastal Casual",
+        "tier2": "$$ Mediterranean & Bistro Premium",
+        "tier3": "$$$ Haute Cuisine & Ultra Luxury",
+        "surprise": "Surprise me — Chef's suggestion",
+        "custom": "Custom menu",
+        "selected": "Selected"
+      },
+      "preferences": {
+        "title": "Preferences & restrictions",
+        "subtitle": "Per guest — allergies are highlighted for our chef.",
+        "allergies": "Allergies (non-negotiable)",
+        "allergiesPlaceholder": "e.g. Shellfish, peanuts, celiac",
+        "dietary": "Dietary restrictions",
+        "proteins": "Protein preferences",
+        "dairy": "Dairy & milk preferences",
+        "mealSchedule": "Meal schedule & heaviness",
+        "breakfast": "Breakfast (AM)",
+        "lunch": "Lunch (PM)",
+        "dinner": "Dinner (PM)",
+        "snacks": "Snacks",
+        "heaviness": { "light": "Light", "moderate": "Moderate", "heavy": "Heavy" }
+      },
+      "bar": {
+        "title": "Bar & beverages",
+        "subtitle": "Stock base is included — you are only charged for what is consumed.",
+        "waters": "Waters",
+        "natural": "Natural",
+        "mineral": "Mineral",
+        "sodas": "Soft drinks",
+        "regular": "Regular",
+        "diet": "Diet / Zero",
+        "wines": "Wines",
+        "reds": "Reds",
+        "whites": "Whites",
+        "roses": "Rosés",
+        "champagne": "Champagne",
+        "chefRecommendation": "Chef's beverage recommendation",
+        "houseByGlass": "House wine by the glass",
+        "byob": "Bring your own bottle (corkage may apply)"
+      }
+    }
+  },
+  "chef": {
+    "dashboard": "Operations",
+    "orders": "Live orders",
+    "allergies": "Critical allergies",
+    "stock": "Stock & consumption",
+    "costing": "Costing tool",
+    "downloadPdf": "Download menu PDF",
+    "initial": "Initial",
+    "consumed": "Consumed",
+    "chargeable": "To charge"
+  },
+  "admin": {
+    "dashboard": "Administration",
+    "menus": "Menu catalog",
+    "guests": "Guests",
+    "trips": "Trips"
+  }
+}
