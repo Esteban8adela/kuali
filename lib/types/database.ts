@@ -29,6 +29,8 @@ export interface Trip {
   locale: string;
   wizard_step: number;
   notes: string | null;
+  global_meal_schedule?: Record<string, unknown>;
+  bar_order?: Record<string, unknown>;
 }
 
 export interface Menu {

@@ -1,15 +1,15 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import type { UserRole } from "@/lib/auth/roles";
+import { resolveUserRole } from "@/lib/auth/get-user-role";
+import { roleHomePath, type UserRole } from "@/lib/auth/roles";
 
 interface RoleGateProps {
   children: React.ReactNode;
   allowed: UserRole[];
   locale: string;
-  fallback?: string;
 }
 
-export async function RoleGate({ children, allowed, locale, fallback }: RoleGateProps) {
+export async function RoleGate({ children, allowed, locale }: RoleGateProps) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -19,16 +19,10 @@ export async function RoleGate({ children, allowed, locale, fallback }: RoleGate
     redirect(`/${locale}/login`);
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  const role = (profile?.role ?? "renta") as UserRole;
+  const role = await resolveUserRole(supabase, user);
 
   if (!allowed.includes(role)) {
-    redirect(fallback ?? `/${locale}`);
+    redirect(roleHomePath(role, locale));
   }
 
   return <>{children}</>;

@@ -25,6 +25,7 @@ export default async function ChefDashboardPage({
 
   return (
     <div>
+      <p className="mb-2 text-sm uppercase tracking-[0.2em] text-[#C4A052]">{t("greeting")}</p>
       <div className="mb-8 flex items-center justify-between">
         <h1 className="font-display text-3xl text-[#1B3A4B]">{t("dashboard")}</h1>
         <Button variant="outline" disabled>

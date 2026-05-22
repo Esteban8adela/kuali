@@ -4,138 +4,186 @@ import { useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Checkbox } from "@/components/ui/checkbox";
-import { saveBarPreferences, advanceWizardStep } from "@/app/[locale]/(guest)/guest/trip/actions";
-import type { TripParticipant, GuestPreferences } from "@/lib/types/database";
-
-interface ParticipantWithPrefs extends TripParticipant {
-  guest_preferences: GuestPreferences | null;
-}
+import { Separator } from "@/components/ui/separator";
+import { finalizeTripBooking } from "@/app/[locale]/(guest)/guest/trip/actions";
+import { WizardNav } from "@/components/guest/wizard-nav";
+import { CatalogMultiPicker } from "@/components/guest/catalog-multi-picker";
+import { SPIRIT_SUBCATEGORIES } from "@/lib/catalog/default-catalog";
+import { filterCatalog } from "@/lib/catalog/utils";
+import type { BarLineSelection, BarOrderPayload, CatalogItem } from "@/lib/catalog/types";
 
 interface StepBarBeveragesProps {
   tripId: string;
-  participants: ParticipantWithPrefs[];
+  catalog: CatalogItem[];
+  initialBar?: Record<string, unknown>;
   locale: string;
 }
 
-export function StepBarBeverages({ tripId, participants, locale }: StepBarBeveragesProps) {
+function emptySpirits(): Record<string, BarLineSelection[]> {
+  return Object.fromEntries(SPIRIT_SUBCATEGORIES.map((s) => [s, []]));
+}
+
+function parseInitialBar(raw?: Record<string, unknown>): BarOrderPayload {
+  const r = raw ?? {};
+  const spirits =
+    (r.spirits as Record<string, BarLineSelection[]>) ?? emptySpirits();
+  return {
+    byob: Boolean(r.byob),
+    natural_water: r.natural_water !== false,
+    mineral_water: r.mineral_water !== false,
+    soda_regular: r.soda_regular !== false,
+    soda_diet: Boolean(r.soda_diet),
+    chef_recommendation: Boolean(r.chef_recommendation),
+    house_wine_by_glass: Boolean(r.house_wine_by_glass),
+    spirits: { ...emptySpirits(), ...spirits },
+    wines: (r.wines as BarLineSelection[]) ?? [],
+    beers: (r.beers as BarLineSelection[]) ?? [],
+    mixers: (r.mixers as BarLineSelection[]) ?? [],
+  };
+}
+
+export function StepBarBeverages({ tripId, catalog, initialBar, locale }: StepBarBeveragesProps) {
   const t = useTranslations("guest.wizard.bar");
   const tc = useTranslations("common");
   const router = useRouter();
   const [pending, startTransition] = useTransition();
 
-  const initial = (participants[0]?.guest_preferences?.bar_preferences ?? {}) as Record<
-    string,
-    boolean | string[]
-  >;
+  const init = parseInitialBar(initialBar);
+  const [byob, setByob] = useState(init.byob);
+  const [natural, setNatural] = useState(init.natural_water);
+  const [mineral, setMineral] = useState(init.mineral_water);
+  const [sodaRegular, setSodaRegular] = useState(init.soda_regular);
+  const [sodaDiet, setSodaDiet] = useState(init.soda_diet);
+  const [chefRec, setChefRec] = useState(init.chef_recommendation);
+  const [houseGlass, setHouseGlass] = useState(init.house_wine_by_glass);
+  const [spirits, setSpirits] = useState(init.spirits);
+  const [wines, setWines] = useState(init.wines);
+  const [beers, setBeers] = useState(init.beers);
+  const [mixers, setMixers] = useState(init.mixers);
 
-  const [natural, setNatural] = useState(Boolean(initial.natural_water));
-  const [mineral, setMineral] = useState(Boolean(initial.mineral_water));
-  const [sodaRegular, setSodaRegular] = useState(Boolean(initial.soda_regular));
-  const [sodaDiet, setSodaDiet] = useState(Boolean(initial.soda_diet));
-  const [wineColors, setWineColors] = useState<string[]>((initial.wine_colors as string[]) ?? []);
-  const [chefRec, setChefRec] = useState(Boolean(initial.chef_recommendation));
-  const [houseGlass, setHouseGlass] = useState(Boolean(initial.house_wine_by_glass));
-  const [byob, setByob] = useState(Boolean(initial.byob));
-
-  const wineOptions = [
-    { key: "reds", label: t("reds") },
-    { key: "whites", label: t("whites") },
-    { key: "roses", label: t("roses") },
-    { key: "champagne", label: t("champagne") },
-  ];
-
-  function toggleWine(key: string) {
-    setWineColors((prev) =>
-      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
-    );
+  function buildPayload(): BarOrderPayload {
+    return {
+      byob,
+      natural_water: natural,
+      mineral_water: mineral,
+      soda_regular: sodaRegular,
+      soda_diet: sodaDiet,
+      chef_recommendation: chefRec,
+      house_wine_by_glass: houseGlass,
+      spirits,
+      wines,
+      beers,
+      mixers,
+    };
   }
 
   function handleSubmit() {
-    const participantId = participants[0]?.id;
-    if (!participantId) return;
-
     startTransition(async () => {
-      await saveBarPreferences({
-        participantId,
-        barPreferences: {
-          natural_water: natural,
-          mineral_water: mineral,
-          soda_regular: sodaRegular,
-          soda_diet: sodaDiet,
-          wine_colors: wineColors,
-          chef_recommendation: chefRec,
-          house_wine_by_glass: houseGlass,
-          byob,
-        },
+      await finalizeTripBooking({
+        tripId,
+        barOrder: buildPayload() as unknown as Record<string, unknown>,
       });
-      await advanceWizardStep(tripId, 4);
-      await supabaseSubmitTrip(tripId);
       router.push(`/${locale}`);
     });
   }
 
-  async function supabaseSubmitTrip(id: string) {
-    const { createClient } = await import("@/lib/supabase/client");
-    const supabase = createClient();
-    await supabase.from("trips").update({ status: "submitted" }).eq("id", id);
-  }
+  const help = t("chefDefaultHelp");
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="mx-auto max-w-3xl space-y-6">
       <Card className="glass-card border-0">
         <CardHeader>
           <CardTitle>{t("title")}</CardTitle>
           <CardDescription>{t("subtitle")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-8">
-          <section>
-            <h4 className="mb-3 font-medium text-[#1B3A4B]">{t("waters")}</h4>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label>{t("natural")}</Label>
-                <Switch checked={natural} onCheckedChange={setNatural} />
-              </div>
-              <div className="flex items-center justify-between">
-                <Label>{t("mineral")}</Label>
-                <Switch checked={mineral} onCheckedChange={setMineral} />
-              </div>
+          <section className="flex items-center justify-between rounded-xl border-2 border-[#C4A052]/40 bg-[#C4A052]/5 px-4 py-4">
+            <Label className="text-base font-medium text-[#1B3A4B]">{t("byob")}</Label>
+            <Switch checked={byob} onCheckedChange={setByob} />
+          </section>
+
+          <section className="space-y-4 rounded-xl border border-[#C4A052]/20 bg-white p-4">
+            <h3 className="font-display text-lg text-[#1B3A4B]">{t("waters")}</h3>
+            <div className="flex items-center justify-between">
+              <Label>{t("natural")}</Label>
+              <Switch checked={natural} onCheckedChange={setNatural} />
+            </div>
+            <div className="flex items-center justify-between">
+              <Label>{t("mineral")}</Label>
+              <Switch checked={mineral} onCheckedChange={setMineral} />
             </div>
           </section>
 
-          <section>
-            <h4 className="mb-3 font-medium text-[#1B3A4B]">{t("sodas")}</h4>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label>{t("regular")}</Label>
-                <Switch checked={sodaRegular} onCheckedChange={setSodaRegular} />
-              </div>
-              <div className="flex items-center justify-between">
-                <Label>{t("diet")}</Label>
-                <Switch checked={sodaDiet} onCheckedChange={setSodaDiet} />
-              </div>
+          <section className="space-y-4 rounded-xl border border-[#C4A052]/20 bg-white p-4">
+            <h3 className="font-display text-lg text-[#1B3A4B]">{t("sodas")}</h3>
+            <div className="flex items-center justify-between">
+              <Label>{t("regular")}</Label>
+              <Switch checked={sodaRegular} onCheckedChange={setSodaRegular} />
+            </div>
+            <div className="flex items-center justify-between">
+              <Label>{t("diet")}</Label>
+              <Switch checked={sodaDiet} onCheckedChange={setSodaDiet} />
             </div>
           </section>
 
-          <section>
-            <h4 className="mb-3 font-medium text-[#1B3A4B]">{t("wines")}</h4>
-            <div className="grid grid-cols-2 gap-3">
-              {wineOptions.map(({ key, label }) => (
-                <label key={key} className="flex items-center gap-2 text-sm">
-                  <Checkbox
-                    checked={wineColors.includes(key)}
-                    onCheckedChange={() => toggleWine(key)}
-                  />
-                  {label}
-                </label>
-              ))}
-            </div>
+          <Separator className="bg-[#C4A052]/20" />
+
+          <section className="space-y-6 rounded-xl border border-[#1B3A4B]/15 bg-[#1B3A4B]/5 p-4">
+            <h3 className="font-display text-xl text-[#1B3A4B]">{t("spirits")}</h3>
+            {SPIRIT_SUBCATEGORIES.map((sub) => (
+              <CatalogMultiPicker
+                key={sub}
+                title={t(`spiritOptions.${sub}`)}
+                items={filterCatalog(catalog, "spirit", sub)}
+                selections={spirits[sub] ?? []}
+                onChange={(next) => setSpirits((s) => ({ ...s, [sub]: next }))}
+                locale={locale}
+                helpText={help}
+                addLabel={t("addBrand")}
+              />
+            ))}
           </section>
 
-          <section className="space-y-3 border-t border-[#C4A052]/15 pt-6">
+          <section className="rounded-xl border border-[#C4A052]/20 bg-white p-4">
+            <CatalogMultiPicker
+              title={t("wines")}
+              items={filterCatalog(catalog, "wine")}
+              selections={wines}
+              onChange={setWines}
+              locale={locale}
+              helpText={help}
+              addLabel={t("addWine")}
+            />
+          </section>
+
+          <section className="rounded-xl border border-[#C4A052]/20 bg-white p-4">
+            <CatalogMultiPicker
+              title={t("beers")}
+              items={filterCatalog(catalog, "beer", null)}
+              selections={beers}
+              onChange={setBeers}
+              locale={locale}
+              helpText={help}
+              addLabel={t("addBeer")}
+            />
+          </section>
+
+          <section className="rounded-xl border border-[#C4A052]/20 bg-white p-4">
+            <CatalogMultiPicker
+              title={t("mixers")}
+              items={filterCatalog(catalog, "mixer", null)}
+              selections={mixers}
+              onChange={setMixers}
+              locale={locale}
+              helpText={help}
+              addLabel={t("addMixer")}
+            />
+          </section>
+
+          <section className="space-y-3 rounded-xl border border-[#C4A052]/20 bg-white p-4">
+            <h3 className="font-display text-lg text-[#1B3A4B]">{t("extras")}</h3>
             <div className="flex items-center justify-between">
               <Label>{t("chefRecommendation")}</Label>
               <Switch checked={chefRec} onCheckedChange={setChefRec} />
@@ -144,19 +192,17 @@ export function StepBarBeverages({ tripId, participants, locale }: StepBarBevera
               <Label>{t("houseByGlass")}</Label>
               <Switch checked={houseGlass} onCheckedChange={setHouseGlass} />
             </div>
-            <div className="flex items-center justify-between">
-              <Label>{t("byob")}</Label>
-              <Switch checked={byob} onCheckedChange={setByob} />
-            </div>
           </section>
         </CardContent>
       </Card>
 
-      <div className="flex justify-end">
-        <Button variant="gold" size="lg" onClick={handleSubmit} disabled={pending}>
-          {tc("save")}
-        </Button>
-      </div>
+      <WizardNav
+        backHref={`/${locale}/guest/trip/${tripId}/preferences`}
+        onContinue={handleSubmit}
+        continueLabel={tc("save")}
+        continueDisabled={pending}
+        continueLoading={pending}
+      />
     </div>
   );
 }

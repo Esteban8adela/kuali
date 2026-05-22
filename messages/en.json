@@ -18,10 +18,17 @@
   },
   "auth": {
     "title": "Welcome aboard",
-    "subtitle": "Enter your email to receive a secure sign-in link.",
+    "subtitle": "Sign in with your email and password to continue.",
     "email": "Email address",
-    "sendLink": "Send magic link",
-    "checkEmail": "Check your inbox for the sign-in link."
+    "password": "Password",
+    "signIn": "Sign in",
+    "signingIn": "Signing in…",
+    "errors": {
+      "invalidCredentials": "Incorrect email or password. Please try again.",
+      "emailNotConfirmed": "Please confirm your email before signing in.",
+      "profileNotFound": "Your account profile could not be loaded. Contact support.",
+      "generic": "Something went wrong. Please try again."
+    }
   },
   "guest": {
     "wizard": {
@@ -40,56 +47,115 @@
         "crewNote": "Crew count adjusts automatically for larger parties.",
         "startDate": "Start date",
         "endDate": "End date",
-        "totalGuests": "{count} guests aboard"
+        "totalGuests": "{count} guests aboard",
+        "adultNames": "Guest names — adults",
+        "childNames": "Guest names — children",
+        "adultLabel": "Adult {number}",
+        "childLabel": "Child {number}",
+        "namePlaceholder": "e.g. John Smith",
+        "datesRequired": "Please select start and end dates to continue.",
+        "adultsRequired": "At least one adult is required on board."
       },
       "menu": {
         "title": "Menu & pricing",
         "subtitle": "Choose your culinary journey. Every detail matters.",
         "filterSeason": "Seasonal menus only",
-        "showAll": "View all menus",
+        "browseMenus": "Browse catalog",
         "tier1": "$ Fresh & Coastal Casual",
         "tier2": "$$ Mediterranean & Bistro Premium",
         "tier3": "$$$ Haute Cuisine & Ultra Luxury",
         "surprise": "Surprise me — Chef's suggestion",
         "custom": "Custom menu",
-        "selected": "Selected"
+        "selected": "Selected",
+        "surpriseNote": "Our chef will curate a surprise menu tailored to your party.",
+        "customNote": "Tell us your vision — the chef will design a fully custom menu.",
+        "childPrice": "child",
+        "offSeasonNote": "Note: Selecting menus outside the current season may incur additional costs for imported ingredients."
       },
       "preferences": {
+        "globalMealsTitle": "Meal times & abundance (entire vessel)",
+        "globalMealsHint": "If meal times and abundance are not specified, they will be left to the Chef's discretion.",
+        "abundancePlaceholder": "Select…",
         "title": "Preferences & restrictions",
-        "subtitle": "Per guest — allergies are highlighted for our chef.",
+        "subtitle": "Each guest card is saved independently for our chef.",
+        "noParticipants": "Complete trip details first to add guests.",
+        "adultGuest": "Adult",
+        "childGuest": "Child",
         "allergies": "Allergies (non-negotiable)",
-        "allergiesPlaceholder": "e.g. Shellfish, peanuts, celiac",
-        "dietary": "Dietary restrictions",
+        "allergiesOtherPlaceholder": "Specify other allergies…",
         "proteins": "Protein preferences",
-        "dairy": "Dairy & milk preferences",
-        "mealSchedule": "Meal schedule & heaviness",
+        "abundance": "Abundance / heaviness",
         "breakfast": "Breakfast (AM)",
         "lunch": "Lunch (PM)",
         "dinner": "Dinner (PM)",
-        "snacks": "Snacks",
-        "heaviness": { "light": "Light", "moderate": "Moderate", "heavy": "Heavy" }
+        "heaviness": { "light": "Light", "moderate": "Moderate", "heavy": "Heavy" },
+        "allergyOptions": {
+          "gluten": "Gluten",
+          "dairy": "Dairy",
+          "shellfish": "Shellfish",
+          "nuts": "Nuts",
+          "eggs": "Eggs",
+          "soy": "Soy",
+          "fish": "Fish",
+          "other": "Other"
+        },
+        "proteinOptions": {
+          "white_fish": "White fish",
+          "tuna": "Tuna",
+          "seafood": "Seafood",
+          "beef": "Beef",
+          "poultry": "Poultry",
+          "pork": "Pork"
+        }
       },
       "bar": {
         "title": "Bar & beverages",
         "subtitle": "Stock base is included — you are only charged for what is consumed.",
+        "noParticipants": "Add guests in step 1 first.",
         "waters": "Waters",
         "natural": "Natural",
         "mineral": "Mineral",
         "sodas": "Soft drinks",
         "regular": "Regular",
         "diet": "Diet / Zero",
+        "spirits": "Spirits & distillates",
         "wines": "Wines",
         "reds": "Reds",
         "whites": "Whites",
         "roses": "Rosés",
-        "champagne": "Champagne",
+        "beerMixers": "Beers & mixers",
+        "beers": "Beer preferences",
+        "mixers": "Mixers",
+        "extras": "Additional options",
+        "wineRegion": "Preferred region or grape",
+        "wineRegionPlaceholder": "e.g. Napa Cabernet, Burgundy Chardonnay",
+        "brandPlaceholder": "Preferred brand (optional)",
+        "beerPlaceholder": "Brands or styles preferred",
+        "mixerPlaceholder": "Tonic, club soda, ginger beer…",
         "chefRecommendation": "Chef's beverage recommendation",
         "houseByGlass": "House wine by the glass",
-        "byob": "Bring your own bottle (corkage may apply)"
+        "byob": "I will bring my own bottles",
+        "chefDefaultHelp": "If quantity or brand is not specified, it will be left to the Chef's discretion.",
+        "addBrand": "Add brand…",
+        "addWine": "Add wine…",
+        "addBeer": "Add beer…",
+        "addMixer": "Add mixer…",
+        "beerMixers": "Beers & mixers",
+        "beers": "Beers",
+        "mixers": "Mixers",
+        "spiritOptions": {
+          "tequila": "Tequila",
+          "rum": "Rum",
+          "vodka": "Vodka",
+          "gin": "Gin",
+          "mezcal": "Mezcal",
+          "whiskey": "Whiskey"
+        }
       }
     }
   },
   "chef": {
+    "greeting": "Hello, Chef",
     "dashboard": "Operations",
     "orders": "Live orders",
     "allergies": "Critical allergies",
@@ -101,7 +167,17 @@
     "chargeable": "To charge"
   },
   "admin": {
+    "greeting": "Hello, Admin",
     "dashboard": "Administration",
+    "reservationsSubtitle": "Review and manage charter reservations.",
+    "reservations": {
+      "active": "Active reservations",
+      "past": "Past reservations",
+      "future": "Upcoming reservations",
+      "emptyActive": "No active reservations at this time.",
+      "emptyPast": "No past reservations.",
+      "emptyFuture": "No upcoming reservations."
+    },
     "menus": "Menu catalog",
     "guests": "Guests",
     "trips": "Trips"

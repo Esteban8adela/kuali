@@ -3,6 +3,7 @@ import { setRequestLocale } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
 import { WizardProgress } from "@/components/guest/wizard-progress";
 import { StepPreferences } from "@/components/guest/step-preferences";
+import type { GlobalMealSchedule } from "@/lib/catalog/types";
 
 export default async function TripPreferencesPage({
   params,
@@ -13,7 +14,11 @@ export default async function TripPreferencesPage({
   setRequestLocale(locale);
 
   const supabase = await createClient();
-  const { data: trip } = await supabase.from("trips").select("id").eq("id", tripId).single();
+  const { data: trip } = await supabase
+    .from("trips")
+    .select("id, global_meal_schedule")
+    .eq("id", tripId)
+    .single();
   if (!trip) notFound();
 
   const { data: participants } = await supabase
@@ -29,6 +34,9 @@ export default async function TripPreferencesPage({
         <StepPreferences
           tripId={tripId}
           participants={participants ?? []}
+          initialGlobalSchedule={
+            (trip.global_meal_schedule as GlobalMealSchedule) ?? {}
+          }
           locale={locale}
         />
       </main>

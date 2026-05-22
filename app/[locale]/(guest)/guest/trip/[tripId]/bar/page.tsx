@@ -3,6 +3,7 @@ import { setRequestLocale } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
 import { WizardProgress } from "@/components/guest/wizard-progress";
 import { StepBarBeverages } from "@/components/guest/step-bar-beverages";
+import { fetchCatalogItems } from "@/lib/catalog/fetch-catalog";
 
 export default async function TripBarPage({
   params,
@@ -13,14 +14,14 @@ export default async function TripBarPage({
   setRequestLocale(locale);
 
   const supabase = await createClient();
-  const { data: trip } = await supabase.from("trips").select("id").eq("id", tripId).single();
+  const { data: trip } = await supabase
+    .from("trips")
+    .select("id, bar_order")
+    .eq("id", tripId)
+    .single();
   if (!trip) notFound();
 
-  const { data: participants } = await supabase
-    .from("trip_participants")
-    .select("*, guest_preferences(*)")
-    .eq("trip_id", tripId)
-    .order("sort_order");
+  const catalog = await fetchCatalogItems();
 
   return (
     <>
@@ -28,7 +29,8 @@ export default async function TripBarPage({
       <main className="px-4 py-8 md:px-8">
         <StepBarBeverages
           tripId={tripId}
-          participants={participants ?? []}
+          catalog={catalog}
+          initialBar={(trip.bar_order as Record<string, unknown>) ?? {}}
           locale={locale}
         />
       </main>

@@ -18,10 +18,17 @@
   },
   "auth": {
     "title": "Bienvenido a bordo",
-    "subtitle": "Ingrese su correo para recibir un enlace seguro de acceso.",
+    "subtitle": "Inicie sesión con su correo y contraseña para continuar.",
     "email": "Correo electrónico",
-    "sendLink": "Enviar enlace mágico",
-    "checkEmail": "Revise su bandeja de entrada para el enlace de acceso."
+    "password": "Contraseña",
+    "signIn": "Iniciar sesión",
+    "signingIn": "Iniciando sesión…",
+    "errors": {
+      "invalidCredentials": "Correo o contraseña incorrectos. Inténtelo de nuevo.",
+      "emailNotConfirmed": "Confirme su correo antes de iniciar sesión.",
+      "profileNotFound": "No se pudo cargar su perfil. Contacte a soporte.",
+      "generic": "Algo salió mal. Inténtelo de nuevo."
+    }
   },
   "guest": {
     "wizard": {
@@ -40,56 +47,115 @@
         "crewNote": "La tripulación se ajusta automáticamente para grupos grandes.",
         "startDate": "Fecha de inicio",
         "endDate": "Fecha de fin",
-        "totalGuests": "{count} huéspedes a bordo"
+        "totalGuests": "{count} huéspedes a bordo",
+        "adultNames": "Nombres — adultos",
+        "childNames": "Nombres — niños",
+        "adultLabel": "Adulto {number}",
+        "childLabel": "Niño {number}",
+        "namePlaceholder": "Ej. Juan Pérez",
+        "datesRequired": "Seleccione fecha de inicio y fin para continuar.",
+        "adultsRequired": "Se requiere al menos un adulto a bordo."
       },
       "menu": {
         "title": "Menú y categorías",
         "subtitle": "Elija su experiencia culinaria. Cada detalle importa.",
         "filterSeason": "Solo menús de temporada",
-        "showAll": "Ver todos los menús",
+        "browseMenus": "Ver catálogo",
         "tier1": "$ Fresco y Costero Casual",
         "tier2": "$$ Mediterráneo y Bistro Premium",
         "tier3": "$$$ Alta Cocina y Ultra Lujo",
         "surprise": "Sorpréndeme — Sugerencia del Chef",
         "custom": "Menú personalizado",
-        "selected": "Seleccionado"
+        "selected": "Seleccionado",
+        "surpriseNote": "El chef preparará un menú sorpresa a la medida de su grupo.",
+        "customNote": "Comparta su visión — el chef diseñará un menú totalmente personalizado.",
+        "childPrice": "niño",
+        "offSeasonNote": "Nota: Seleccionar menús fuera de temporada puede incurrir en costos adicionales por importación de ingredientes."
       },
       "preferences": {
+        "globalMealsTitle": "Horarios y abundancia (todo el barco)",
+        "globalMealsHint": "Si no se especifican horarios y nivel de abundancia, quedarán a consideración del Chef.",
+        "abundancePlaceholder": "Seleccionar…",
         "title": "Preferencias y restricciones",
-        "subtitle": "Por huésped — las alergias se resaltan para nuestro chef.",
+        "subtitle": "Cada tarjeta se guarda de forma independiente para el chef.",
+        "noParticipants": "Complete primero los detalles del viaje.",
+        "adultGuest": "Adulto",
+        "childGuest": "Niño",
         "allergies": "Alergias (no negociables)",
-        "allergiesPlaceholder": "ej. Mariscos, cacahuate, celíaco",
-        "dietary": "Restricciones dietéticas",
+        "allergiesOtherPlaceholder": "Especifique otras alergias…",
         "proteins": "Preferencias de proteínas",
-        "dairy": "Preferencias de leches",
-        "mealSchedule": "Horarios y abundancia de comidas",
+        "abundance": "Abundancia / pesadez",
         "breakfast": "Desayuno (AM)",
         "lunch": "Comida (PM)",
         "dinner": "Cena (PM)",
-        "snacks": "Botanas",
-        "heaviness": { "light": "Ligera", "moderate": "Moderada", "heavy": "Pesada" }
+        "heaviness": { "light": "Ligera", "moderate": "Moderada", "heavy": "Pesada" },
+        "allergyOptions": {
+          "gluten": "Gluten",
+          "dairy": "Lácteos",
+          "shellfish": "Mariscos",
+          "nuts": "Nueces",
+          "eggs": "Huevo",
+          "soy": "Soya",
+          "fish": "Pescado",
+          "other": "Otros"
+        },
+        "proteinOptions": {
+          "white_fish": "Pescado blanco",
+          "tuna": "Atún",
+          "seafood": "Mariscos",
+          "beef": "Res",
+          "poultry": "Aves",
+          "pork": "Cerdo"
+        }
       },
       "bar": {
         "title": "Bar y bebidas",
         "subtitle": "Stock base incluido — solo se cobra lo consumido.",
+        "noParticipants": "Agregue huéspedes en el paso 1 primero.",
         "waters": "Aguas",
         "natural": "Natural",
         "mineral": "Mineral",
         "sodas": "Refrescos",
         "regular": "Regulares",
         "diet": "Dieta / Zero",
+        "spirits": "Destilados",
         "wines": "Vinos",
         "reds": "Tintos",
         "whites": "Blancos",
         "roses": "Rosados",
-        "champagne": "Champagne",
+        "beerMixers": "Cervezas y mixers",
+        "beers": "Preferencias de cerveza",
+        "mixers": "Mixers",
+        "extras": "Opciones adicionales",
+        "wineRegion": "Región o uva preferida",
+        "wineRegionPlaceholder": "ej. Cabernet de Napa, Chardonnay de Borgoña",
+        "brandPlaceholder": "Marca preferida (opcional)",
+        "beerPlaceholder": "Marcas o estilos preferidos",
+        "mixerPlaceholder": "Tónica, soda, ginger beer…",
         "chefRecommendation": "Recomendación del Chef",
         "houseByGlass": "Vino de la casa por copeo",
-        "byob": "Llevar su propio vino (descorche puede aplicar)"
+        "byob": "Llevaré mis propias botellas",
+        "chefDefaultHelp": "Si no se especifica cantidad o marca, quedará a consideración del Chef.",
+        "addBrand": "Agregar marca…",
+        "addWine": "Agregar vino…",
+        "addBeer": "Agregar cerveza…",
+        "addMixer": "Agregar mixer…",
+        "beerMixers": "Cervezas y mixers",
+        "beers": "Cervezas",
+        "mixers": "Mixers",
+        "spiritOptions": {
+          "tequila": "Tequila",
+          "rum": "Ron",
+          "vodka": "Vodka",
+          "gin": "Ginebra",
+          "mezcal": "Mezcal",
+          "whiskey": "Whisky"
+        }
       }
     }
   },
   "chef": {
+    "greeting": "Hola, Chef",
     "dashboard": "Operaciones",
     "orders": "Órdenes en vivo",
     "allergies": "Alergias críticas",
@@ -101,7 +167,17 @@
     "chargeable": "A cobrar"
   },
   "admin": {
+    "greeting": "Hola, Admin",
     "dashboard": "Administración",
+    "reservationsSubtitle": "Revise y gestione las reservas del catamarán.",
+    "reservations": {
+      "active": "Reservas activas",
+      "past": "Reservas pasadas",
+      "future": "Reservas futuras",
+      "emptyActive": "No hay reservas activas en este momento.",
+      "emptyPast": "No hay reservas pasadas.",
+      "emptyFuture": "No hay reservas futuras."
+    },
     "menus": "Catálogo de menús",
     "guests": "Huéspedes",
     "trips": "Viajes"

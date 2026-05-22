@@ -15,6 +15,11 @@ export default async function TripDetailsPage({
 
   const supabase = await createClient();
   const { data: trip } = await supabase.from("trips").select("*").eq("id", tripId).single();
+  const { data: participants } = await supabase
+    .from("trip_participants")
+    .select("*")
+    .eq("trip_id", tripId)
+    .order("sort_order");
 
   if (!trip) notFound();
 
@@ -22,7 +27,11 @@ export default async function TripDetailsPage({
     <>
       <WizardProgress currentStep={1} />
       <main className="px-4 py-8 md:px-8">
-        <StepTripDetails trip={trip as Trip} locale={locale} />
+        <StepTripDetails
+          trip={trip as Trip}
+          participants={participants ?? []}
+          locale={locale}
+        />
       </main>
     </>
   );
