@@ -6,6 +6,8 @@ import { computeTripStepStatus, type StepStatus } from "@/lib/trip/step-status";
 
 export type { StepState, StepStatus } from "@/lib/trip/step-status";
 
+const ACTIVE_TRIP_STATUSES = ["draft", "submitted", "active"] as const;
+
 export default async function GuestDashboardPage({
   params,
 }: {
@@ -21,14 +23,29 @@ export default async function GuestDashboardPage({
 
   if (!user) redirect(`/${locale}/login`);
 
-  const { data: trips } = await supabase
+  const tripSelect =
+    "id, status, start_date, end_date, adult_count, child_count, wizard_step, bar_order, menu_order";
+
+  const { data: activeTrips } = await supabase
     .from("trips")
-    .select("id, status, start_date, end_date, adult_count, child_count, wizard_step, bar_order")
+    .select(tripSelect)
     .eq("created_by", user.id)
-    .order("created_at", { ascending: false })
+    .in("status", [...ACTIVE_TRIP_STATUSES])
+    .order("updated_at", { ascending: false })
     .limit(1);
 
-  const activeTrip = trips?.[0] ?? null;
+  let activeTrip = activeTrips?.[0] ?? null;
+
+  if (!activeTrip) {
+    const { data: fallbackTrips } = await supabase
+      .from("trips")
+      .select(tripSelect)
+      .eq("created_by", user.id)
+      .order("updated_at", { ascending: false })
+      .limit(1);
+
+    activeTrip = fallbackTrips?.[0] ?? null;
+  }
 
   let menuName: string | null = null;
   let stepStatus: StepStatus = {

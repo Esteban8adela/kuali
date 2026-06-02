@@ -1,11 +1,20 @@
 import { z } from "zod";
+import {
+  areTripDatesInvalidOrder,
+  coerceToDateOnlyString,
+} from "@/lib/trip/date-validation";
+
+const dateOnlyField = z.preprocess(
+  (val) => coerceToDateOnlyString(val),
+  z.string().nullable().optional()
+);
 
 export const tripDetailsSchema = z.object({
   tripId: z.string().uuid(),
   adultCount: z.number().int().min(0).max(30),
   childCount: z.number().int().min(0).max(20),
-  startDate: z.string().optional().nullable(),
-  endDate: z.string().optional().nullable(),
+  startDate: dateOnlyField,
+  endDate: dateOnlyField,
   wizardStep: z.number().int().min(1).max(5).optional(),
   adultNames: z.array(z.string()).optional(),
   childNames: z.array(z.string()).optional(),
@@ -14,10 +23,7 @@ export const tripDetailsSchema = z.object({
     message: "At least one guest required",
   })
   .refine(
-    (d) => {
-      if (!d.startDate || !d.endDate) return true;
-      return new Date(d.endDate) >= new Date(d.startDate);
-    },
+    (d) => !areTripDatesInvalidOrder(d.startDate, d.endDate),
     { message: "End date cannot be before start date" }
   );
 
@@ -35,7 +41,14 @@ export const menuSelectionSchema = z.object({
           heaviness: z.string().nullable().optional(),
           kidsMenuCount: z.number().int().min(0).optional(),
           kidsMenuNotes: z.string().nullable().optional(),
+          selected_dish_id: z.string().uuid().nullable().optional(),
+          selected_appetizer_id: z.string().uuid().nullable().optional(),
+          selected_main_id: z.string().uuid().nullable().optional(),
+          selected_kids_dish_id: z.string().uuid().nullable().optional(),
           kidsMenu: z.boolean().optional(),
+          selected_dishes: z.array(z.string().uuid()).optional(),
+          selected_appetizers: z.array(z.string().uuid()).optional(),
+          selected_mains: z.array(z.string().uuid()).optional(),
           dishes: z.array(z.string()).optional(),
         })
       ),

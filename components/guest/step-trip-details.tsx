@@ -13,6 +13,7 @@ import { updateTripDetails, saveDraftAndExit } from "@/app/[locale]/(guest)/gues
 import { WizardNav } from "@/components/guest/wizard-nav";
 import { RequiredMark } from "@/components/ui/required-mark";
 import { isUnsetGuestName } from "@/lib/guest/participant-names";
+import { areTripDatesInvalidOrder, areTripDatesValid, formatDateOnlyForPayload, normalizeDateOnlyInput } from "@/lib/trip/date-validation";
 import { registerWizardDraftSave } from "@/lib/wizard/draft-registry";
 import type { Trip, TripParticipant } from "@/lib/types/database";
 
@@ -53,8 +54,8 @@ export function StepTripDetails({ trip, participants, locale }: StepTripDetailsP
   const [pending, startTransition] = useTransition();
   const [adults, setAdults] = useState(trip.adult_count);
   const [children, setChildren] = useState(trip.child_count);
-  const [startDate, setStartDate] = useState(trip.start_date ?? "");
-  const [endDate, setEndDate] = useState(trip.end_date ?? "");
+  const [startDate, setStartDate] = useState(() => normalizeDateOnlyInput(trip.start_date) ?? "");
+  const [endDate, setEndDate] = useState(() => normalizeDateOnlyInput(trip.end_date) ?? "");
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
 
   const [adultNames, setAdultNames] = useState<string[]>(() =>
@@ -68,14 +69,9 @@ export function StepTripDetails({ trip, participants, locale }: StepTripDetailsP
 
   const crewCount = getCrewCount(adults, children);
   const totalGuests = adults + children;
-  const datesInOrder =
-    !startDate ||
-    !endDate ||
-    new Date(endDate).getTime() >= new Date(startDate).getTime();
   const hasBothDates = Boolean(startDate && endDate);
-  const datesInvalidOrder =
-    hasBothDates && new Date(endDate).getTime() < new Date(startDate).getTime();
-  const datesValid = hasBothDates && datesInOrder;
+  const datesInvalidOrder = areTripDatesInvalidOrder(startDate, endDate);
+  const datesValid = hasBothDates && areTripDatesValid(startDate, endDate);
   const adultsValid = adults >= 1;
 
   useEffect(() => {
@@ -95,17 +91,24 @@ export function StepTripDetails({ trip, participants, locale }: StepTripDetailsP
   }, [children]);
 
   const canContinue = datesValid && adultsValid && totalGuests >= 1;
+  const canSaveExit = adultsValid && !datesInvalidOrder;
+
+  function tripDatePayload() {
+    return {
+      startDate: formatDateOnlyForPayload(startDate),
+      endDate: formatDateOnlyForPayload(endDate),
+    };
+  }
 
   const persist = useCallback(async () => {
-    if (!adultsValid) return;
+    if (!adultsValid || datesInvalidOrder) return;
     setSaveStatus("saving");
     try {
       await updateTripDetails({
         tripId: trip.id,
         adultCount: adults,
         childCount: children,
-        startDate: startDate || null,
-        endDate: endDate || null,
+        ...tripDatePayload(),
         wizardStep: 1,
         adultNames: adultNames.map((n) => n.trim()),
         childNames: childNames.map((n) => n.trim()),
@@ -115,31 +118,31 @@ export function StepTripDetails({ trip, participants, locale }: StepTripDetailsP
     } catch {
       setSaveStatus("idle");
     }
-  }, [trip.id, adults, children, startDate, endDate, adultNames, childNames, adultsValid]);
+  }, [trip.id, adults, children, startDate, endDate, adultNames, childNames, adultsValid, datesInvalidOrder]);
 
   useEffect(() => {
-    if (!adultsValid) return;
+    if (!adultsValid || datesInvalidOrder) return;
     const timer = setTimeout(() => {
       startTransition(() => {
         void persist();
       });
     }, 800);
     return () => clearTimeout(timer);
-  }, [adults, children, startDate, endDate, adultNames, childNames, persist, adultsValid]);
+  }, [adults, children, startDate, endDate, adultNames, childNames, persist, adultsValid, datesInvalidOrder]);
 
   useEffect(() => {
-    if (!adultsValid) return;
+    if (!adultsValid || datesInvalidOrder) return;
     return registerWizardDraftSave(persist);
-  }, [persist, adultsValid]);
+  }, [persist, adultsValid, datesInvalidOrder]);
 
   function handleContinue() {
+    if (!canContinue) return;
     startTransition(async () => {
       await updateTripDetails({
         tripId: trip.id,
         adultCount: adults,
         childCount: children,
-        startDate: startDate || null,
-        endDate: endDate || null,
+        ...tripDatePayload(),
         wizardStep: 2,
         adultNames: adultNames.map((n) => n.trim()),
         childNames: childNames.map((n) => n.trim()),
@@ -149,8 +152,17 @@ export function StepTripDetails({ trip, participants, locale }: StepTripDetailsP
   }
 
   function handleSaveExit() {
+    if (!adultsValid || datesInvalidOrder) return;
     startTransition(async () => {
-      await persist();
+      await updateTripDetails({
+        tripId: trip.id,
+        adultCount: adults,
+        childCount: children,
+        ...tripDatePayload(),
+        wizardStep: 1,
+        adultNames: adultNames.map((n) => n.trim()),
+        childNames: childNames.map((n) => n.trim()),
+      });
       await saveDraftAndExit(trip.id);
       router.push(`/${locale}/guest/dashboard`);
     });
@@ -284,7 +296,7 @@ export function StepTripDetails({ trip, participants, locale }: StepTripDetailsP
 
         <WizardNav
           onContinue={handleContinue}
-          onSaveExit={handleSaveExit}
+          onSaveExit={canSaveExit ? handleSaveExit : undefined}
           continueDisabled={pending || !canContinue}
           continueLoading={pending}
           saveExitLoading={pending}

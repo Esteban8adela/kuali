@@ -100,6 +100,7 @@
         "subtitle": "Choose your culinary journey. Every detail matters.",
         "dayByDay": "Day-by-day itinerary, dish by dish.",
         "noDates": "Select valid dates in step 1 to generate the itinerary.",
+        "datesRangeInvalid": "Trip dates are invalid. Return to step 1 and ensure the end date is on or after the start date.",
         "dayLabel": "Day {number} — {date}",
         "breakfast": "Breakfast",
         "lunch": "Lunch",
@@ -117,10 +118,20 @@
           "heavy": "Heavy"
         },
         "kidsMenuLabel": "How many kids menus for this meal?",
-        "kidsMenuConfig": "Kids menu configuration / requests",
-        "kidsMenuConfigPlaceholder": "Nuggets, hot dogs, allergies, etc.",
-        "kidsMenuValidationHint": "Please complete the kids menu configuration for every meal with kids menus requested.",
+        "kidsMenuDish": "Kids menu dish",
+        "kidsMenuValidationHint": "Select a kids menu dish for every meal with kids menus requested.",
+        "menuIncompleteHint": "Each day needs breakfast, lunch main course, and dinner selected.",
         "dishes": "Dishes",
+        "selectDishPlaceholder": "Select a dish…",
+        "noSelection": "None",
+        "noImage": "No image",
+        "optional": "optional",
+        "breakfastDish": "Breakfast",
+        "dinnerDish": "Dinner",
+        "lunchAppetizers": "Starters",
+        "lunchMains": "Main courses",
+        "noDishesAvailable": "No dishes available in this category yet.",
+        "selectedCount": "{count} selected",
         "dishPlaceholder": "Add a dish…",
         "addDish": "Add dish",
         "filterSeason": "Seasonal menus only",
@@ -290,6 +301,106 @@
     },
     "menus": "Menu catalog",
     "guests": "Guests",
-    "trips": "Trips"
+    "trips": "Trips",
+    "catalogNav": "Catalog & recipes",
+    "catalog": {
+      "ingredientsTab": "Ingredients",
+      "dishesTab": "Dishes"
+    },
+    "ingredientsNav": "Ingredients",
+    "ingredients": {
+      "title": "Ingredient management",
+      "subtitle": "Maintain the inventory catalog used in recipes and costing.",
+      "addButton": "Add ingredient",
+      "addTitle": "New ingredient",
+      "editTitle": "Edit ingredient",
+      "formSubtitle": "Define unit, cost, and stock category for this item.",
+      "empty": "No ingredients registered yet.",
+      "saveError": "Could not save the ingredient. Please try again.",
+      "deleteConfirm": "Delete this ingredient? This cannot be undone.",
+      "edit": "Edit",
+      "delete": "Delete",
+      "columns": {
+        "name": "Name",
+        "unit": "Unit",
+        "cost": "Cost per unit",
+        "category": "Category",
+        "actions": "Actions"
+      },
+      "fields": {
+        "name": "Name",
+        "unit": "Unit of measure",
+        "cost": "Cost per unit",
+        "category": "Stock category"
+      },
+      "categories": {
+        "abarrotes": "Dry goods",
+        "frutas_verduras": "Fruits & vegetables",
+        "carniceria": "Butcher",
+        "pescaderia": "Seafood",
+        "lacteos": "Dairy",
+        "bebidas": "Beverages",
+        "otros": "Other"
+      },
+      "units": {
+        "kg": "kg",
+        "g": "g",
+        "litro": "liter",
+        "ml": "ml",
+        "l": "L",
+        "pieza": "piece",
+        "caja": "box"
+      }
+    },
+    "dishes": {
+      "title": "Dish & recipe management",
+      "subtitle": "Build dishes and define ingredient quantities per guest.",
+      "addButton": "Add dish",
+      "addTitle": "New dish",
+      "editTitle": "Edit dish",
+      "formSubtitle": "Set dish details, define batch yield, and enter total ingredient quantities.",
+      "empty": "No dishes registered yet.",
+      "saveError": "Could not save the dish. Please try again.",
+      "deleteConfirm": "Delete this dish and its recipe? This cannot be undone.",
+      "edit": "Edit",
+      "delete": "Delete",
+      "recipeLineCount": "{count, plural, =0 {No ingredients} one {# ingredient} other {# ingredients}}",
+      "columns": {
+        "name": "Name",
+        "category": "Category",
+        "description": "Description",
+        "recipeLines": "Recipe",
+        "actions": "Actions"
+      },
+      "fields": {
+        "name": "Name",
+        "description": "Description",
+        "category": "Category",
+        "recipeYield": "Recipe yield (servings)",
+        "imageUrl": "Image URL"
+      },
+      "categories": {
+        "breakfast": "Breakfast",
+        "lunch_appetizer": "Lunch appetizer",
+        "lunch_main": "Lunch main",
+        "dinner": "Dinner",
+        "kids": "Kids",
+        "snack": "Snack"
+      },
+      "recipe": {
+        "title": "Recipe builder",
+        "subtitle": "Enter total quantities for the full batch; per-person amounts are calculated automatically.",
+        "addLine": "Add ingredient",
+        "empty": "No recipe lines yet. Add ingredients to calculate cost.",
+        "noIngredients": "Create ingredients first before building recipes.",
+        "ingredient": "Ingredient",
+        "selectIngredient": "Select ingredient",
+        "totalQuantity": "Total quantity",
+        "equivPerPerson": "Eq. {amount} {unit} per person",
+        "removeLine": "Remove line",
+        "totalDishCost": "Total dish cost",
+        "totalCostPerPerson": "Total cost per person"
+      }
+    }
   }
 }

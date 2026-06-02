@@ -100,6 +100,7 @@
         "subtitle": "Elija su experiencia culinaria. Cada detalle importa.",
         "dayByDay": "Itinerario día por día, platillo por platillo.",
         "noDates": "Selecciona fechas válidas en el paso 1 para generar el itinerario.",
+        "datesRangeInvalid": "Las fechas del viaje no son válidas. Regresa al paso 1 y confirma que la fecha de fin sea igual o posterior a la de inicio.",
         "dayLabel": "Día {number} — {date}",
         "breakfast": "Desayuno",
         "lunch": "Comida",
@@ -117,10 +118,20 @@
           "heavy": "Pesada"
         },
         "kidsMenuLabel": "¿Cuántos menús infantiles desean para esta comida?",
-        "kidsMenuConfig": "Configuración / solicitudes del menú infantil",
-        "kidsMenuConfigPlaceholder": "Nuggets, hot dogs, alergias, etc.",
-        "kidsMenuValidationHint": "Completa la configuración del menú infantil para cada comida con menús de niños solicitados.",
+        "kidsMenuDish": "Platillo del menú infantil",
+        "kidsMenuValidationHint": "Selecciona un platillo infantil para cada comida con menús de niños solicitados.",
+        "menuIncompleteHint": "Cada día requiere desayuno, plato fuerte de comida y cena.",
         "dishes": "Platillos",
+        "selectDishPlaceholder": "Seleccionar platillo…",
+        "noSelection": "Ninguno",
+        "noImage": "Sin imagen",
+        "optional": "opcional",
+        "breakfastDish": "Desayuno",
+        "dinnerDish": "Cena",
+        "lunchAppetizers": "Entradas",
+        "lunchMains": "Platos fuertes",
+        "noDishesAvailable": "Aún no hay platillos disponibles en esta categoría.",
+        "selectedCount": "{count} seleccionados",
         "dishPlaceholder": "Agregar platillo…",
         "addDish": "Agregar platillo",
         "filterSeason": "Solo menús de temporada",
@@ -290,6 +301,106 @@
     },
     "menus": "Catálogo de menús",
     "guests": "Huéspedes",
-    "trips": "Viajes"
+    "trips": "Viajes",
+    "catalogNav": "Catálogo y recetas",
+    "catalog": {
+      "ingredientsTab": "Ingredientes",
+      "dishesTab": "Platillos"
+    },
+    "ingredientsNav": "Ingredientes",
+    "ingredients": {
+      "title": "Gestión de ingredientes",
+      "subtitle": "Administre el catálogo de inventario usado en recetas y costeo.",
+      "addButton": "Agregar ingrediente",
+      "addTitle": "Nuevo ingrediente",
+      "editTitle": "Editar ingrediente",
+      "formSubtitle": "Defina unidad, costo y categoría de stock para este artículo.",
+      "empty": "Aún no hay ingredientes registrados.",
+      "saveError": "No se pudo guardar el ingrediente. Inténtelo de nuevo.",
+      "deleteConfirm": "¿Eliminar este ingrediente? Esta acción no se puede deshacer.",
+      "edit": "Editar",
+      "delete": "Eliminar",
+      "columns": {
+        "name": "Nombre",
+        "unit": "Unidad",
+        "cost": "Costo por unidad",
+        "category": "Categoría",
+        "actions": "Acciones"
+      },
+      "fields": {
+        "name": "Nombre",
+        "unit": "Unidad de medida",
+        "cost": "Costo por unidad",
+        "category": "Categoría de stock"
+      },
+      "categories": {
+        "abarrotes": "Abarrotes",
+        "frutas_verduras": "Frutas y Verduras",
+        "carniceria": "Carnicería",
+        "pescaderia": "Pescadería",
+        "lacteos": "Lácteos",
+        "bebidas": "Bebidas",
+        "otros": "Otros"
+      },
+      "units": {
+        "kg": "kg",
+        "g": "g",
+        "litro": "litro",
+        "ml": "ml",
+        "l": "l",
+        "pieza": "pieza",
+        "caja": "caja"
+      }
+    },
+    "dishes": {
+      "title": "Gestión de platillos y recetas",
+      "subtitle": "Cree platillos y defina cantidades de ingredientes por persona.",
+      "addButton": "Agregar platillo",
+      "addTitle": "Nuevo platillo",
+      "editTitle": "Editar platillo",
+      "formSubtitle": "Complete los datos del platillo, defina el rendimiento del lote e ingrese las cantidades totales de ingredientes.",
+      "empty": "Aún no hay platillos registrados.",
+      "saveError": "No se pudo guardar el platillo. Inténtelo de nuevo.",
+      "deleteConfirm": "¿Eliminar este platillo y su receta? Esta acción no se puede deshacer.",
+      "edit": "Editar",
+      "delete": "Eliminar",
+      "recipeLineCount": "{count, plural, =0 {Sin ingredientes} one {# ingrediente} other {# ingredientes}}",
+      "columns": {
+        "name": "Nombre",
+        "category": "Categoría",
+        "description": "Descripción",
+        "recipeLines": "Receta",
+        "actions": "Acciones"
+      },
+      "fields": {
+        "name": "Nombre",
+        "description": "Descripción",
+        "category": "Categoría",
+        "recipeYield": "Rendimiento (porciones)",
+        "imageUrl": "URL de imagen"
+      },
+      "categories": {
+        "breakfast": "Desayuno",
+        "lunch_appetizer": "Entrada comida",
+        "lunch_main": "Plato fuerte comida",
+        "dinner": "Cena",
+        "kids": "Niños",
+        "snack": "Snack"
+      },
+      "recipe": {
+        "title": "Constructor de receta",
+        "subtitle": "Ingrese las cantidades totales del lote; las cantidades por persona se calculan automáticamente.",
+        "addLine": "Añadir ingrediente",
+        "empty": "Sin líneas de receta. Agregue ingredientes para calcular el costo.",
+        "noIngredients": "Cree ingredientes primero antes de armar recetas.",
+        "ingredient": "Ingrediente",
+        "selectIngredient": "Seleccionar ingrediente",
+        "totalQuantity": "Cantidad total a usar",
+        "equivPerPerson": "Eq. a {amount} {unit} por persona",
+        "removeLine": "Eliminar línea",
+        "totalDishCost": "Costo total del platillo",
+        "totalCostPerPerson": "Costo total por persona"
+      }
+    }
   }
 }

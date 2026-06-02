@@ -1,13 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -17,9 +15,19 @@ import {
 } from "@/components/ui/select";
 import { saveMenuSelection, advanceWizardStep, saveDraftAndExit } from "@/app/[locale]/(guest)/guest/trip/actions";
 import { WizardNav } from "@/components/guest/wizard-nav";
+import { DishSinglePicker } from "@/components/guest/dish-single-picker";
 import { useWizardAutosave } from "@/hooks/use-wizard-autosave";
 import { RequiredMark } from "@/components/ui/required-mark";
-import { isKidsMenuConfigValid, isMenuItineraryComplete } from "@/lib/guest/menu-itinerary";
+import {
+  isKidsMenuConfigValid,
+  isMenuItineraryComplete,
+  parseMenuOrder,
+  type MenuDayPlan,
+  type MenuMealBlock,
+} from "@/lib/guest/menu-itinerary";
+import { buildItineraryDates } from "@/lib/trip/itinerary-days";
+import { normalizeDateOnlyInput } from "@/lib/trip/date-validation";
+import type { DishesByCategory } from "@/lib/guest/fetch-dishes-catalog";
 
 type MealKey = "breakfast" | "lunch" | "dinner";
 
@@ -27,19 +35,15 @@ interface MealBlock {
   key: MealKey;
   heaviness: string;
   kidsMenuCount: number;
-  kidsMenuNotes: string;
-  dishes: string[];
+  selected_kids_dish_id: string | null;
+  selected_dish_id: string | null;
+  selected_appetizer_id: string | null;
+  selected_main_id: string | null;
 }
 
 interface DayPlan {
   date: string;
   meals: MealBlock[];
-}
-
-interface InitialMenuSelection {
-  menu_id: string | null;
-  selection_type: string;
-  custom_notes: string | null;
 }
 
 interface StepMenuSelectionProps {
@@ -48,70 +52,39 @@ interface StepMenuSelectionProps {
   startDate?: string | null;
   endDate?: string | null;
   childCount?: number;
-  initialSelection?: InitialMenuSelection;
+  initialMenuOrder?: unknown;
+  dishesByCategory: DishesByCategory;
 }
 
 const MAX_ITINERARY_DAYS = 30;
 const MEAL_KEYS: MealKey[] = ["breakfast", "lunch", "dinner"];
 const HEAVINESS = ["light", "moderate", "heavy"] as const;
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function firstUuid(ids: string[] | undefined): string | null {
+  const found = (ids ?? []).find((id) => UUID_RE.test(id));
+  return found ?? null;
+}
 
 function newMeal(key: MealKey): MealBlock {
-  return { key, heaviness: "", kidsMenuCount: 0, kidsMenuNotes: "", dishes: [""] };
-}
-
-function parseDateOnly(value: string | null | undefined): Date | null {
-  if (!value || typeof value !== "string") return null;
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
-  if (!match) return null;
-
-  const year = Number(match[1]);
-  const month = Number(match[2]) - 1;
-  const day = Number(match[3]);
-  const date = new Date(year, month, day, 12, 0, 0, 0);
-
-  if (Number.isNaN(date.getTime())) return null;
-  if (date.getFullYear() !== year || date.getMonth() !== month || date.getDate() !== day) {
-    return null;
-  }
-  return date;
-}
-
-function formatDateOnly(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
+  return {
+    key,
+    heaviness: "",
+    kidsMenuCount: 0,
+    selected_kids_dish_id: null,
+    selected_dish_id: null,
+    selected_appetizer_id: null,
+    selected_main_id: null,
+  };
 }
 
 function buildDays(startDate?: string | null, endDate?: string | null): DayPlan[] {
-  if (!startDate || !endDate) return [];
-
-  const start = parseDateOnly(startDate);
-  const end = parseDateOnly(endDate);
-  if (!start || !end) return [];
-
-  const startMs = start.getTime();
-  const endMs = end.getTime();
-  if (endMs < startMs) return [];
-
-  const ONE_DAY_MS = 86_400_000;
-  const days: DayPlan[] = [];
-  let currentDate = new Date(startMs);
-  let safeCount = 0;
-
-  while (currentDate.getTime() <= endMs) {
-    if (safeCount > MAX_ITINERARY_DAYS) break;
-
-    days.push({
-      date: formatDateOnly(currentDate),
-      meals: [newMeal("breakfast"), newMeal("lunch"), newMeal("dinner")],
-    });
-
-    currentDate = new Date(currentDate.getTime() + ONE_DAY_MS);
-    safeCount += 1;
-  }
-
-  return days;
+  const dates = buildItineraryDates(startDate, endDate, MAX_ITINERARY_DAYS);
+  return dates.map((date) => ({
+    date,
+    meals: [newMeal("breakfast"), newMeal("lunch"), newMeal("dinner")],
+  }));
 }
 
 function normalizeMeal(raw: Record<string, unknown>): MealBlock {
@@ -122,30 +95,85 @@ function normalizeMeal(raw: Record<string, unknown>): MealBlock {
   } else if (raw.kidsMenu === true) {
     kidsMenuCount = 1;
   }
+
+  const legacyIds = Array.isArray(raw.dishes)
+    ? (raw.dishes as string[]).filter((id) => UUID_RE.test(id))
+    : [];
+
+  const selectedKids =
+    typeof raw.selected_kids_dish_id === "string" && UUID_RE.test(raw.selected_kids_dish_id)
+      ? raw.selected_kids_dish_id
+      : null;
+
+  if (key === "lunch") {
+    const appetizerId =
+      typeof raw.selected_appetizer_id === "string" && UUID_RE.test(raw.selected_appetizer_id)
+        ? raw.selected_appetizer_id
+        : firstUuid(raw.selected_appetizers as string[] | undefined);
+    const mainId =
+      typeof raw.selected_main_id === "string" && UUID_RE.test(raw.selected_main_id)
+        ? raw.selected_main_id
+        : firstUuid(raw.selected_mains as string[] | undefined) ?? legacyIds[0] ?? null;
+
+    return {
+      key: "lunch",
+      heaviness: typeof raw.heaviness === "string" ? raw.heaviness : "",
+      kidsMenuCount,
+      selected_kids_dish_id: selectedKids,
+      selected_dish_id: null,
+      selected_appetizer_id: appetizerId,
+      selected_main_id: mainId,
+    };
+  }
+
+  const dishId =
+    typeof raw.selected_dish_id === "string" && UUID_RE.test(raw.selected_dish_id)
+      ? raw.selected_dish_id
+      : firstUuid(raw.selected_dishes as string[] | undefined) ?? legacyIds[0] ?? null;
+
   return {
     key,
     heaviness: typeof raw.heaviness === "string" ? raw.heaviness : "",
     kidsMenuCount,
-    kidsMenuNotes: typeof raw.kidsMenuNotes === "string" ? raw.kidsMenuNotes : "",
-    dishes: Array.isArray(raw.dishes) ? (raw.dishes as string[]) : [""],
+    selected_kids_dish_id: selectedKids,
+    selected_dish_id: dishId,
+    selected_appetizer_id: null,
+    selected_main_id: null,
   };
 }
 
-function parseInitialPlans(raw: string | null): DayPlan[] {
-  if (!raw) return [];
-  try {
-    const parsed = JSON.parse(raw) as { itinerary?: Array<{ date: string; meals: Record<string, unknown>[] }> };
-    const itinerary = parsed.itinerary;
-    if (!Array.isArray(itinerary)) return [];
-    return itinerary.slice(0, MAX_ITINERARY_DAYS).map((day) => ({
-      date: day.date,
-      meals: Array.isArray(day.meals)
-        ? day.meals.map((m) => normalizeMeal(m))
-        : [newMeal("breakfast"), newMeal("lunch"), newMeal("dinner")],
-    }));
-  } catch {
-    return [];
+function serializeMeal(meal: MealBlock): MenuMealBlock {
+  const base = {
+    key: meal.key,
+    heaviness: meal.heaviness,
+    kidsMenuCount: meal.kidsMenuCount,
+    selected_kids_dish_id: meal.selected_kids_dish_id,
+  };
+
+  if (meal.key === "lunch") {
+    return {
+      ...base,
+      selected_appetizer_id: meal.selected_appetizer_id,
+      selected_main_id: meal.selected_main_id,
+    };
   }
+
+  return {
+    ...base,
+    selected_dish_id: meal.selected_dish_id,
+  };
+}
+
+function parseInitialPlans(menuOrder: unknown): DayPlan[] {
+  const itinerary = parseMenuOrder(menuOrder);
+  if (!itinerary.length) return [];
+
+  return itinerary.slice(0, MAX_ITINERARY_DAYS).map((day) => ({
+    date: day.date,
+    meals: Array.isArray(day.meals)
+      ? day.meals.map((m) => normalizeMeal(m as unknown as Record<string, unknown>))
+      : [newMeal("breakfast"), newMeal("lunch"), newMeal("dinner")],
+  }));
 }
 
 export function StepMenuSelection({
@@ -154,26 +182,31 @@ export function StepMenuSelection({
   startDate,
   endDate,
   childCount = 0,
-  initialSelection,
+  initialMenuOrder,
+  dishesByCategory,
 }: StepMenuSelectionProps) {
   const t = useTranslations("guest.wizard.menu");
   const router = useRouter();
   const [pending, startTransition] = useTransition();
 
-  const dateRangeKey = `${startDate ?? ""}|${endDate ?? ""}`;
+  const tripStart = normalizeDateOnlyInput(startDate);
+  const tripEnd = normalizeDateOnlyInput(endDate);
+  const hasTripDates = Boolean(tripStart && tripEnd);
+
+  const dateRangeKey = `${tripStart ?? ""}|${tripEnd ?? ""}`;
   const rangeKeyRef = useRef(dateRangeKey);
 
   const [days, setDays] = useState<DayPlan[]>(() => {
-    const fromDb = parseInitialPlans(initialSelection?.custom_notes ?? null);
+    const fromDb = parseInitialPlans(initialMenuOrder);
     if (fromDb.length > 0) return fromDb;
-    return buildDays(startDate, endDate);
+    return buildDays(tripStart, tripEnd);
   });
 
   useEffect(() => {
     if (rangeKeyRef.current === dateRangeKey) return;
     rangeKeyRef.current = dateRangeKey;
-    setDays(buildDays(startDate, endDate));
-  }, [dateRangeKey, startDate, endDate]);
+    setDays(buildDays(tripStart, tripEnd));
+  }, [dateRangeKey, tripStart, tripEnd]);
 
   function updateMeal(dayIndex: number, mealKey: MealKey, updater: (m: MealBlock) => MealBlock) {
     setDays((prev) =>
@@ -188,16 +221,28 @@ export function StepMenuSelection({
     );
   }
 
-  function addDish(dayIndex: number, mealKey: MealKey) {
-    updateMeal(dayIndex, mealKey, (m) => ({ ...m, dishes: [...m.dishes, ""] }));
-  }
+  const serializedDays: MenuDayPlan[] = useMemo(
+    () =>
+      days.map((day) => ({
+        date: day.date,
+        meals: day.meals.map(serializeMeal),
+      })),
+    [days]
+  );
 
-  function setDish(dayIndex: number, mealKey: MealKey, dishIndex: number, value: string) {
-    updateMeal(dayIndex, mealKey, (m) => ({
-      ...m,
-      dishes: m.dishes.map((d, i) => (i === dishIndex ? value : d)),
-    }));
-  }
+  const menuComplete = useMemo(
+    () => isMenuItineraryComplete(serializedDays),
+    [serializedDays]
+  );
+  const kidsConfigValid = useMemo(() => isKidsMenuConfigValid(days), [days]);
+  const stepComplete = menuComplete && kidsConfigValid;
+  const canContinue = hasTripDates && days.length > 0 && stepComplete;
+
+  const continueHint = !menuComplete
+    ? t("menuIncompleteHint")
+    : !kidsConfigValid
+      ? t("kidsMenuValidationHint")
+      : undefined;
 
   async function persistItinerary() {
     if (!days.length) return;
@@ -206,7 +251,7 @@ export function StepMenuSelection({
       menuId: null,
       selectionType: "custom",
       customNotes: null,
-      itinerary: days,
+      itinerary: serializedDays,
     });
   }
 
@@ -235,9 +280,24 @@ export function StepMenuSelection({
     });
   }
 
-  const menuComplete = isMenuItineraryComplete(days);
-  const kidsConfigValid = isKidsMenuConfigValid(days);
-  const canContinue = days.length > 0 && menuComplete && kidsConfigValid;
+  if (!hasTripDates) {
+    return (
+      <div className="mx-auto max-w-5xl space-y-6">
+        <Card className="glass-card border-0">
+          <CardHeader>
+            <CardTitle>{t("title")}</CardTitle>
+            <CardDescription>{t("dayByDay")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              {t("noDates")}
+            </p>
+          </CardContent>
+        </Card>
+        <WizardNav backHref={`/${locale}/guest/trip/${tripId}/details`} continueDisabled />
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
@@ -249,12 +309,15 @@ export function StepMenuSelection({
         <CardContent>
           {days.length === 0 ? (
             <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-              {t("noDates")}
+              {t("datesRangeInvalid")}
             </p>
           ) : (
             <div className="space-y-6">
               {days.map((day, dayIndex) => (
-                <Card key={`${day.date}-${dayIndex}`} className="border border-[#C4A052]/25 bg-white shadow-sm">
+                <Card
+                  key={`${day.date}-${dayIndex}`}
+                  className="border border-[#C4A052]/25 bg-white shadow-sm"
+                >
                   <CardHeader className="border-b border-[#1B3A4B]/10 bg-[#1B3A4B]/5 pb-3">
                     <CardTitle className="font-display text-lg text-[#1B3A4B]">
                       {t("dayLabel", { number: dayIndex + 1, date: day.date })}
@@ -265,10 +328,15 @@ export function StepMenuSelection({
                       {MEAL_KEYS.map((mealKey) => {
                         const meal = day.meals.find((m) => m.key === mealKey) ?? newMeal(mealKey);
                         return (
-                          <div key={mealKey} className="space-y-3 rounded-lg border border-neutral-200 p-4">
+                          <div
+                            key={mealKey}
+                            className="space-y-3 rounded-lg border border-neutral-200 p-4"
+                          >
                             <div>
                               <h4 className="font-medium text-[#1B3A4B]">{t(mealKey)}</h4>
-                              <span className="text-xs text-neutral-500">{t(`windows.${mealKey}`)}</span>
+                              <span className="text-xs text-neutral-500">
+                                {t(`windows.${mealKey}`)}
+                              </span>
                             </div>
 
                             <div>
@@ -296,7 +364,9 @@ export function StepMenuSelection({
 
                             {childCount > 0 && (
                               <div>
-                                <Label htmlFor={`kids-${dayIndex}-${mealKey}`}>{t("kidsMenuLabel")}</Label>
+                                <Label htmlFor={`kids-${dayIndex}-${mealKey}`}>
+                                  {t("kidsMenuLabel")}
+                                </Label>
                                 <Input
                                   id={`kids-${dayIndex}-${mealKey}`}
                                   type="number"
@@ -305,57 +375,94 @@ export function StepMenuSelection({
                                   value={meal.kidsMenuCount}
                                   onChange={(e) => {
                                     const raw = parseInt(e.target.value, 10);
-                                    const next = Number.isNaN(raw) ? 0 : Math.min(childCount, Math.max(0, raw));
-                                    updateMeal(dayIndex, mealKey, (m) => ({ ...m, kidsMenuCount: next }));
+                                    const next = Number.isNaN(raw)
+                                      ? 0
+                                      : Math.min(childCount, Math.max(0, raw));
+                                    updateMeal(dayIndex, mealKey, (m) => ({
+                                      ...m,
+                                      kidsMenuCount: next,
+                                      selected_kids_dish_id:
+                                        next > 0 ? m.selected_kids_dish_id : null,
+                                    }));
                                   }}
                                   className="mt-1"
                                 />
-                                {meal.kidsMenuCount > 0 && (
-                                  <div className="mt-2">
-                                    <Label htmlFor={`kids-notes-${dayIndex}-${mealKey}`}>
-                                      {t("kidsMenuConfig")} <RequiredMark />
-                                    </Label>
-                                    <Textarea
-                                      id={`kids-notes-${dayIndex}-${mealKey}`}
-                                      value={meal.kidsMenuNotes}
-                                      onChange={(e) =>
-                                        updateMeal(dayIndex, mealKey, (m) => ({
-                                          ...m,
-                                          kidsMenuNotes: e.target.value,
-                                        }))
-                                      }
-                                      placeholder={t("kidsMenuConfigPlaceholder")}
-                                      className="mt-1 min-h-[56px]"
-                                    />
-                                  </div>
-                                )}
                               </div>
                             )}
 
-                            <div className="space-y-2">
-                              <Label>
-                                {t("dishes")} <RequiredMark />
-                              </Label>
-                              {meal.dishes.map((dish, dishIndex) => (
-                                <Textarea
-                                  key={`${dayIndex}-${mealKey}-${dishIndex}`}
-                                  value={dish}
-                                  onChange={(e) =>
-                                    setDish(dayIndex, mealKey, dishIndex, e.target.value)
+                            {mealKey === "breakfast" && (
+                              <DishSinglePicker
+                                label={t("breakfastDish")}
+                                dishes={dishesByCategory.breakfast}
+                                value={meal.selected_dish_id}
+                                onChange={(id) =>
+                                  updateMeal(dayIndex, "breakfast", (m) => ({
+                                    ...m,
+                                    selected_dish_id: id,
+                                  }))
+                                }
+                                required
+                              />
+                            )}
+
+                            {mealKey === "lunch" && (
+                              <>
+                                <DishSinglePicker
+                                  label={t("lunchAppetizers")}
+                                  dishes={dishesByCategory.lunch_appetizer}
+                                  value={meal.selected_appetizer_id}
+                                  onChange={(id) =>
+                                    updateMeal(dayIndex, "lunch", (m) => ({
+                                      ...m,
+                                      selected_appetizer_id: id,
+                                    }))
                                   }
-                                  className="min-h-[56px]"
-                                  placeholder={t("dishPlaceholder")}
+                                  optional
                                 />
-                              ))}
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant="outline"
-                                onClick={() => addDish(dayIndex, mealKey)}
-                              >
-                                {t("addDish")}
-                              </Button>
-                            </div>
+                                <DishSinglePicker
+                                  label={t("lunchMains")}
+                                  dishes={dishesByCategory.lunch_main}
+                                  value={meal.selected_main_id}
+                                  onChange={(id) =>
+                                    updateMeal(dayIndex, "lunch", (m) => ({
+                                      ...m,
+                                      selected_main_id: id,
+                                    }))
+                                  }
+                                  required
+                                />
+                              </>
+                            )}
+
+                            {mealKey === "dinner" && (
+                              <DishSinglePicker
+                                label={t("dinnerDish")}
+                                dishes={dishesByCategory.dinner}
+                                value={meal.selected_dish_id}
+                                onChange={(id) =>
+                                  updateMeal(dayIndex, "dinner", (m) => ({
+                                    ...m,
+                                    selected_dish_id: id,
+                                  }))
+                                }
+                                required
+                              />
+                            )}
+
+                            {childCount > 0 && meal.kidsMenuCount > 0 && (
+                              <DishSinglePicker
+                                label={t("kidsMenuDish")}
+                                dishes={dishesByCategory.kids}
+                                value={meal.selected_kids_dish_id}
+                                onChange={(id) =>
+                                  updateMeal(dayIndex, mealKey, (m) => ({
+                                    ...m,
+                                    selected_kids_dish_id: id,
+                                  }))
+                                }
+                                required
+                              />
+                            )}
                           </div>
                         );
                       })}
@@ -373,7 +480,7 @@ export function StepMenuSelection({
         onContinue={handleContinue}
         onSaveExit={handleSaveExit}
         continueDisabled={pending || !canContinue}
-        continueHint={!kidsConfigValid ? t("kidsMenuValidationHint") : undefined}
+        continueHint={continueHint}
         continueLoading={pending}
         saveExitLoading={pending}
       />

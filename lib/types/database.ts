@@ -31,6 +31,7 @@ export interface Trip {
   notes: string | null;
   global_meal_schedule?: Record<string, unknown>;
   bar_order?: Record<string, unknown>;
+  menu_order?: Record<string, unknown>;
 }
 
 export interface Menu {
@@ -68,6 +69,37 @@ export interface GuestPreferences {
   meal_schedule: Record<string, unknown>;
   bar_preferences: Record<string, unknown>;
   no_dietary_restrictions?: boolean;
+}
+
+export interface Ingredient {
+  id: string;
+  name: string;
+  unit: string;
+  cost_per_unit: number;
+  stock_category: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Dish {
+  id: string;
+  name: string;
+  description: string | null;
+  category: string;
+  image_url: string | null;
+  recipe_yield: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DishRecipeLine {
+  ingredient_id: string;
+  quantity_per_pax: number;
+  ingredient?: Ingredient | null;
+}
+
+export interface DishWithRecipe extends Dish {
+  recipe: DishRecipeLine[];
 }
 
 export interface TripStockLine {

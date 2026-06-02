@@ -11,6 +11,7 @@ import {
 } from "@/lib/validations/guest-wizard";
 import { calculateMealCostWithCrew } from "@/lib/pricing/calculate-trip-total";
 import { clampWizardStep, normalizeBarOrder } from "@/lib/trip/wizard";
+import { coerceToDateOnlyString } from "@/lib/trip/date-validation";
 import { genericStoredName } from "@/lib/guest/participant-names";
 
 export async function createTrip(locale: string) {
@@ -40,13 +41,16 @@ export async function updateTripDetails(input: unknown) {
   const parsed = tripDetailsSchema.parse(input);
   const supabase = await createClient();
 
+  const startDate: string | null = coerceToDateOnlyString(parsed.startDate);
+  const endDate: string | null = coerceToDateOnlyString(parsed.endDate);
+
   const { error } = await supabase
     .from("trips")
     .update({
       adult_count: parsed.adultCount,
       child_count: parsed.childCount,
-      start_date: parsed.startDate || null,
-      end_date: parsed.endDate || null,
+      start_date: startDate,
+      end_date: endDate,
       wizard_step: clampWizardStep(parsed.wizardStep ?? 1),
     })
     .eq("id", parsed.tripId);
@@ -68,22 +72,28 @@ export async function saveMenuSelection(input: unknown) {
   const parsed = menuSelectionSchema.parse(input);
   const supabase = await createClient();
 
+  const menuOrder = { itinerary: parsed.itinerary };
+
+  const { error: tripError } = await supabase
+    .from("trips")
+    .update({ menu_order: menuOrder, wizard_step: 2 })
+    .eq("id", parsed.tripId);
+
+  if (tripError) throw tripError;
+
   await supabase.from("trip_menu_selections").delete().eq("trip_id", parsed.tripId);
 
-  const { error } = await supabase.from("trip_menu_selections").insert({
+  const { error: selectionError } = await supabase.from("trip_menu_selections").insert({
     trip_id: parsed.tripId,
     menu_id: null,
     selection_type: parsed.selectionType,
-    custom_notes: JSON.stringify({
-      notes: parsed.customNotes ?? null,
-      itinerary: parsed.itinerary,
-    }),
+    custom_notes: JSON.stringify(menuOrder),
     quantity_adult: 1,
   });
 
-  if (error) throw error;
+  if (selectionError) throw selectionError;
 
-  await supabase.from("trips").update({ wizard_step: 2 }).eq("id", parsed.tripId);
+  revalidatePath(`/`, "layout");
   return { ok: true };
 }
 

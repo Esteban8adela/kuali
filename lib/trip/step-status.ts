@@ -2,10 +2,11 @@ import {
   isKidsMenuConfigValid,
   isMenuItineraryComplete,
   isMenuStepComplete,
-  parseMenuItinerary,
+  resolveMenuItinerary,
 } from "@/lib/guest/menu-itinerary";
 import { isPreferenceRecordComplete } from "@/lib/guest/preference-complete";
 import { isBarOrderSaved } from "@/lib/trip/bar-order";
+import { areTripDatesValid } from "@/lib/trip/date-validation";
 import { normalizeBarOrder } from "@/lib/trip/wizard";
 
 export type StepState = "none" | "partial" | "complete";
@@ -23,16 +24,8 @@ export interface StepStatus {
   step5Hint?: string;
 }
 
-export function areTripDatesValid(
-  startDate: string | null | undefined,
-  endDate: string | null | undefined
-): boolean {
-  if (!startDate || !endDate) return false;
-  return new Date(endDate).getTime() >= new Date(startDate).getTime();
-}
 
 const BAR_CONTENT_KEYS = [
-  "byob",
   "spirits",
   "wines",
   "beers",
@@ -67,6 +60,7 @@ interface TripForStepStatus {
   wizard_step: number;
   status: string;
   bar_order?: unknown;
+  menu_order?: unknown;
 }
 
 interface ParticipantRow {
@@ -127,8 +121,8 @@ export function computeTripStepStatus(
     }
   }
 
-  if (menuSelection) {
-    const itinerary = parseMenuItinerary(menuSelection.custom_notes);
+  if (menuSelection || trip.menu_order) {
+    const itinerary = resolveMenuItinerary(trip.menu_order, menuSelection?.custom_notes ?? null);
     if (itinerary.length > 0 && isMenuStepComplete(itinerary)) {
       stepStatus.step2 = "complete";
     } else {
@@ -140,6 +134,11 @@ export function computeTripStepStatus(
       ) {
         stepStatus.step2Hint =
           locale === "es" ? "Falta configurar menú infantil" : "Kids menu configuration missing";
+      } else if (itinerary.length > 0 && !isMenuItineraryComplete(itinerary)) {
+        stepStatus.step2Hint =
+          locale === "es"
+            ? "Falta desayuno, plato fuerte o cena en algún día"
+            : "Missing breakfast, lunch main, or dinner on some days";
       } else {
         stepStatus.step2Hint =
           locale === "es" ? "Faltan configurar comidas" : "Meals still need to be configured";

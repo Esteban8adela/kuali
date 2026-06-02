@@ -11,7 +11,7 @@ export async function fetchTripStepStatus(
 
   const { data: trip } = await supabase
     .from("trips")
-    .select("start_date, end_date, adult_count, child_count, wizard_step, status, bar_order")
+    .select("start_date, end_date, adult_count, child_count, wizard_step, status, bar_order, menu_order")
     .eq("id", tripId)
     .single();
 
