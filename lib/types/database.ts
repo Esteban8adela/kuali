@@ -67,6 +67,7 @@ export interface GuestPreferences {
   general_food_notes: string[];
   meal_schedule: Record<string, unknown>;
   bar_preferences: Record<string, unknown>;
+  no_dietary_restrictions?: boolean;
 }
 
 export interface TripStockLine {

@@ -6,6 +6,7 @@
     "back": "Back",
     "save": "Save",
     "saving": "Saving…",
+    "saveExit": "Save & exit",
     "saved": "Saved",
     "login": "Sign in",
     "logout": "Sign out",
@@ -19,24 +20,59 @@
   "auth": {
     "title": "Welcome aboard",
     "subtitle": "Sign in with your email and password to continue.",
+    "signUpTitle": "Create your account",
+    "signUpSubtitle": "Join us and start planning your voyage.",
+    "firstName": "First name(s)",
+    "lastName": "Last name(s)",
     "email": "Email address",
     "password": "Password",
     "signIn": "Sign in",
-    "signingIn": "Signing in…",
+    "signUp": "Create account",
+    "signingIn": "Please wait…",
+    "switchToSignUp": "Don't have an account? Sign up",
+    "switchToLogin": "Already have an account? Sign in",
+    "checkEmail": "Check your email to confirm your account.",
+    "signUpSuccess": "Registration successful. Please check your email to verify your account.",
     "errors": {
       "invalidCredentials": "Incorrect email or password. Please try again.",
       "emailNotConfirmed": "Please confirm your email before signing in.",
       "profileNotFound": "Your account profile could not be loaded. Contact support.",
+      "missingFields": "Please fill in all required fields.",
+      "weakPassword": "Password must be at least 6 characters.",
+      "alreadyExists": "An account with this email already exists.",
       "generic": "Something went wrong. Please try again."
     }
   },
   "guest": {
+    "dashboard": {
+      "title": "Your Voyage",
+      "subtitle": "Plan and manage your catamaran experience.",
+      "noTrip": "You don't have an active reservation yet.",
+      "newBooking": "Start a new booking",
+      "checklist": "Booking Checklist",
+      "continueBooking": "Continue booking",
+      "orderSummary": "Order Summary",
+      "dates": "Dates",
+      "guests": "Guests",
+      "adults": "adults",
+      "children": "children",
+      "menuLabel": "Menu",
+      "modify": "Modify order",
+      "steps": {
+        "dates": "Dates & passengers",
+        "menu": "Menu selection",
+        "preferences": "Dietary preferences",
+        "snacks": "Snacks",
+        "bar": "Bar & beverages"
+      }
+    },
     "wizard": {
       "steps": {
         "details": "Trip details",
         "menu": "Menu selection",
         "preferences": "Preferences",
-        "bar": "Bar & beverages"
+        "bar": "Bar & beverages",
+        "snacks": "Snacks"
       },
       "details": {
         "title": "Trip details",
@@ -53,12 +89,40 @@
         "adultLabel": "Adult {number}",
         "childLabel": "Child {number}",
         "namePlaceholder": "e.g. John Smith",
+        "guestNamePlaceholder": "Guest {number}",
+        "childNamePlaceholder": "Child {number}",
         "datesRequired": "Please select start and end dates to continue.",
+        "datesInvalidOrder": "Please select valid dates (start date must be before end date).",
         "adultsRequired": "At least one adult is required on board."
       },
       "menu": {
         "title": "Menu & pricing",
         "subtitle": "Choose your culinary journey. Every detail matters.",
+        "dayByDay": "Day-by-day itinerary, dish by dish.",
+        "noDates": "Select valid dates in step 1 to generate the itinerary.",
+        "dayLabel": "Day {number} — {date}",
+        "breakfast": "Breakfast",
+        "lunch": "Lunch",
+        "dinner": "Dinner",
+        "windows": {
+          "breakfast": "8:00 – 11:00",
+          "lunch": "13:00 – 16:00",
+          "dinner": "19:00 – 22:00"
+        },
+        "heaviness": "Heaviness / Abundance",
+        "heavinessPlaceholder": "Select…",
+        "heavinessOptions": {
+          "light": "Light",
+          "moderate": "Moderate",
+          "heavy": "Heavy"
+        },
+        "kidsMenuLabel": "How many kids menus for this meal?",
+        "kidsMenuConfig": "Kids menu configuration / requests",
+        "kidsMenuConfigPlaceholder": "Nuggets, hot dogs, allergies, etc.",
+        "kidsMenuValidationHint": "Please complete the kids menu configuration for every meal with kids menus requested.",
+        "dishes": "Dishes",
+        "dishPlaceholder": "Add a dish…",
+        "addDish": "Add dish",
         "filterSeason": "Seasonal menus only",
         "browseMenus": "Browse catalog",
         "tier1": "$ Fresh & Coastal Casual",
@@ -69,6 +133,7 @@
         "selected": "Selected",
         "surpriseNote": "Our chef will curate a surprise menu tailored to your party.",
         "customNote": "Tell us your vision — the chef will design a fully custom menu.",
+        "customPlaceholder": "Describe your ideal menu idea here…",
         "childPrice": "child",
         "offSeasonNote": "Note: Selecting menus outside the current season may incur additional costs for imported ingredients."
       },
@@ -81,14 +146,20 @@
         "noParticipants": "Complete trip details first to add guests.",
         "adultGuest": "Adult",
         "childGuest": "Child",
-        "allergies": "Allergies (non-negotiable)",
+        "noRestrictions": "No dietary restrictions",
+        "allergies": "Allergies and preferences",
         "allergiesOtherPlaceholder": "Specify other allergies…",
         "proteins": "Protein preferences",
+        "skipMeal": "Skip",
         "abundance": "Abundance / heaviness",
         "breakfast": "Breakfast (AM)",
         "lunch": "Lunch (PM)",
         "dinner": "Dinner (PM)",
-        "heaviness": { "light": "Light", "moderate": "Moderate", "heavy": "Heavy" },
+        "heaviness": {
+          "light": "Light",
+          "moderate": "Moderate",
+          "heavy": "Heavy"
+        },
         "allergyOptions": {
           "gluten": "Gluten",
           "dairy": "Dairy",
@@ -106,11 +177,32 @@
           "beef": "Beef",
           "poultry": "Poultry",
           "pork": "Pork"
+        },
+        "dietStyle": "Diet style",
+        "dietStylePlaceholder": "Select style",
+        "additionalComments": "Additional comments",
+        "additionalCommentsPlaceholder": "No very spicy, avoid onion...",
+        "validationHint": "Please select a restriction or 'No dietary restrictions' for all guests.",
+        "dietStyles": {
+          "vegan": "Vegan",
+          "vegetarian": "Vegetarian",
+          "pescatarian": "Pescatarian",
+          "omnivore": "Omnivore",
+          "keto": "Keto",
+          "other": "Other"
         }
       },
       "bar": {
         "title": "Bar & beverages",
         "subtitle": "Stock base is included — you are only charged for what is consumed.",
+        "stockBanner": "Help yourself freely from the onboard stock. Consumption will be tracked and billed at the end of your trip.",
+        "baseStockTitle": "Included onboard stock",
+        "baseStockWaters": "Natural and mineral water (Bonafont, Evian, Fiji, Topo Chico, Perrier, San Pellegrino).",
+        "baseStockSodas": "Regular and diet soft drinks (Coca Cola, Sprite, Fanta, Ginger Ale, Coca Light, Coca Zero, Sprite Zero).",
+        "specificRequestLabel": "Would you like any specific brand or beverage not on our list?",
+        "specificRequestPlaceholder": "e.g. Fanta, a specific tequila brand…",
+        "residualStockTitle": "Residual stock from previous trips",
+        "residualStockEmpty": "No residual stock registered at this time.",
         "noParticipants": "Add guests in step 1 first.",
         "waters": "Waters",
         "natural": "Natural",
@@ -124,7 +216,7 @@
         "whites": "Whites",
         "roses": "Rosés",
         "beerMixers": "Beers & mixers",
-        "beers": "Beer preferences",
+        "beers": "Beers",
         "mixers": "Mixers",
         "extras": "Additional options",
         "wineRegion": "Preferred region or grape",
@@ -135,14 +227,13 @@
         "chefRecommendation": "Chef's beverage recommendation",
         "houseByGlass": "House wine by the glass",
         "byob": "I will bring my own bottles",
+        "chefChoice": "Chef's choice",
+        "addWithoutBrand": "Add without brand",
         "chefDefaultHelp": "If quantity or brand is not specified, it will be left to the Chef's discretion.",
         "addBrand": "Add brand…",
         "addWine": "Add wine…",
         "addBeer": "Add beer…",
         "addMixer": "Add mixer…",
-        "beerMixers": "Beers & mixers",
-        "beers": "Beers",
-        "mixers": "Mixers",
         "spiritOptions": {
           "tequila": "Tequila",
           "rum": "Rum",
@@ -150,6 +241,25 @@
           "gin": "Gin",
           "mezcal": "Mezcal",
           "whiskey": "Whiskey"
+        }
+      },
+      "snacks": {
+        "title": "Snacks & complements",
+        "subtitle": "Select what to buy and what should always be onboard.",
+        "snacksToBuy": "Snacks to buy",
+        "alwaysOnboard": "Always onboard checklist",
+        "crudites": "Add cheese & cold cuts boards (crudites)?",
+        "items": {
+          "chips": "Chips",
+          "maruchan": "Instant noodles",
+          "mango_snacks": "Mango snacks",
+          "candies": "Candies"
+        },
+        "alwaysItems": {
+          "pico_de_gallo": "Pico de gallo",
+          "salsas": "Salsas",
+          "cacahuates": "Peanuts",
+          "fruit": "Fruit"
         }
       }
     }

@@ -1,12 +1,10 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useCallback, useMemo, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -18,10 +16,13 @@ import {
 } from "@/components/ui/select";
 import {
   saveAllGuestPreferences,
-  saveGlobalMealSchedule,
   advanceWizardStep,
+  saveDraftAndExit,
 } from "@/app/[locale]/(guest)/guest/trip/actions";
 import { WizardNav } from "@/components/guest/wizard-nav";
+import { RequiredMark } from "@/components/ui/required-mark";
+import { useWizardAutosave } from "@/hooks/use-wizard-autosave";
+import { resolveParticipantDisplayName } from "@/lib/guest/participant-names";
 import {
   ALLERGY_OPTIONS,
   buildPreferenceState,
@@ -29,12 +30,9 @@ import {
   type AllergyOption,
   type ParticipantPreferenceForm,
 } from "@/lib/guest/preference-state";
-import type { GlobalMealSchedule } from "@/lib/catalog/types";
 import type { TripParticipant, GuestPreferences } from "@/lib/types/database";
 
-const PROTEINS = ["white_fish", "tuna", "seafood", "beef", "poultry", "pork"];
-const MEALS = ["breakfast", "lunch", "dinner"] as const;
-const HEAVINESS = ["light", "moderate", "heavy"] as const;
+const DIET_STYLES = ["vegan", "vegetarian", "pescatarian", "omnivore", "keto", "other"];
 
 interface ParticipantWithPrefs extends TripParticipant {
   guest_preferences: GuestPreferences | null;
@@ -43,14 +41,19 @@ interface ParticipantWithPrefs extends TripParticipant {
 interface StepPreferencesProps {
   tripId: string;
   participants: ParticipantWithPrefs[];
-  initialGlobalSchedule?: GlobalMealSchedule;
   locale: string;
+}
+
+function isParticipantComplete(data: ParticipantPreferenceForm): boolean {
+  if (data.noRestrictions) return true;
+  if (data.allergies.length > 0) return true;
+  if (data.dietStyle) return true;
+  return false;
 }
 
 export function StepPreferences({
   tripId,
   participants,
-  initialGlobalSchedule = {},
   locale,
 }: StepPreferencesProps) {
   const t = useTranslations("guest.wizard.preferences");
@@ -70,10 +73,6 @@ export function StepPreferences({
   const [byParticipant, setByParticipant] =
     useState<Record<string, ParticipantPreferenceForm>>(initialState);
 
-  const [globalMealSchedule, setGlobalMealSchedule] = useState<GlobalMealSchedule>(
-    initialGlobalSchedule ?? {}
-  );
-
   function updateParticipant(
     id: string,
     updater: (prev: ParticipantPreferenceForm) => ParticipantPreferenceForm
@@ -84,42 +83,65 @@ export function StepPreferences({
     }));
   }
 
+  function toggleNoRestrictions(participantId: string) {
+    updateParticipant(participantId, (p) => {
+      const next = !p.noRestrictions;
+      return {
+        ...p,
+        noRestrictions: next,
+        allergies: next ? [] : p.allergies,
+        allergiesOther: next ? "" : p.allergiesOther,
+      };
+    });
+  }
+
   function toggleAllergy(participantId: string, allergy: AllergyOption) {
     updateParticipant(participantId, (p) => ({
       ...p,
+      noRestrictions: false,
       allergies: p.allergies.includes(allergy)
         ? p.allergies.filter((a) => a !== allergy)
         : [...p.allergies, allergy],
     }));
   }
 
-  function toggleProtein(participantId: string, protein: string) {
-    updateParticipant(participantId, (p) => ({
-      ...p,
-      proteinPreferences: p.proteinPreferences.includes(protein)
-        ? p.proteinPreferences.filter((x) => x !== protein)
-        : [...p.proteinPreferences, protein],
-    }));
-  }
+  const savePrefsPayloads = useCallback(async () => {
+    const payloads = participants.map((p) => {
+      const data = byParticipant[p.id] ?? emptyPreferenceState();
+      return {
+        participantId: p.id,
+        noDietaryRestrictions: data.noRestrictions,
+        allergies: data.noRestrictions ? [] : data.allergies.filter((a) => a !== "other"),
+        allergiesOther: (!data.noRestrictions && data.allergies.includes("other")) ? data.allergiesOther : "",
+        dietaryRestrictions: data.dietStyle ? [data.dietStyle] : [],
+        proteinPreferences: [],
+        generalFoodNotes: data.additionalComments ? [data.additionalComments] : [],
+      };
+    });
+    await saveAllGuestPreferences(payloads);
+  }, [participants, byParticipant]);
+
+  useWizardAutosave(savePrefsPayloads, [byParticipant]);
 
   function handleContinue() {
     startTransition(async () => {
-      const payloads = participants.map((p) => {
-        const data = byParticipant[p.id] ?? emptyPreferenceState();
-        return {
-          participantId: p.id,
-          allergies: data.allergies.filter((a) => a !== "other"),
-          allergiesOther: data.allergies.includes("other") ? data.allergiesOther : "",
-          dietaryRestrictions: [],
-          proteinPreferences: data.proteinPreferences,
-        };
-      });
-      await saveAllGuestPreferences(payloads);
-      await saveGlobalMealSchedule({ tripId, mealSchedule: globalMealSchedule });
+      await savePrefsPayloads();
       await advanceWizardStep(tripId, 4);
-      router.push(`/${locale}/guest/trip/${tripId}/bar`);
+      router.push(`/${locale}/guest/trip/${tripId}/snacks`);
     });
   }
+
+  function handleSaveExit() {
+    startTransition(async () => {
+      await savePrefsPayloads();
+      await saveDraftAndExit(tripId);
+      router.push(`/${locale}/guest/dashboard`);
+    });
+  }
+
+  const allParticipantsComplete = participants.every((p) =>
+    isParticipantComplete(byParticipant[p.id] ?? emptyPreferenceState())
+  );
 
   if (!participants.length) {
     return (
@@ -135,55 +157,6 @@ export function StepPreferences({
     <div className="mx-auto max-w-6xl space-y-6">
       <Card className="glass-card border-0">
         <CardHeader>
-          <CardTitle>{t("globalMealsTitle")}</CardTitle>
-          <CardDescription>{t("globalMealsHint")}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 rounded-xl border border-[#1B3A4B]/15 bg-[#1B3A4B]/5 p-4 md:grid-cols-3">
-            {MEALS.map((meal) => (
-              <div key={meal} className="space-y-2">
-                <Label className="font-medium text-[#1B3A4B]">{t(meal)}</Label>
-                <Input
-                  type="time"
-                  value={globalMealSchedule[meal]?.time ?? ""}
-                  onChange={(e) =>
-                    setGlobalMealSchedule((s) => ({
-                      ...s,
-                      [meal]: { ...s[meal], time: e.target.value },
-                    }))
-                  }
-                />
-                <div>
-                  <Label className="text-xs text-neutral-500">{t("abundance")}</Label>
-                  <Select
-                    value={globalMealSchedule[meal]?.heaviness ?? ""}
-                    onValueChange={(v) =>
-                      setGlobalMealSchedule((s) => ({
-                        ...s,
-                        [meal]: { ...s[meal], heaviness: v },
-                      }))
-                    }
-                  >
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder={t("abundancePlaceholder")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {HEAVINESS.map((h) => (
-                        <SelectItem key={h} value={h}>
-                          {t(`heaviness.${h}`)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="glass-card border-0">
-        <CardHeader>
           <CardTitle>{t("title")}</CardTitle>
           <CardDescription>{t("subtitle")}</CardDescription>
         </CardHeader>
@@ -192,15 +165,28 @@ export function StepPreferences({
             {participants.map((p) => {
               const data = byParticipant[p.id] ?? emptyPreferenceState();
               const hasAllergies = data.allergies.length > 0;
+              const isComplete = isParticipantComplete(data);
+              const guestNumber =
+                p.participant_type === "child"
+                  ? participants.filter((x) => x.participant_type === "child").indexOf(p) + 1
+                  : participants.filter((x) => x.participant_type === "adult").indexOf(p) + 1;
+              const displayName = resolveParticipantDisplayName(
+                p.display_name,
+                p.participant_type,
+                guestNumber,
+                locale
+              );
 
               return (
                 <Card
                   key={p.id}
-                  className="flex h-full min-h-[320px] flex-col border border-[#C4A052]/25 bg-white shadow-sm"
+                  className={`flex h-full min-h-[320px] flex-col border bg-white shadow-sm ${
+                    isComplete ? "border-[#C4A052]/25" : "border-amber-300"
+                  }`}
                 >
                   <CardHeader className="border-b border-[#1B3A4B]/10 bg-[#1B3A4B]/5 pb-3">
                     <CardTitle className="font-display text-xl text-[#1B3A4B]">
-                      {p.display_name}
+                      {displayName}
                     </CardTitle>
                     <CardDescription className="capitalize text-neutral-500">
                       {p.participant_type === "child" ? t("childGuest") : t("adultGuest")}
@@ -215,9 +201,18 @@ export function StepPreferences({
                       }
                     >
                       <Label className={hasAllergies ? "text-red-700" : "text-[#1B3A4B]"}>
-                        {t("allergies")}
+                        {t("allergies")} <RequiredMark />
                       </Label>
-                      <div className="mt-2 grid grid-cols-2 gap-2">
+
+                      <label className="mt-2 flex cursor-pointer items-center gap-2 rounded-md bg-green-50 px-2 py-1.5 text-xs font-medium text-green-700">
+                        <Checkbox
+                          checked={data.noRestrictions}
+                          onCheckedChange={() => toggleNoRestrictions(p.id)}
+                        />
+                        <span>{t("noRestrictions")}</span>
+                      </label>
+
+                      <div className={`mt-2 grid grid-cols-2 gap-2 ${data.noRestrictions ? "pointer-events-none opacity-40" : ""}`}>
                         {ALLERGY_OPTIONS.map((key) => (
                           <label
                             key={key}
@@ -226,12 +221,13 @@ export function StepPreferences({
                             <Checkbox
                               checked={data.allergies.includes(key)}
                               onCheckedChange={() => toggleAllergy(p.id, key)}
+                              disabled={data.noRestrictions}
                             />
                             <span>{t(`allergyOptions.${key}`)}</span>
                           </label>
                         ))}
                       </div>
-                      {data.allergies.includes("other") && (
+                      {data.allergies.includes("other") && !data.noRestrictions && (
                         <Textarea
                           className="mt-2 min-h-[60px] text-sm"
                           placeholder={t("allergiesOtherPlaceholder")}
@@ -247,23 +243,38 @@ export function StepPreferences({
                     </div>
 
                     <div>
-                      <Label>{t("proteins")}</Label>
-                      <div className="mt-2 flex flex-wrap gap-1.5">
-                        {PROTEINS.map((protein) => (
-                          <Button
-                            key={protein}
-                            type="button"
-                            size="sm"
-                            variant={
-                              data.proteinPreferences.includes(protein) ? "gold" : "outline"
-                            }
-                            className="h-7 text-xs"
-                            onClick={() => toggleProtein(p.id, protein)}
-                          >
-                            {t(`proteinOptions.${protein}`)}
-                          </Button>
-                        ))}
-                      </div>
+                      <Label>{t("dietStyle")}</Label>
+                      <Select
+                        value={data.dietStyle}
+                        onValueChange={(v) =>
+                          updateParticipant(p.id, (prev) => ({ ...prev, dietStyle: v }))
+                        }
+                      >
+                        <SelectTrigger className="mt-2">
+                          <SelectValue placeholder={t("dietStylePlaceholder")} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {DIET_STYLES.map((style) => (
+                            <SelectItem key={style} value={style}>
+                              {t(`dietStyles.${style}`)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>{t("additionalComments")}</Label>
+                      <Textarea
+                        className="mt-2 min-h-[70px]"
+                        placeholder={t("additionalCommentsPlaceholder")}
+                        value={data.additionalComments}
+                        onChange={(e) =>
+                          updateParticipant(p.id, (prev) => ({
+                            ...prev,
+                            additionalComments: e.target.value,
+                          }))
+                        }
+                      />
                     </div>
                   </CardContent>
                 </Card>
@@ -276,8 +287,11 @@ export function StepPreferences({
       <WizardNav
         backHref={`/${locale}/guest/trip/${tripId}/menu`}
         onContinue={handleContinue}
-        continueDisabled={pending}
+        onSaveExit={handleSaveExit}
+        continueDisabled={pending || !allParticipantsComplete}
+        continueHint={!allParticipantsComplete ? t("validationHint") : undefined}
         continueLoading={pending}
+        saveExitLoading={pending}
       />
     </div>
   );

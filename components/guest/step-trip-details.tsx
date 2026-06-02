@@ -9,8 +9,11 @@ import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { getCrewCount } from "@/lib/pricing/crew";
-import { updateTripDetails } from "@/app/[locale]/(guest)/guest/trip/actions";
+import { updateTripDetails, saveDraftAndExit } from "@/app/[locale]/(guest)/guest/trip/actions";
 import { WizardNav } from "@/components/guest/wizard-nav";
+import { RequiredMark } from "@/components/ui/required-mark";
+import { isUnsetGuestName } from "@/lib/guest/participant-names";
+import { registerWizardDraftSave } from "@/lib/wizard/draft-registry";
 import type { Trip, TripParticipant } from "@/lib/types/database";
 
 interface StepTripDetailsProps {
@@ -19,16 +22,10 @@ interface StepTripDetailsProps {
   locale: string;
 }
 
-function isGenericName(name: string | undefined, prefix: string) {
-  if (!name) return true;
-  return new RegExp(`^${prefix} \\d+$`).test(name);
-}
-
 function initEmptyNames(
   count: number,
   existing: TripParticipant[],
-  type: "adult" | "child",
-  prefix: string
+  type: "adult" | "child"
 ): string[] {
   const fromDb = existing
     .filter((p) => p.participant_type === type)
@@ -37,8 +34,16 @@ function initEmptyNames(
 
   return Array.from({ length: count }, (_, i) => {
     const n = fromDb[i];
-    return n && !isGenericName(n, prefix) ? n : "";
+    return n && !isUnsetGuestName(n) ? n : "";
   });
+}
+
+function todayDateString(): string {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
 
 export function StepTripDetails({ trip, participants, locale }: StepTripDetailsProps) {
@@ -53,15 +58,24 @@ export function StepTripDetails({ trip, participants, locale }: StepTripDetailsP
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
 
   const [adultNames, setAdultNames] = useState<string[]>(() =>
-    initEmptyNames(trip.adult_count, participants, "adult", "Guest")
+    initEmptyNames(trip.adult_count, participants, "adult")
   );
   const [childNames, setChildNames] = useState<string[]>(() =>
-    initEmptyNames(trip.child_count, participants, "child", "Child")
+    initEmptyNames(trip.child_count, participants, "child")
   );
+
+  const minDate = useMemo(() => todayDateString(), []);
 
   const crewCount = getCrewCount(adults, children);
   const totalGuests = adults + children;
-  const datesValid = Boolean(startDate && endDate);
+  const datesInOrder =
+    !startDate ||
+    !endDate ||
+    new Date(endDate).getTime() >= new Date(startDate).getTime();
+  const hasBothDates = Boolean(startDate && endDate);
+  const datesInvalidOrder =
+    hasBothDates && new Date(endDate).getTime() < new Date(startDate).getTime();
+  const datesValid = hasBothDates && datesInOrder;
   const adultsValid = adults >= 1;
 
   useEffect(() => {
@@ -80,17 +94,10 @@ export function StepTripDetails({ trip, participants, locale }: StepTripDetailsP
     });
   }, [children]);
 
-  const namesValid = useMemo(
-    () =>
-      adultNames.every((n) => n.trim().length > 0) &&
-      childNames.every((n) => n.trim().length > 0),
-    [adultNames, childNames]
-  );
-
-  const canContinue = datesValid && adultsValid && namesValid && totalGuests >= 1;
+  const canContinue = datesValid && adultsValid && totalGuests >= 1;
 
   const persist = useCallback(async () => {
-    if (!datesValid || !adultsValid) return;
+    if (!adultsValid) return;
     setSaveStatus("saving");
     try {
       await updateTripDetails({
@@ -108,17 +115,22 @@ export function StepTripDetails({ trip, participants, locale }: StepTripDetailsP
     } catch {
       setSaveStatus("idle");
     }
-  }, [trip.id, adults, children, startDate, endDate, adultNames, childNames, datesValid, adultsValid]);
+  }, [trip.id, adults, children, startDate, endDate, adultNames, childNames, adultsValid]);
 
   useEffect(() => {
-    if (!datesValid || !adultsValid) return;
+    if (!adultsValid) return;
     const timer = setTimeout(() => {
       startTransition(() => {
         void persist();
       });
     }, 800);
     return () => clearTimeout(timer);
-  }, [adults, children, startDate, endDate, adultNames, childNames, persist, datesValid, adultsValid]);
+  }, [adults, children, startDate, endDate, adultNames, childNames, persist, adultsValid]);
+
+  useEffect(() => {
+    if (!adultsValid) return;
+    return registerWizardDraftSave(persist);
+  }, [persist, adultsValid]);
 
   function handleContinue() {
     startTransition(async () => {
@@ -136,6 +148,14 @@ export function StepTripDetails({ trip, participants, locale }: StepTripDetailsP
     });
   }
 
+  function handleSaveExit() {
+    startTransition(async () => {
+      await persist();
+      await saveDraftAndExit(trip.id);
+      router.push(`/${locale}/guest/dashboard`);
+    });
+  }
+
   const statusText =
     saveStatus === "saving" ? tc("saving") : saveStatus === "saved" ? tc("saved") : undefined;
 
@@ -149,7 +169,9 @@ export function StepTripDetails({ trip, participants, locale }: StepTripDetailsP
         <div className="space-y-6">
           <div>
             <div className="mb-3 flex items-center justify-between">
-              <Label>{t("adults")}</Label>
+              <Label>
+                {t("adults")} <RequiredMark />
+              </Label>
               <span className="font-display text-2xl text-[#1B3A4B]">{adults}</span>
             </div>
             <Slider value={[adults]} onValueChange={([v]) => setAdults(v)} min={0} max={20} step={1} />
@@ -169,7 +191,9 @@ export function StepTripDetails({ trip, participants, locale }: StepTripDetailsP
 
         {adults > 0 && (
           <div className="space-y-3 rounded-xl border border-[#C4A052]/20 bg-white/50 p-4">
-            <h3 className="font-display text-lg text-[#1B3A4B]">{t("adultNames")}</h3>
+            <h3 className="font-display text-lg text-[#1B3A4B]">
+              {t("adultNames")} <RequiredMark />
+            </h3>
             <div className="grid gap-3 sm:grid-cols-2">
               {adultNames.map((_, i) => (
                 <div key={`adult-${i}`}>
@@ -184,7 +208,7 @@ export function StepTripDetails({ trip, participants, locale }: StepTripDetailsP
                       next[i] = e.target.value;
                       setAdultNames(next);
                     }}
-                    placeholder={t("namePlaceholder")}
+                    placeholder={t("guestNamePlaceholder", { number: i + 1 })}
                   />
                 </div>
               ))}
@@ -194,7 +218,9 @@ export function StepTripDetails({ trip, participants, locale }: StepTripDetailsP
 
         {children > 0 && (
           <div className="space-y-3 rounded-xl border border-[#C4A052]/20 bg-white/50 p-4">
-            <h3 className="font-display text-lg text-[#1B3A4B]">{t("childNames")}</h3>
+            <h3 className="font-display text-lg text-[#1B3A4B]">
+              {t("childNames")} <RequiredMark />
+            </h3>
             <div className="grid gap-3 sm:grid-cols-2">
               {childNames.map((_, i) => (
                 <div key={`child-${i}`}>
@@ -209,7 +235,7 @@ export function StepTripDetails({ trip, participants, locale }: StepTripDetailsP
                       next[i] = e.target.value;
                       setChildNames(next);
                     }}
-                    placeholder={t("namePlaceholder")}
+                    placeholder={t("childNamePlaceholder", { number: i + 1 })}
                   />
                 </div>
               ))}
@@ -224,20 +250,26 @@ export function StepTripDetails({ trip, participants, locale }: StepTripDetailsP
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <Label htmlFor="start">{t("startDate")}</Label>
+            <Label htmlFor="start">
+              {t("startDate")} <RequiredMark />
+            </Label>
             <Input
               id="start"
               type="date"
+              min={minDate}
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
               className="mt-2"
             />
           </div>
           <div>
-            <Label htmlFor="end">{t("endDate")}</Label>
+            <Label htmlFor="end">
+              {t("endDate")} <RequiredMark />
+            </Label>
             <Input
               id="end"
               type="date"
+              min={startDate && startDate >= minDate ? startDate : minDate}
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
               className="mt-2"
@@ -245,13 +277,17 @@ export function StepTripDetails({ trip, participants, locale }: StepTripDetailsP
           </div>
         </div>
         {!datesValid && (
-          <p className="text-center text-sm text-amber-800">{t("datesRequired")}</p>
+          <p className="text-center text-sm text-amber-800">
+            {datesInvalidOrder ? t("datesInvalidOrder") : t("datesRequired")}
+          </p>
         )}
 
         <WizardNav
           onContinue={handleContinue}
+          onSaveExit={handleSaveExit}
           continueDisabled={pending || !canContinue}
           continueLoading={pending}
+          saveExitLoading={pending}
           statusText={statusText}
         />
       </CardContent>

@@ -14,9 +14,11 @@ export const ALLERGY_OPTIONS = [
 export type AllergyOption = (typeof ALLERGY_OPTIONS)[number];
 
 export interface ParticipantPreferenceForm {
+  noRestrictions: boolean;
   allergies: AllergyOption[];
   allergiesOther: string;
-  proteinPreferences: string[];
+  dietStyle: string;
+  additionalComments: string;
 }
 
 export function parseAllergiesFromDb(raw: string[]): {
@@ -43,16 +45,20 @@ export function buildPreferenceState(
 ): ParticipantPreferenceForm {
   const { allergies, allergiesOther } = parseAllergiesFromDb(prefs?.allergies ?? []);
   return {
+    noRestrictions: Boolean(prefs?.no_dietary_restrictions),
     allergies,
     allergiesOther,
-    proteinPreferences: prefs?.protein_preferences ?? [],
+    dietStyle: prefs?.dietary_restrictions?.[0] ?? "",
+    additionalComments: prefs?.general_food_notes?.[0] ?? "",
   };
 }
 
 export function emptyPreferenceState(): ParticipantPreferenceForm {
   return {
+    noRestrictions: false,
     allergies: [],
     allergiesOther: "",
-    proteinPreferences: [],
+    dietStyle: "",
+    additionalComments: "",
   };
 }

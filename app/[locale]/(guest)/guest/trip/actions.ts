@@ -9,6 +9,9 @@ import {
   globalMealScheduleSchema,
   finalizeTripSchema,
 } from "@/lib/validations/guest-wizard";
+import { calculateMealCostWithCrew } from "@/lib/pricing/calculate-trip-total";
+import { clampWizardStep, normalizeBarOrder } from "@/lib/trip/wizard";
+import { genericStoredName } from "@/lib/guest/participant-names";
 
 export async function createTrip(locale: string) {
   const supabase = await createClient();
@@ -44,7 +47,7 @@ export async function updateTripDetails(input: unknown) {
       child_count: parsed.childCount,
       start_date: parsed.startDate || null,
       end_date: parsed.endDate || null,
-      wizard_step: parsed.wizardStep ?? 1,
+      wizard_step: clampWizardStep(parsed.wizardStep ?? 1),
     })
     .eq("id", parsed.tripId);
 
@@ -69,9 +72,12 @@ export async function saveMenuSelection(input: unknown) {
 
   const { error } = await supabase.from("trip_menu_selections").insert({
     trip_id: parsed.tripId,
-    menu_id: parsed.menuId,
+    menu_id: null,
     selection_type: parsed.selectionType,
-    custom_notes: parsed.customNotes,
+    custom_notes: JSON.stringify({
+      notes: parsed.customNotes ?? null,
+      itinerary: parsed.itinerary,
+    }),
     quantity_adult: 1,
   });
 
@@ -98,12 +104,12 @@ export async function syncTripParticipants(
   const slots: { type: "adult" | "child"; name: string; index: number }[] = [
     ...Array.from({ length: adults }, (_, i) => ({
       type: "adult" as const,
-      name: names?.adultNames[i]?.trim() || `Guest ${i + 1}`,
+      name: names?.adultNames[i]?.trim() || genericStoredName("adult", i + 1),
       index: i,
     })),
     ...Array.from({ length: children }, (_, i) => ({
       type: "child" as const,
-      name: names?.childNames[i]?.trim() || `Child ${i + 1}`,
+      name: names?.childNames[i]?.trim() || genericStoredName("child", i + 1),
       index: adults + i,
     })),
   ];
@@ -154,13 +160,15 @@ export async function saveGuestPreferences(input: unknown) {
 
   const { error } = await supabase
     .from("guest_preferences")
-    .update({
+    .upsert({
+      participant_id: parsed.participantId,
+      no_dietary_restrictions: parsed.noDietaryRestrictions,
       allergies: allergyList,
       dietary_restrictions: parsed.dietaryRestrictions,
       protein_preferences: parsed.proteinPreferences,
+      general_food_notes: parsed.generalFoodNotes ?? [],
       dairy_preferences: parsed.dairyPreferences ?? [],
-    })
-    .eq("participant_id", parsed.participantId);
+    }, { onConflict: "participant_id" });
 
   if (error) throw error;
   return { ok: true };
@@ -189,17 +197,97 @@ export async function saveGlobalMealSchedule(input: unknown) {
   return { ok: true };
 }
 
-/** Persists full bar order on `trips.bar_order` and marks trip submitted */
-export async function finalizeTripBooking(input: unknown) {
-  const parsed = finalizeTripSchema.parse(input);
+export async function saveSnacksStep(input: {
+  tripId: string;
+  snacks: string[];
+  alwaysOnboard: string[];
+  crudites: boolean;
+}) {
   const supabase = await createClient();
+  const { data: trip } = await supabase
+    .from("trips")
+    .select("bar_order")
+    .eq("id", input.tripId)
+    .single();
+
+  const nextBar = {
+    ...normalizeBarOrder(trip?.bar_order),
+    snacks: {
+      snacks: input.snacks,
+      alwaysOnboard: input.alwaysOnboard,
+      crudites: input.crudites,
+    },
+  };
+
+  const { error } = await supabase
+    .from("trips")
+    .update({ bar_order: nextBar, wizard_step: clampWizardStep(4) })
+    .eq("id", input.tripId);
+
+  if (error) throw error;
+  return { ok: true };
+}
+
+export async function saveBarStep(input: {
+  tripId: string;
+  barOrder: Record<string, unknown>;
+}) {
+  const supabase = await createClient();
+  const { data: trip } = await supabase
+    .from("trips")
+    .select("bar_order")
+    .eq("id", input.tripId)
+    .single();
+
+  const mergedBarOrder = {
+    ...normalizeBarOrder(trip?.bar_order),
+    ...normalizeBarOrder(input.barOrder),
+    bar_saved: true,
+  };
 
   const { error } = await supabase
     .from("trips")
     .update({
-      bar_order: parsed.barOrder,
+      bar_order: mergedBarOrder,
+      wizard_step: clampWizardStep(5),
+    })
+    .eq("id", input.tripId);
+
+  if (error) throw error;
+  revalidatePath(`/`, "layout");
+  return { ok: true };
+}
+
+/** Persists full bar order on `trips.bar_order` and marks trip submitted */
+export async function finalizeTripBooking(input: unknown) {
+  const parsed = finalizeTripSchema.parse(input);
+  const supabase = await createClient();
+  const { data: trip } = await supabase
+    .from("trips")
+    .select("adult_count, child_count, bar_order")
+    .eq("id", parsed.tripId)
+    .single();
+
+  const mergedBarOrder = {
+    ...normalizeBarOrder(trip?.bar_order),
+    ...normalizeBarOrder(parsed.barOrder),
+    bar_saved: true,
+  };
+
+  const dishLines = Object.keys(mergedBarOrder).length;
+  const estimatedTotalCents = calculateMealCostWithCrew({
+    adults: trip?.adult_count ?? 0,
+    children: trip?.child_count ?? 0,
+    perPlateCostCents: Math.max(0, dishLines) * 100,
+  });
+
+  const { error } = await supabase
+    .from("trips")
+    .update({
+      bar_order: mergedBarOrder,
       status: "submitted",
-      wizard_step: 4,
+      wizard_step: clampWizardStep(5),
+      estimated_total_cents: estimatedTotalCents,
     })
     .eq("id", parsed.tripId);
 
@@ -210,6 +298,20 @@ export async function finalizeTripBooking(input: unknown) {
 
 export async function advanceWizardStep(tripId: string, step: number) {
   const supabase = await createClient();
-  await supabase.from("trips").update({ wizard_step: step }).eq("id", tripId);
+  const { error } = await supabase
+    .from("trips")
+    .update({ wizard_step: clampWizardStep(step) })
+    .eq("id", tripId);
+  if (error) throw error;
+  return { ok: true };
+}
+
+export async function saveDraftAndExit(tripId: string) {
+  const supabase = await createClient();
+  await supabase
+    .from("trips")
+    .update({ status: "draft" })
+    .eq("id", tripId);
+  revalidatePath(`/`, "layout");
   return { ok: true };
 }

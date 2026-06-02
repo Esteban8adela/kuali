@@ -1,6 +1,7 @@
 "use client";
 
 import { useId } from "react";
+import { useTranslations } from "next-intl";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,7 @@ export function CatalogMultiPicker({
   addLabel,
 }: CatalogMultiPickerProps) {
   const selectId = useId();
+  const t = useTranslations("guest.wizard.bar");
   const available = items.filter(
     (item) => !selections.some((s) => s.catalogItemId === item.id)
   );
@@ -70,11 +72,13 @@ export function CatalogMultiPicker({
       <Label className="text-base font-medium text-[#1B3A4B]">{title}</Label>
       {selections.map((sel, index) => (
         <div
-          key={`${sel.catalogItemId}-${index}`}
+          key={`${sel.catalogItemId ?? "blank"}-${index}`}
           className="flex flex-wrap items-center gap-2 rounded-lg border border-[#C4A052]/25 bg-white p-3"
         >
           <span className="min-w-[120px] flex-1 text-sm font-medium text-[#1B3A4B]">
-            {sel.label}
+            {sel.label || (
+              <span className="italic text-amber-600">{t("chefChoice")}</span>
+            )}
           </span>
           <div className="flex items-center gap-2">
             <Label className="text-xs text-neutral-500">Qty</Label>
@@ -92,8 +96,9 @@ export function CatalogMultiPicker({
           </Button>
         </div>
       ))}
-      {available.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2">
+
+      <div className="flex flex-wrap items-center gap-2">
+        {available.length > 0 && (
           <Select onValueChange={addItem}>
             <SelectTrigger className="max-w-xs" id={selectId}>
               <SelectValue placeholder={addLabel} />
@@ -106,8 +111,8 @@ export function CatalogMultiPicker({
               ))}
             </SelectContent>
           </Select>
-        </div>
-      )}
+        )}
+      </div>
       <p className="text-xs text-neutral-500">{helpText}</p>
     </div>
   );

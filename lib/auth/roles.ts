@@ -22,6 +22,6 @@ export function roleHomePath(role: UserRole, locale: string): string {
     case "admin":
       return `/${locale}/admin/dashboard`;
     default:
-      return `/${locale}/guest/trip/new`;
+      return `/${locale}/guest/dashboard`;
   }
 }

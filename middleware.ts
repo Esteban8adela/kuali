@@ -38,28 +38,39 @@ export async function middleware(request: NextRequest) {
   const { supabaseResponse, user, supabase } = await updateSession(request);
 
   if (user) {
-    const role = await resolveUserRole(supabase, user);
-    const home = roleHomePath(role, locale);
-
-    if (isRoot || path === "/login") {
-      const url = request.nextUrl.clone();
-      url.pathname = home;
-      const redirect = NextResponse.redirect(url);
-      supabaseResponse.cookies.getAll().forEach((c) => redirect.cookies.set(c.name, c.value));
-      return redirect;
+    if (isPublic || isRoot) {
+      try {
+        const role = await resolveUserRole(supabase, user);
+        const home = roleHomePath(role, locale);
+        const url = request.nextUrl.clone();
+        url.pathname = home;
+        const redirect = NextResponse.redirect(url);
+        supabaseResponse.cookies.getAll().forEach((c) => redirect.cookies.set(c.name, c.value));
+        return redirect;
+      } catch {
+        // If role resolution fails, let them through to avoid loop
+      }
     }
 
     const section = isRoleSection(path);
-    if (section && !roleAllowedInSection(role, section)) {
-      const url = request.nextUrl.clone();
-      url.pathname = home;
-      const redirect = NextResponse.redirect(url);
-      supabaseResponse.cookies.getAll().forEach((c) => redirect.cookies.set(c.name, c.value));
-      return redirect;
+    if (section) {
+      try {
+        const role = await resolveUserRole(supabase, user);
+        if (!roleAllowedInSection(role, section)) {
+          const home = roleHomePath(role, locale);
+          const url = request.nextUrl.clone();
+          url.pathname = home;
+          const redirect = NextResponse.redirect(url);
+          supabaseResponse.cookies.getAll().forEach((c) => redirect.cookies.set(c.name, c.value));
+          return redirect;
+        }
+      } catch {
+        // Fallback: allow access
+      }
     }
   } else if (!isPublic && !isRoot) {
     const section = isRoleSection(path);
-    if (section === "guest" || section === "chef" || section === "admin") {
+    if (section) {
       const url = request.nextUrl.clone();
       url.pathname = `/${locale}/login`;
       const redirect = NextResponse.redirect(url);

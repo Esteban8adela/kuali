@@ -2,9 +2,11 @@ import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
 import { WizardProgress } from "@/components/guest/wizard-progress";
-import { StepPreferences } from "@/components/guest/step-preferences";
+import { StepSnacks } from "@/components/guest/step-snacks";
 import { fetchTripStepStatus } from "@/lib/trip/fetch-trip-step-status";
-export default async function TripPreferencesPage({
+import { normalizeBarOrder } from "@/lib/trip/wizard";
+
+export default async function TripSnacksPage({
   params,
 }: {
   params: Promise<{ locale: string; tripId: string }>;
@@ -15,29 +17,22 @@ export default async function TripPreferencesPage({
   const supabase = await createClient();
   const { data: trip } = await supabase
     .from("trips")
-    .select("id")
+    .select("id, bar_order")
     .eq("id", tripId)
     .single();
   if (!trip) notFound();
 
-  const { data: participants } = await supabase
-    .from("trip_participants")
-    .select("*, guest_preferences(*)")
-    .eq("trip_id", tripId)
-    .order("sort_order");
-
+  const barOrder = normalizeBarOrder(trip.bar_order);
+  const initial = (barOrder.snacks ?? {}) as Record<string, unknown>;
   const stepStatus = await fetchTripStepStatus(tripId, locale);
 
   return (
     <>
-      <WizardProgress currentStep={3} tripId={tripId} locale={locale} stepStatus={stepStatus} />
+      <WizardProgress currentStep={4} tripId={tripId} locale={locale} stepStatus={stepStatus} />
       <main className="px-4 py-8 md:px-8">
-        <StepPreferences
-          tripId={tripId}
-          participants={participants ?? []}
-          locale={locale}
-        />
+        <StepSnacks tripId={tripId} locale={locale} initial={initial} />
       </main>
     </>
   );
 }
+
