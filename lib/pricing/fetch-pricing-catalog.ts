@@ -1,5 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
-import { localizedDishName, localizedPantryItemName, localizedSnackName } from "@/lib/catalog/utils";
+import {
+  localizedBeverageName,
+  localizedDishName,
+  localizedPantryItemName,
+  localizedSnackName,
+} from "@/lib/catalog/utils";
 
 export interface PricingCatalog {
   dishPricesCents: Record<string, number>;
@@ -14,9 +19,7 @@ function beverageLabel(
   row: { name_en: string; name_es: string; presentation?: string | null },
   locale: string
 ): string {
-  const name = locale === "es" ? row.name_es : row.name_en;
-  if (row.presentation?.trim()) return `${name} (${row.presentation.trim()})`;
-  return name;
+  return localizedBeverageName(row, locale);
 }
 
 export async function fetchPricingCatalog(locale = "en"): Promise<PricingCatalog> {

@@ -9,7 +9,7 @@ import { parseAllergiesFromDb } from "@/lib/guest/preference-state";
 import {
   extractBarBottleLines,
 } from "@/lib/chef/format-service-order";
-import { resolveSnacksSelectionLabels } from "@/lib/chef/resolve-catalog-labels";
+import { resolveBarLineLabel, resolveSnacksSelectionLabels } from "@/lib/chef/resolve-catalog-labels";
 import { normalizeDateOnlyInput } from "@/lib/trip/date-validation";
 import type { ChefTripDetailsPayload, ChefTripParticipant } from "@/app/[locale]/(chef)/chef/chef-actions";
 import type { MenuMealBlock } from "@/lib/guest/menu-itinerary";
@@ -169,6 +169,7 @@ interface ServiceOrderReportProps {
 
 export async function ServiceOrderReport({ data, locale }: ServiceOrderReportProps) {
   const t = await getTranslations("chef.serviceOrder");
+  const tCategories = await getTranslations("catalogCategories");
   const tAllergies = await getTranslations("guest.wizard.preferences.allergyOptions");
   const tDiet = await getTranslations("guest.wizard.preferences.dietStyles");
   const tMenu = await getTranslations("guest.wizard.menu");
@@ -195,7 +196,13 @@ export async function ServiceOrderReport({ data, locale }: ServiceOrderReportPro
   const unrestrictedGuests = allGuestPreferences.filter((guest) => !guest.requiresAttention);
 
   const snackLabels = resolveSnacksSelectionLabels(snacksData, pricingCatalog);
-  const barLines = extractBarBottleLines(barOrder);
+  const barLines = extractBarBottleLines(barOrder).map((line) => ({
+    ...line,
+    displayLabel: resolveBarLineLabel(line, pricingCatalog.namesById),
+    categoryLabel: tCategories.has(line.category as "rum")
+      ? tCategories(line.category as "rum")
+      : line.category,
+  }));
   const byob = Boolean(barOrder.byob);
   const specificRequest =
     typeof barOrder.specific_bottle_request === "string" ? barOrder.specific_bottle_request.trim() : "";
@@ -499,14 +506,14 @@ export async function ServiceOrderReport({ data, locale }: ServiceOrderReportPro
             <ul className="divide-y divide-neutral-100 rounded-xl border border-neutral-100">
               {barLines.map((line, idx) => (
                 <li
-                  key={`${line.category}-${line.label}-${idx}`}
+                  key={`${line.category}-${line.displayLabel}-${idx}`}
                   className="flex items-center justify-between gap-4 px-4 py-3 text-base"
                 >
                   <span className="text-neutral-800">
                     <span className="mr-2 text-xs font-semibold uppercase tracking-wide text-neutral-400">
-                      {line.category}
+                      {line.categoryLabel}
                     </span>
-                    {line.label}
+                    {line.displayLabel}
                   </span>
                   <span className="shrink-0 font-medium text-[#1B3A4B]">× {line.quantity}</span>
                 </li>

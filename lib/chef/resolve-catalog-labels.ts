@@ -1,4 +1,5 @@
 import { parseSnacksPayload } from "@/lib/guest/snacks-selection";
+import type { BarBottleLine } from "@/lib/chef/format-service-order";
 import type { PricingCatalog } from "@/lib/pricing/fetch-pricing-catalog";
 
 const OTHER_KEY = "other";
@@ -10,6 +11,17 @@ export function resolveCatalogItemName(
 ): string {
   if (id === OTHER_KEY && otherText?.trim()) return otherText.trim();
   return namesById[id] ?? id;
+}
+
+/** Resolve a bar line label from catalog ID; free-text lines skip catalog lookup. */
+export function resolveBarLineLabel(
+  line: Pick<BarBottleLine, "catalogItemId" | "label">,
+  namesById: Record<string, string>
+): string {
+  if (!line.catalogItemId) {
+    return line.label?.trim() || "—";
+  }
+  return namesById[line.catalogItemId] ?? (line.label?.trim() || line.catalogItemId);
 }
 
 export function resolveSnacksSelectionLabels(

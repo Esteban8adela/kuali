@@ -10,10 +10,12 @@ import { WizardNav } from "@/components/guest/wizard-nav";
 import { confirmTripOrder } from "@/app/[locale]/(guest)/guest/trip/actions";
 import { formatCurrency } from "@/lib/utils";
 import { OrderPriceBreakdown } from "@/components/guest/order-price-breakdown";
-import { parseSnacksPayload } from "@/lib/guest/snacks-selection";
+import { extractBarBottleLines } from "@/lib/chef/format-service-order";
 import {
-  extractBarBottleLines,
-} from "@/lib/chef/format-service-order";
+  resolveBarLineLabel,
+  resolveSnacksSelectionLabels,
+} from "@/lib/chef/resolve-catalog-labels";
+import type { PricingCatalog } from "@/lib/pricing/fetch-pricing-catalog";
 import type { OrderOverviewData } from "@/lib/guest/fetch-order-overview";
 import type { MenuDayPlan } from "@/lib/guest/menu-itinerary";
 import {
@@ -139,17 +141,18 @@ export function StepOrderOverview({ data, locale }: StepOrderOverviewProps) {
   const showSubmittedBadge = isSubmittedEdit || data.status === "active";
   const foodFormatted = formatCurrency(data.tripCostUsd, locale);
 
-  const parsedSnacks = parseSnacksPayload(data.snacksData);
-  const barLines = extractBarBottleLines(data.barOrder);
+  const snackLabels = resolveSnacksSelectionLabels(data.snacksData, {
+    namesById: data.catalogNames,
+  } as PricingCatalog);
+  const barLines = extractBarBottleLines(data.barOrder).map((line) => ({
+    ...line,
+    displayLabel: resolveBarLineLabel(line, data.catalogNames),
+  }));
   const byob = Boolean(data.barOrder.byob);
   const specificRequest =
     typeof data.barOrder.specific_bottle_request === "string"
       ? data.barOrder.specific_bottle_request.trim()
       : "";
-
-  function catalogLabel(id: string): string {
-    return data.catalogNames[id] ?? id;
-  }
 
   function handlePrimaryAction() {
     startTransition(async () => {
@@ -231,28 +234,26 @@ export function StepOrderOverview({ data, locale }: StepOrderOverviewProps) {
             <div className="rounded-xl border border-neutral-200 bg-white p-5 text-sm text-neutral-700">
               <p>
                 <span className="font-medium">{t("snacksLabel")}:</span>{" "}
-                {parsedSnacks.snackItemIds.length
-                  ? parsedSnacks.snackItemIds.map(catalogLabel).join(", ")
+                {snackLabels.snacks.length
+                  ? snackLabels.snacks.join(", ")
                   : t("noneSelected")}
               </p>
               <p className="mt-2">
                 <span className="font-medium">{t("alwaysOnboardLabel")}:</span>{" "}
-                {parsedSnacks.alwaysOnboardItemIds.length
-                  ? parsedSnacks.alwaysOnboardItemIds.map(catalogLabel).join(", ")
+                {snackLabels.alwaysOnboard.length
+                  ? snackLabels.alwaysOnboard.join(", ")
                   : t("noneSelected")}
               </p>
-              {(parsedSnacks.charcuterie.meats.length > 0 ||
-                parsedSnacks.charcuterie.cheeses.length > 0 ||
-                parsedSnacks.charcuterie.complements.length > 0) && (
+              {(snackLabels.charcuterie.meats.length > 0 ||
+                snackLabels.charcuterie.cheeses.length > 0 ||
+                snackLabels.charcuterie.complements.length > 0) && (
                 <p className="mt-2">
                   <span className="font-medium">{t("charcuterieLabel")}:</span>{" "}
                   {[
-                    ...parsedSnacks.charcuterie.meats,
-                    ...parsedSnacks.charcuterie.cheeses,
-                    ...parsedSnacks.charcuterie.complements,
-                  ]
-                    .map(catalogLabel)
-                    .join(", ")}
+                    ...snackLabels.charcuterie.meats,
+                    ...snackLabels.charcuterie.cheeses,
+                    ...snackLabels.charcuterie.complements,
+                  ].join(", ")}
                 </p>
               )}
             </div>
@@ -272,8 +273,8 @@ export function StepOrderOverview({ data, locale }: StepOrderOverviewProps) {
               {barLines.length > 0 ? (
                 <ul className={`space-y-1 ${byob || specificRequest ? "mt-2" : ""}`}>
                   {barLines.map((line, i) => (
-                    <li key={`${line.category}-${line.label}-${i}`}>
-                      {line.label}
+                    <li key={`${line.category}-${line.displayLabel}-${i}`}>
+                      {line.displayLabel}
                       {line.quantity !== "—" ? ` × ${line.quantity}` : ""}
                     </li>
                   ))}

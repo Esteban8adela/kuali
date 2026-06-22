@@ -1,11 +1,24 @@
 import type { CatalogItem } from "./types";
 
-export function catalogLabel(item: CatalogItem, locale: string): string {
-  const name = locale === "es" ? item.name_es : item.name_en;
+export function localizedBeverageName(
+  item: {
+    name_en: string;
+    name_es: string;
+    presentation?: string | null;
+  },
+  locale: string
+): string {
+  const primary = locale === "es" ? item.name_es : item.name_en;
+  const fallback = locale === "es" ? item.name_en : item.name_es;
+  const name = primary?.trim() || fallback?.trim() || "";
   if (item.presentation?.trim()) {
     return `${name} (${item.presentation.trim()})`;
   }
   return name;
+}
+
+export function catalogLabel(item: CatalogItem, locale: string): string {
+  return localizedBeverageName(item, locale);
 }
 
 export function filterCatalog(

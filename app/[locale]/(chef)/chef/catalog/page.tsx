@@ -1,6 +1,11 @@
 import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
+import {
+  localizedBeverageName,
+  localizedDishName,
+  localizedSnackName,
+} from "@/lib/catalog/utils";
 import { formatCurrency, centsToUsd } from "@/lib/utils";
 
 export default async function ChefCatalogPage({
@@ -11,14 +16,19 @@ export default async function ChefCatalogPage({
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("chef.catalog");
+  const tCategories = await getTranslations("catalogCategories");
 
   const supabase = await createClient();
   const [dishes, snacks, beverages] = await Promise.all([
-    supabase.from("dishes").select("name, category, base_price_cents").order("name"),
-    supabase.from("snacks").select("name, category, base_price_cents").eq("is_active", true).order("name"),
+    supabase.from("dishes").select("name, name_en, name_es, category, base_price_cents").order("name"),
+    supabase
+      .from("snacks")
+      .select("name, name_en, name_es, category, base_price_cents")
+      .eq("is_active", true)
+      .order("name"),
     supabase
       .from("catalog_items")
-      .select("name_en, name_es, category, base_price_cents")
+      .select("name_en, name_es, presentation, category, base_price_cents")
       .eq("is_active", true)
       .order("name_en"),
   ]);
@@ -26,6 +36,10 @@ export default async function ChefCatalogPage({
   const dishRows = dishes.data ?? [];
   const snackRows = snacks.data ?? [];
   const bevRows = beverages.data ?? [];
+
+  function categoryLabel(key: string): string {
+    return tCategories.has(key as "spirit") ? tCategories(key as "spirit") : key;
+  }
 
   return (
     <div className="space-y-10">
@@ -35,13 +49,27 @@ export default async function ChefCatalogPage({
       </header>
 
       {[
-        { title: t("dishesSection"), rows: dishRows.map((r) => ({ name: r.name, meta: r.category, cents: r.base_price_cents })) },
-        { title: t("snacksSection"), rows: snackRows.map((r) => ({ name: r.name, meta: r.category, cents: r.base_price_cents })) },
+        {
+          title: t("dishesSection"),
+          rows: dishRows.map((r) => ({
+            name: localizedDishName(r, locale),
+            meta: categoryLabel(r.category),
+            cents: r.base_price_cents,
+          })),
+        },
+        {
+          title: t("snacksSection"),
+          rows: snackRows.map((r) => ({
+            name: localizedSnackName(r, locale),
+            meta: categoryLabel(r.category),
+            cents: r.base_price_cents,
+          })),
+        },
         {
           title: t("beveragesSection"),
           rows: bevRows.map((r) => ({
-            name: locale === "es" ? r.name_es : r.name_en,
-            meta: r.category,
+            name: localizedBeverageName(r, locale),
+            meta: categoryLabel(r.category),
             cents: r.base_price_cents,
           })),
         },
@@ -61,7 +89,7 @@ export default async function ChefCatalogPage({
               </thead>
               <tbody>
                 {section.rows.map((row) => (
-                  <tr key={`${section.title}-${row.name}`} className="border-b border-neutral-100">
+                  <tr key={`${section.title}-${row.name}-${row.meta}`} className="border-b border-neutral-100">
                     <td className="py-2.5 font-medium text-neutral-900">{row.name}</td>
                     <td className="py-2.5 text-neutral-600">{row.meta}</td>
                     <td className="py-2.5 text-right text-neutral-700">

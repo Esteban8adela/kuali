@@ -13,6 +13,7 @@ import {
 import { formatChefGuestDisplayName, participantGuestNumber } from "@/lib/guest/participant-names";
 import { parseAllergiesFromDb } from "@/lib/guest/preference-state";
 import { extractBarBottleLines } from "@/lib/chef/format-service-order";
+import { resolveBarLineLabel } from "@/lib/chef/resolve-catalog-labels";
 import {
   breakfastDishRows,
   dinnerDishRows,
@@ -190,11 +191,25 @@ export function ShoppingListReport({ data, locale }: ShoppingListReportProps) {
       unitPriceCents: priceCentsForId(pricingCatalog, "snackPricesCents", id),
     });
   }
+  if (parsedSnacks.otherSnack?.trim()) {
+    snackRows.push({
+      item: parsedSnacks.otherSnack.trim(),
+      qty: 1,
+      unitPriceCents: 0,
+    });
+  }
   for (const id of parsedSnacks.alwaysOnboardItemIds) {
     pantryRows.push({
       item: resolveAlwaysOnboardLabel(id, parsedSnacks, pricingCatalog.namesById),
       qty: 1,
       unitPriceCents: priceCentsForId(pricingCatalog, "alwaysOnboardPricesCents", id),
+    });
+  }
+  if (parsedSnacks.otherAlways?.trim()) {
+    pantryRows.push({
+      item: parsedSnacks.otherAlways.trim(),
+      qty: 1,
+      unitPriceCents: 0,
     });
   }
   for (const id of parsedSnacks.charcuterie.meats) {
@@ -218,10 +233,31 @@ export function ShoppingListReport({ data, locale }: ShoppingListReportProps) {
       unitPriceCents: priceCentsForId(pricingCatalog, "charcuteriePricesCents", id),
     });
   }
+  if (parsedSnacks.charcuterie.otherMeats?.trim()) {
+    snackRows.push({
+      item: parsedSnacks.charcuterie.otherMeats.trim(),
+      qty: 1,
+      unitPriceCents: 0,
+    });
+  }
+  if (parsedSnacks.charcuterie.otherCheeses?.trim()) {
+    snackRows.push({
+      item: parsedSnacks.charcuterie.otherCheeses.trim(),
+      qty: 1,
+      unitPriceCents: 0,
+    });
+  }
+  if (parsedSnacks.charcuterie.otherComplements?.trim()) {
+    pantryRows.push({
+      item: parsedSnacks.charcuterie.otherComplements.trim(),
+      qty: 1,
+      unitPriceCents: 0,
+    });
+  }
   for (const line of barLines) {
     const qty = line.quantity === "—" ? 1 : Math.max(1, parseInt(line.quantity, 10) || 1);
     barRows.push({
-      item: line.label,
+      item: resolveBarLineLabel(line, pricingCatalog.namesById),
       qty,
       unitPriceCents: line.catalogItemId
         ? priceCentsForId(pricingCatalog, "beveragePricesCents", line.catalogItemId)

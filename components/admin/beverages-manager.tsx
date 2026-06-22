@@ -23,7 +23,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { BEVERAGE_CATEGORY_KEYS, SPIRIT_SUBCATEGORIES } from "@/lib/constants/beverages";
-import { sortBeverages } from "@/lib/catalog/utils";
+import { sortBeverages, localizedBeverageName } from "@/lib/catalog/utils";
 import {
   ManualPriceInput,
   manualPriceDisplayFromCents,
@@ -141,10 +141,7 @@ export function BeveragesManager({ items, locale }: BeveragesManagerProps) {
     });
   }
 
-  const displayName = (item: CatalogItemRow) => {
-    const name = locale === "es" ? item.name_es : item.name_en;
-    return item.presentation?.trim() ? `${name} (${item.presentation.trim()})` : name;
-  };
+  const displayName = (item: CatalogItemRow) => localizedBeverageName(item, locale);
 
   const sectionMeta: Record<string, { title: string; desc: string }> = {
     spirit: { title: t("sections.spirits"), desc: t("sections.spiritsDesc") },
@@ -152,6 +149,54 @@ export function BeveragesManager({ items, locale }: BeveragesManagerProps) {
     beer: { title: t("sections.beers"), desc: t("sections.beersDesc") },
     wine: { title: t("sections.wines"), desc: t("sections.winesDesc") },
   };
+
+  function renderBeverageTable(catItems: CatalogItemRow[]) {
+    return (
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-[#1B3A4B]/10 bg-[#1B3A4B]/5 text-left text-xs uppercase text-neutral-600">
+            <th className="px-4 py-2 font-medium">{t("columns.name")}</th>
+            <th className="px-4 py-2 font-medium">{t("columns.basePrice")}</th>
+            <th className="px-4 py-2 text-right font-medium">{t("columns.actions")}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {catItems.map((item) => (
+            <tr key={item.id} className="border-b border-neutral-100">
+              <td className="px-4 py-2.5 font-medium">{displayName(item)}</td>
+              <td className="px-4 py-2.5">
+                {formatCurrency(centsToUsd(item.base_price_cents), locale)}
+              </td>
+              <td className="px-4 py-2.5">
+                <div className="flex justify-end gap-1">
+                  <Button type="button" variant="ghost" size="icon" onClick={() => openEdit(item)}>
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleDelete(item.id)}
+                    disabled={pending}
+                  >
+                    <Trash2 className="h-4 w-4 text-red-600" />
+                  </Button>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
+  }
+
+  function groupSpiritsBySubcategory(spiritItems: CatalogItemRow[]) {
+    return spiritItems.reduce<Record<string, CatalogItemRow[]>>((groups, item) => {
+      const sub = item.subcategory ?? SPIRIT_SUBCATEGORIES[0];
+      (groups[sub] ??= []).push(item);
+      return groups;
+    }, {});
+  }
 
   return (
     <div className="space-y-8">
@@ -179,52 +224,23 @@ export function BeveragesManager({ items, locale }: BeveragesManagerProps) {
               <CardContent className="p-0 pb-4">
                 {sectionItems.length === 0 ? (
                   <p className="px-6 py-6 text-center text-sm text-neutral-500">{t("empty")}</p>
+                ) : cat === "spirit" ? (
+                  <div className="space-y-6 px-2 pb-2">
+                    {SPIRIT_SUBCATEGORIES.map((sub) => {
+                      const subItems = groupSpiritsBySubcategory(sectionItems)[sub];
+                      if (!subItems?.length) return null;
+                      return (
+                        <div key={sub}>
+                          <h3 className="px-4 py-2 font-display text-lg text-[#1B3A4B]">
+                            {t(`spiritTypes.${sub}`)}
+                          </h3>
+                          {renderBeverageTable(subItems)}
+                        </div>
+                      );
+                    })}
+                  </div>
                 ) : (
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-[#1B3A4B]/10 bg-[#1B3A4B]/5 text-left text-xs uppercase text-neutral-600">
-                        <th className="px-4 py-2 font-medium">{t("columns.name")}</th>
-                        {cat === "spirit" ? (
-                          <th className="px-4 py-2 font-medium">{t("columns.subcategory")}</th>
-                        ) : null}
-                        <th className="px-4 py-2 font-medium">{t("columns.basePrice")}</th>
-                        <th className="px-4 py-2 text-right font-medium">{t("columns.actions")}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {sectionItems.map((item) => (
-                        <tr key={item.id} className="border-b border-neutral-100">
-                          <td className="px-4 py-2.5 font-medium">{displayName(item)}</td>
-                          {cat === "spirit" ? (
-                            <td className="px-4 py-2.5 text-neutral-600">
-                              {item.subcategory
-                                ? t(`spiritTypes.${item.subcategory}` as "spiritTypes.rum")
-                                : "—"}
-                            </td>
-                          ) : null}
-                          <td className="px-4 py-2.5">
-                            {formatCurrency(centsToUsd(item.base_price_cents), locale)}
-                          </td>
-                          <td className="px-4 py-2.5">
-                            <div className="flex justify-end gap-1">
-                              <Button type="button" variant="ghost" size="icon" onClick={() => openEdit(item)}>
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleDelete(item.id)}
-                                disabled={pending}
-                              >
-                                <Trash2 className="h-4 w-4 text-red-600" />
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  renderBeverageTable(sectionItems)
                 )}
               </CardContent>
             </Card>

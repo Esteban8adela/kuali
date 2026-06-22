@@ -1,4 +1,5 @@
 import { extractBarBottleLines } from "@/lib/chef/format-service-order";
+import { resolveBarLineLabel } from "@/lib/chef/resolve-catalog-labels";
 import type { MenuDayPlan, MenuMealBlock } from "@/lib/guest/menu-itinerary";
 import { parseSnacksPayload } from "@/lib/guest/snacks-selection";
 import type { PricingCatalog } from "@/lib/pricing/fetch-pricing-catalog";
@@ -125,7 +126,7 @@ function barLines(
     const qty = line.quantity !== "—" ? Math.max(1, parseInt(line.quantity, 10) || 1) : 1;
     const unitPriceCents = priceCents(catalog, "beveragePricesCents", line.catalogItemId);
     lines.push({
-      concept: line.label,
+      concept: resolveBarLineLabel(line, catalog.namesById),
       quantity: qty,
       unitPriceCents,
       subtotalCents: unitPriceCents * qty,

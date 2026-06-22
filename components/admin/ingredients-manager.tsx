@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { Pencil, Plus, Trash2 } from "lucide-react";
@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { IngredientFormDialog } from "@/components/admin/ingredient-form-dialog";
 import { deleteIngredient } from "@/app/[locale]/(admin)/admin/catalog/admin-actions";
 import type { Ingredient } from "@/lib/types/database";
+import { formatCurrency } from "@/lib/utils";
 
 interface IngredientsManagerProps {
   ingredients: Ingredient[];
@@ -22,16 +23,6 @@ export function IngredientsManager({ ingredients, locale }: IngredientsManagerPr
   const [editing, setEditing] = useState<Ingredient | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-
-  const currency = useMemo(
-    () =>
-      new Intl.NumberFormat(locale === "es" ? "es-MX" : "en-US", {
-        style: "currency",
-        currency: "MXN",
-        minimumFractionDigits: 2,
-      }),
-    [locale]
-  );
 
   function openCreate() {
     setEditing(null);
@@ -101,7 +92,7 @@ export function IngredientsManager({ ingredients, locale }: IngredientsManagerPr
                         {t(`units.${item.unit}` as "units.kg")}
                       </td>
                       <td className="px-4 py-3 text-neutral-700">
-                        {currency.format(Number(item.cost_per_unit))}
+                        {formatCurrency(Number(item.cost_per_unit), locale)}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex justify-end gap-1">
