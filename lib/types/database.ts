@@ -89,6 +89,7 @@ export interface Dish {
   image_url: string | null;
   recipe_yield: number;
   base_price_cents: number;
+  manual_price_cents: number | null;
   created_at: string;
   updated_at: string;
 }

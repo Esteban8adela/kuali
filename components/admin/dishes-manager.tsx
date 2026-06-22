@@ -10,14 +10,26 @@ import { DishFormDialog } from "@/components/admin/dish-form-dialog";
 import { deleteDish } from "@/app/[locale]/(admin)/admin/catalog/admin-actions";
 import type { DishWithRecipe, Ingredient } from "@/lib/types/database";
 
+import {
+  KIDS_DISH_CATEGORIES,
+  REGULAR_DISH_CATEGORIES,
+  type DishCategory,
+} from "@/lib/constants/dishes";
+
 interface DishesManagerProps {
   dishes: DishWithRecipe[];
   ingredients: Ingredient[];
   locale: string;
+  mode?: "regular" | "kids";
 }
 
-export function DishesManager({ dishes, ingredients, locale }: DishesManagerProps) {
-  const t = useTranslations("admin.dishes");
+export function DishesManager({
+  dishes,
+  ingredients,
+  locale,
+  mode = "regular",
+}: DishesManagerProps) {
+  const t = useTranslations(mode === "kids" ? "admin.kidsDishes" : "admin.dishes");
   const router = useRouter();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<DishWithRecipe | null>(null);
@@ -134,6 +146,10 @@ export function DishesManager({ dishes, ingredients, locale }: DishesManagerProp
         dish={editing}
         ingredients={ingredients}
         locale={locale}
+        mode={mode}
+        categoryOptions={
+          (mode === "kids" ? KIDS_DISH_CATEGORIES : REGULAR_DISH_CATEGORIES) as readonly DishCategory[]
+        }
       />
     </div>
   );

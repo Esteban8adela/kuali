@@ -102,9 +102,16 @@ function TripGrid({ trips, locale }: { trips: ChefTripListItem[]; locale: string
 interface ChefTripsBoardProps {
   categorized: CategorizedChefTrips;
   locale: string;
+  defaultTab?: "present" | "future" | "past";
+  hideTabs?: boolean;
 }
 
-export function ChefTripsBoard({ categorized, locale }: ChefTripsBoardProps) {
+export function ChefTripsBoard({
+  categorized,
+  locale,
+  defaultTab: defaultTabProp,
+  hideTabs = false,
+}: ChefTripsBoardProps) {
   const t = useTranslations("chef.portal");
   const total =
     categorized.present.length + categorized.future.length + categorized.past.length;
@@ -117,11 +124,23 @@ export function ChefTripsBoard({ categorized, locale }: ChefTripsBoardProps) {
     );
   }
 
-  const defaultTab = categorized.present.length
-    ? "present"
-    : categorized.future.length
-      ? "future"
-      : "past";
+  const defaultTab =
+    defaultTabProp ??
+    (categorized.present.length
+      ? "present"
+      : categorized.future.length
+        ? "future"
+        : "past");
+
+  if (hideTabs) {
+    const trips =
+      defaultTab === "present"
+        ? categorized.present
+        : defaultTab === "future"
+          ? categorized.future
+          : categorized.past;
+    return <TripGrid trips={trips} locale={locale} />;
+  }
 
   return (
     <Tabs defaultValue={defaultTab} className="space-y-6">

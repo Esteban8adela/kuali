@@ -1,10 +1,9 @@
 import { setRequestLocale } from "next-intl/server";
 import { DishesManager } from "@/components/admin/dishes-manager";
 import { getDishes, getIngredients } from "../admin-actions";
+import { isKidsDishCategory } from "@/lib/constants/dishes";
 
-import { isRegularDishCategory } from "@/lib/constants/dishes";
-
-export default async function CatalogDishesPage({
+export default async function CatalogKidsMenuPage({
   params,
 }: {
   params: Promise<{ locale: string }>;
@@ -13,9 +12,14 @@ export default async function CatalogDishesPage({
   setRequestLocale(locale);
 
   const [allDishes, ingredients] = await Promise.all([getDishes(), getIngredients()]);
-  const dishes = allDishes.filter((d) => isRegularDishCategory(d.category));
+  const dishes = allDishes.filter((d) => isKidsDishCategory(d.category));
 
   return (
-    <DishesManager dishes={dishes} ingredients={ingredients} locale={locale} mode="regular" />
+    <DishesManager
+      dishes={dishes}
+      ingredients={ingredients}
+      locale={locale}
+      mode="kids"
+    />
   );
 }

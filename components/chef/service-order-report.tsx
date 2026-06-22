@@ -8,9 +8,8 @@ import { formatChefGuestDisplayName, participantGuestNumber } from "@/lib/guest/
 import { parseAllergiesFromDb } from "@/lib/guest/preference-state";
 import {
   extractBarBottleLines,
-  extractCharcuterie,
-  extractSnackKeys,
 } from "@/lib/chef/format-service-order";
+import { resolveSnacksSelectionLabels } from "@/lib/chef/resolve-catalog-labels";
 import { normalizeDateOnlyInput } from "@/lib/trip/date-validation";
 import type { ChefTripDetailsPayload, ChefTripParticipant } from "@/app/[locale]/(chef)/chef/chef-actions";
 import type { MenuMealBlock } from "@/lib/guest/menu-itinerary";
@@ -170,12 +169,20 @@ interface ServiceOrderReportProps {
 
 export async function ServiceOrderReport({ data, locale }: ServiceOrderReportProps) {
   const t = await getTranslations("chef.serviceOrder");
-  const tSnacks = await getTranslations("guest.wizard.snacks");
   const tAllergies = await getTranslations("guest.wizard.preferences.allergyOptions");
   const tDiet = await getTranslations("guest.wizard.preferences.dietStyles");
   const tMenu = await getTranslations("guest.wizard.menu");
 
-  const { trip, principal_guest_name, participants, itinerary, dishNames, barOrder, snacksData } = data;
+  const {
+    trip,
+    principal_guest_name,
+    participants,
+    itinerary,
+    dishNames,
+    barOrder,
+    snacksData,
+    pricingCatalog,
+  } = data;
   const pax = trip.adult_count + trip.child_count;
   const dates = formatDateRange(trip.start_date, trip.end_date, locale, t("datesTbd"));
   const allGuestPreferences = buildGuestPreferenceCards(
@@ -187,29 +194,13 @@ export async function ServiceOrderReport({ data, locale }: ServiceOrderReportPro
   const attentionGuests = allGuestPreferences.filter((guest) => guest.requiresAttention);
   const unrestrictedGuests = allGuestPreferences.filter((guest) => !guest.requiresAttention);
 
-  const snackKeys = extractSnackKeys(snacksData, "snacks");
-  const alwaysKeys = extractSnackKeys(snacksData, "alwaysOnboard");
-  const otherSnack = typeof snacksData.otherSnack === "string" ? snacksData.otherSnack : "";
-  const otherAlways = typeof snacksData.otherAlways === "string" ? snacksData.otherAlways : "";
-  const charcuterie = extractCharcuterie(snacksData);
-
+  const snackLabels = resolveSnacksSelectionLabels(snacksData, pricingCatalog);
   const barLines = extractBarBottleLines(barOrder);
   const byob = Boolean(barOrder.byob);
   const specificRequest =
     typeof barOrder.specific_bottle_request === "string" ? barOrder.specific_bottle_request.trim() : "";
 
   const dishPending = t("dishPending");
-
-  function charcuterieLabels(
-    keys: string[],
-    prefix: "meats" | "cheeses" | "complements",
-    otherText: string | null
-  ): string[] {
-    return keys.map((key) => {
-      if (key === "other" && otherText) return otherText;
-      return tSnacks(`charcuterieItems.${prefix}.${key}` as "charcuterieItems.meats.serrano_ham");
-    });
-  }
 
   return (
     <div className="mx-auto max-w-4xl space-y-10 pb-12">
@@ -352,10 +343,17 @@ export async function ServiceOrderReport({ data, locale }: ServiceOrderReportPro
                       )}
                     </ul>
                     {kids > 0 ? (
-                      <p className="mt-3 border-t border-neutral-200 pt-3 text-sm font-medium text-amber-800">
-                        {t("kidsMenus", { count: kids })}
-                        {kidsDish ? ` — ${kidsDish}` : ""}
-                      </p>
+                      <div className="mt-3 border-t border-neutral-200 pt-3">
+                        <p className="text-sm font-semibold text-amber-900">
+                          {tMenu("kidsMenuDish")}
+                          <span className="ml-1 font-normal text-amber-800">
+                            ({t("kidsMenus", { count: kids })})
+                          </span>
+                        </p>
+                        <p className="mt-1 text-base font-medium text-neutral-900">
+                          {kidsDish ?? dishPending}
+                        </p>
+                      </div>
                     ) : null}
                   </div>
                 );
@@ -409,36 +407,30 @@ export async function ServiceOrderReport({ data, locale }: ServiceOrderReportPro
         <div className="grid gap-8 md:grid-cols-2">
           <div className="space-y-3">
             <h3 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">
-              {tSnacks("snacksToBuy")}
+              {t("snacksToBuy")}
             </h3>
-            {snackKeys.length === 0 && !otherSnack ? (
+            {snackLabels.snacks.length === 0 ? (
               <p className="text-neutral-600">{t("noneSelected")}</p>
             ) : (
               <ul className="list-disc space-y-1 pl-5 text-base text-neutral-800">
-                {snackKeys
-                  .filter((key) => key !== "other")
-                  .map((key) => (
-                    <li key={key}>{tSnacks(`items.${key}` as "items.chips")}</li>
-                  ))}
-                {snackKeys.includes("other") && otherSnack ? <li>{otherSnack}</li> : null}
+                {snackLabels.snacks.map((label) => (
+                  <li key={label}>{label}</li>
+                ))}
               </ul>
             )}
           </div>
 
           <div className="space-y-3">
             <h3 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">
-              {tSnacks("alwaysOnboard")}
+              {t("alwaysOnboard")}
             </h3>
-            {alwaysKeys.length === 0 && !otherAlways ? (
+            {snackLabels.alwaysOnboard.length === 0 ? (
               <p className="text-neutral-600">{t("noneSelected")}</p>
             ) : (
               <ul className="list-disc space-y-1 pl-5 text-base text-neutral-800">
-                {alwaysKeys
-                  .filter((key) => key !== "other")
-                  .map((key) => (
-                    <li key={key}>{tSnacks(`alwaysItems.${key}` as "alwaysItems.fruit")}</li>
-                  ))}
-                {alwaysKeys.includes("other") && otherAlways ? <li>{otherAlways}</li> : null}
+                {snackLabels.alwaysOnboard.map((label) => (
+                  <li key={label}>{label}</li>
+                ))}
               </ul>
             )}
           </div>
@@ -446,49 +438,39 @@ export async function ServiceOrderReport({ data, locale }: ServiceOrderReportPro
 
         <div className="space-y-4">
           <h3 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">
-            {tSnacks("charcuterieSectionTitle")}
+            {t("charcuterieSection")}
           </h3>
-          {!charcuterie.meats.length &&
-          !charcuterie.cheeses.length &&
-          !charcuterie.complements.length ? (
+          {!snackLabels.charcuterie.meats.length &&
+          !snackLabels.charcuterie.cheeses.length &&
+          !snackLabels.charcuterie.complements.length ? (
             <p className="text-neutral-600">{t("noneSelected")}</p>
           ) : (
             <div className="grid gap-4 md:grid-cols-3">
-              {charcuterie.meats.length > 0 ? (
+              {snackLabels.charcuterie.meats.length > 0 ? (
                 <div>
-                  <p className="mb-2 font-medium text-neutral-800">{tSnacks("charcuterieMeats")}</p>
+                  <p className="mb-2 font-medium text-neutral-800">{t("charcuterieMeats")}</p>
                   <ul className="list-disc space-y-1 pl-5 text-sm text-neutral-700">
-                    {charcuterieLabels(charcuterie.meats, "meats", charcuterie.otherMeats).map(
-                      (label) => (
-                        <li key={label}>{label}</li>
-                      )
-                    )}
+                    {snackLabels.charcuterie.meats.map((label) => (
+                      <li key={label}>{label}</li>
+                    ))}
                   </ul>
                 </div>
               ) : null}
-              {charcuterie.cheeses.length > 0 ? (
+              {snackLabels.charcuterie.cheeses.length > 0 ? (
                 <div>
-                  <p className="mb-2 font-medium text-neutral-800">{tSnacks("charcuterieCheeses")}</p>
+                  <p className="mb-2 font-medium text-neutral-800">{t("charcuterieCheeses")}</p>
                   <ul className="list-disc space-y-1 pl-5 text-sm text-neutral-700">
-                    {charcuterieLabels(charcuterie.cheeses, "cheeses", charcuterie.otherCheeses).map(
-                      (label) => (
-                        <li key={label}>{label}</li>
-                      )
-                    )}
+                    {snackLabels.charcuterie.cheeses.map((label) => (
+                      <li key={label}>{label}</li>
+                    ))}
                   </ul>
                 </div>
               ) : null}
-              {charcuterie.complements.length > 0 ? (
+              {snackLabels.charcuterie.complements.length > 0 ? (
                 <div>
-                  <p className="mb-2 font-medium text-neutral-800">
-                    {tSnacks("charcuterieComplements")}
-                  </p>
+                  <p className="mb-2 font-medium text-neutral-800">{t("charcuterieComplements")}</p>
                   <ul className="list-disc space-y-1 pl-5 text-sm text-neutral-700">
-                    {charcuterieLabels(
-                      charcuterie.complements,
-                      "complements",
-                      charcuterie.otherComplements
-                    ).map((label) => (
+                    {snackLabels.charcuterie.complements.map((label) => (
                       <li key={label}>{label}</li>
                     ))}
                   </ul>

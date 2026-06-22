@@ -35,3 +35,28 @@ export function formatCurrency(amountUsd: number, locale: string): string {
 export function centsToUsd(cents: number): number {
   return (Number.isFinite(cents) ? cents : 0) / 100;
 }
+
+/** Convert locale display amount to USD cents for DB storage. */
+export function localeAmountToUsdCents(amount: number, locale: string): number {
+  const safe = Number.isFinite(amount) ? Math.max(0, amount) : 0;
+  if (locale === "es") {
+    return Math.round((safe / USD_TO_MXN_RATE) * 100);
+  }
+  return Math.round(safe * 100);
+}
+
+/** Convert USD cents to amount shown in the admin price input for the locale. */
+export function usdCentsToLocaleAmount(cents: number, locale: string): number {
+  const usd = centsToUsd(cents);
+  return locale === "es" ? usd * USD_TO_MXN_RATE : usd;
+}
+
+/** Format a hint string for the alternate currency (~ $X.XX USD / MXN). */
+export function formatAlternateCurrencyHint(usdCents: number, locale: string): string {
+  const usd = centsToUsd(usdCents);
+  if (locale === "es") {
+    return `~ ${new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(usd)} USD`;
+  }
+  const mxn = usd * USD_TO_MXN_RATE;
+  return `~ ${new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(mxn)} MXN`;
+}

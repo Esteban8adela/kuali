@@ -289,6 +289,8 @@
         "addWithoutBrand": "Add without brand",
         "chefDefaultHelp": "If quantity or brand is not specified, it will be left to the Chef's discretion.",
         "addBrand": "Add brand…",
+        "addOther": "Add other",
+        "otherPlaceholder": "Specify what you need...",
         "addWine": "Add wine…",
         "addBeer": "Add beer…",
         "addMixer": "Add mixer…",
@@ -313,6 +315,7 @@
         "charcuterieCheeses": "Cheeses",
         "charcuterieComplements": "Complements",
         "charcuterieHelp": "(Premium charcuterie selection)",
+        "otherOption": "Other",
         "charcuterieOtherPlaceholder": "Specify your preference…",
         "charcuterieItems": {
           "meats": {
@@ -386,6 +389,26 @@
   },
   "chef": {
     "greeting": "Hello, Chef",
+    "nav": {
+      "dashboard": "Dashboard (Upcoming trips)",
+      "history": "History",
+      "catalogs": "Catalogs (read-only)"
+    },
+    "history": {
+      "title": "Trip history",
+      "subtitle": "Past trips and archived service orders."
+    },
+    "catalog": {
+      "title": "Catalogs (read-only)",
+      "subtitle": "View dishes, snacks, and beverages configured by admin.",
+      "dishesSection": "Dishes",
+      "snacksSection": "Snacks",
+      "beveragesSection": "Beverages",
+      "nameColumn": "Name",
+      "categoryColumn": "Category",
+      "priceColumn": "Price",
+      "empty": "No items in this catalog."
+    },
     "dashboard": "Operations",
     "orders": "Live orders",
     "allergies": "Critical allergies",
@@ -443,6 +466,12 @@
       "dishPending": "Dish pending / not found",
       "kidsMenus": "{count} kids menu(s)",
       "complements": "Snacks & complements",
+      "snacksToBuy": "Snacks to buy",
+      "alwaysOnboard": "Always onboard",
+      "charcuterieSection": "Charcuterie",
+      "charcuterieMeats": "Meats",
+      "charcuterieCheeses": "Cheeses",
+      "charcuterieComplements": "Complements",
       "noneSelected": "None selected",
       "barBottles": "Bar bottle selections",
       "byob": "Guest will bring their own bottles (BYOB)",

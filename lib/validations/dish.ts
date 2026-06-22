@@ -11,6 +11,7 @@ export const dishSchema = z.object({
   description: z.string().trim().optional().nullable(),
   category: z.enum(DISH_CATEGORIES),
   recipe_yield: z.coerce.number().positive("Recipe yield must be greater than zero"),
+  manual_price_cents: z.coerce.number().int().min(0).optional().nullable(),
   base_price_cents: z.coerce.number().int().min(0).default(0),
   image_url: z
     .union([z.string().url(), z.literal(""), z.null()])

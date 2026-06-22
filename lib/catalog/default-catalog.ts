@@ -28,11 +28,4 @@ export const DEFAULT_CATALOG: CatalogItem[] = [
   { id: "seed-mix-3", category: "mixer", subcategory: null, name_en: "Ginger Beer", name_es: "Ginger Beer", sort_order: 3, is_active: true, base_price_cents: 0 },
 ];
 
-export const SPIRIT_SUBCATEGORIES = [
-  "tequila",
-  "rum",
-  "vodka",
-  "gin",
-  "mezcal",
-  "whiskey",
-] as const;
+export { SPIRIT_SUBCATEGORIES } from "@/lib/constants/beverages";

@@ -1,6 +1,6 @@
 "use client";
 
-import { useId } from "react";
+import { useId, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ import {
 import { Minus, Plus, X } from "lucide-react";
 import type { BarLineSelection, CatalogItem } from "@/lib/catalog/types";
 import { catalogLabel } from "@/lib/catalog/utils";
+import { GUEST_OTHER_OPTION } from "@/lib/guest/catalog-other";
 
 interface CatalogMultiPickerProps {
   title: string;
@@ -23,6 +24,9 @@ interface CatalogMultiPickerProps {
   onChange: (next: BarLineSelection[]) => void;
   locale: string;
   addLabel: string;
+  showOtherOption?: boolean;
+  otherLabel?: string;
+  otherPlaceholder?: string;
 }
 
 function normalizeQuantity(value: number | null | undefined): number {
@@ -37,14 +41,20 @@ export function CatalogMultiPicker({
   onChange,
   locale,
   addLabel,
+  showOtherOption = false,
+  otherLabel,
+  otherPlaceholder,
 }: CatalogMultiPickerProps) {
   const selectId = useId();
   const t = useTranslations("guest.wizard.bar");
+  const [otherDraft, setOtherDraft] = useState("");
+  const hasOther = selections.some((s) => !s.catalogItemId);
   const available = items.filter(
     (item) => !selections.some((s) => s.catalogItemId === item.id)
   );
 
   function addItem(catalogItemId: string) {
+    if (catalogItemId === GUEST_OTHER_OPTION) return;
     const item = items.find((i) => i.id === catalogItemId);
     if (!item) return;
     onChange([
@@ -55,6 +65,16 @@ export function CatalogMultiPicker({
         quantity: 1,
       },
     ]);
+  }
+
+  function addOtherLine() {
+    const label = otherDraft.trim();
+    if (!label || hasOther) return;
+    onChange([
+      ...selections,
+      { catalogItemId: null, label, quantity: 1 },
+    ]);
+    setOtherDraft("");
   }
 
   function updateQty(index: number, nextQty: number) {
@@ -122,7 +142,7 @@ export function CatalogMultiPicker({
       })}
 
       <div className="flex flex-wrap items-center gap-2">
-        {available.length > 0 && (
+        {(available.length > 0 || showOtherOption) && (
           <Select onValueChange={addItem}>
             <SelectTrigger className="max-w-xs" id={selectId}>
               <SelectValue placeholder={addLabel} />
@@ -136,6 +156,20 @@ export function CatalogMultiPicker({
             </SelectContent>
           </Select>
         )}
+        {showOtherOption && !hasOther ? (
+          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+            <Input
+              type="text"
+              value={otherDraft}
+              onChange={(e) => setOtherDraft(e.target.value)}
+              placeholder={otherPlaceholder ?? "Especifica qué necesitas..."}
+              className="max-w-xs"
+            />
+            <Button type="button" variant="outline" size="sm" onClick={addOtherLine} disabled={!otherDraft.trim()}>
+              {otherLabel ?? t("addOther")}
+            </Button>
+          </div>
+        ) : null}
       </div>
     </div>
   );

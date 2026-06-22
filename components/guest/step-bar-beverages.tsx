@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { advanceWizardStep, saveBarStep, saveDraftAndExit } from "@/app/[locale]/(guest)/guest/trip/actions";
 import { WizardNav } from "@/components/guest/wizard-nav";
 import { CatalogMultiPicker } from "@/components/guest/catalog-multi-picker";
-import { SPIRIT_SUBCATEGORIES } from "@/lib/catalog/default-catalog";
+import { SPIRIT_SUBCATEGORIES } from "@/lib/constants/beverages";
 import { filterCatalog } from "@/lib/catalog/utils";
 import type { BarLineSelection, BarOrderPayload, CatalogItem } from "@/lib/catalog/types";
 
@@ -274,6 +274,9 @@ export function StepBarBeverages({
                 onChange={(next) => setSpirits((s) => ({ ...s, [sub]: next }))}
                 locale={locale}
                 addLabel={t("addBrand")}
+                showOtherOption
+                otherLabel={t("addOther")}
+                otherPlaceholder={t("otherPlaceholder")}
               />
             ))}
           </section>
@@ -286,6 +289,9 @@ export function StepBarBeverages({
               onChange={setWines}
               locale={locale}
               addLabel={t("addWine")}
+              showOtherOption
+              otherLabel={t("addOther")}
+              otherPlaceholder={t("otherPlaceholder")}
             />
           </section>
 
@@ -297,6 +303,9 @@ export function StepBarBeverages({
               onChange={setBeers}
               locale={locale}
               addLabel={t("addBeer")}
+              showOtherOption
+              otherLabel={t("addOther")}
+              otherPlaceholder={t("otherPlaceholder")}
             />
           </section>
 
@@ -308,6 +317,9 @@ export function StepBarBeverages({
               onChange={setMixers}
               locale={locale}
               addLabel={t("addMixer")}
+              showOtherOption
+              otherLabel={t("addOther")}
+              otherPlaceholder={t("otherPlaceholder")}
             />
           </section>
 

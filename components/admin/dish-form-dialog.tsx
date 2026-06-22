@@ -21,13 +21,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { DISH_CATEGORIES, type DishCategory } from "@/lib/constants/dishes";
+import {
+  type DishCategory,
+} from "@/lib/constants/dishes";
 import {
   createDish,
   updateDish,
 } from "@/app/[locale]/(admin)/admin/catalog/admin-actions";
 import type { DishWithRecipe, Ingredient } from "@/lib/types/database";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, centsToUsd } from "@/lib/utils";
+import {
+  ManualPriceInput,
+  manualPriceDisplayFromCents,
+} from "@/components/admin/manual-price-input";
 
 interface RecipeRow {
   key: string;
@@ -41,16 +47,14 @@ interface DishFormValues {
   category: DishCategory;
   image_url: string;
   recipe_yield: string;
-  base_price_usd: string;
 }
 
-const emptyForm = (): DishFormValues => ({
+const emptyForm = (defaultCategory: DishCategory): DishFormValues => ({
   name: "",
   description: "",
-  category: "lunch_main",
+  category: defaultCategory,
   image_url: "",
   recipe_yield: "1",
-  base_price_usd: "0",
 });
 
 function fromDish(dish: DishWithRecipe): DishFormValues {
@@ -60,7 +64,6 @@ function fromDish(dish: DishWithRecipe): DishFormValues {
     category: dish.category as DishCategory,
     image_url: dish.image_url ?? "",
     recipe_yield: String(dish.recipe_yield ?? 1),
-    base_price_usd: String((dish.base_price_cents ?? 0) / 100),
   };
 }
 
@@ -95,6 +98,8 @@ interface DishFormDialogProps {
   dish?: DishWithRecipe | null;
   ingredients: Ingredient[];
   locale: string;
+  mode?: "regular" | "kids";
+  categoryOptions: readonly DishCategory[];
 }
 
 export function DishFormDialog({
@@ -103,15 +108,25 @@ export function DishFormDialog({
   dish,
   ingredients,
   locale,
+  mode = "regular",
+  categoryOptions,
 }: DishFormDialogProps) {
-  const t = useTranslations("admin.dishes");
+  const t = useTranslations(mode === "kids" ? "admin.kidsDishes" : "admin.dishes");
   const ti = useTranslations("admin.ingredients");
   const tc = useTranslations("common");
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [form, setForm] = useState<DishFormValues>(dish ? fromDish(dish) : emptyForm());
+  const [form, setForm] = useState<DishFormValues>(() =>
+    dish ? fromDish(dish) : emptyForm(categoryOptions[0] ?? "lunch_main")
+  );
   const [recipeRows, setRecipeRows] = useState<RecipeRow[]>(() => fromRecipe(dish));
+  const [manualPriceDisplay, setManualPriceDisplay] = useState(() =>
+    manualPriceDisplayFromCents(dish?.manual_price_cents ?? null, locale)
+  );
+  const [manualPriceUsdCents, setManualPriceUsdCents] = useState<number | null>(
+    dish?.manual_price_cents ?? null
+  );
 
   const isEdit = Boolean(dish);
 
@@ -141,10 +156,20 @@ export function DishFormDialog({
 
   const costPerPerson = totalDishCost / recipeYield;
 
+  const ingredientCostCents = Math.round(costPerPerson * 100);
+  const effectivePriceCents = manualPriceUsdCents ?? ingredientCostCents;
+
+  const priceLabel =
+    locale === "es" ? t("fields.manualPriceMxn") : t("fields.manualPriceUsd");
+
   function resetState(nextDish?: DishWithRecipe | null) {
     setError(null);
-    setForm(nextDish ? fromDish(nextDish) : emptyForm());
+    setForm(nextDish ? fromDish(nextDish) : emptyForm(categoryOptions[0] ?? "lunch_main"));
     setRecipeRows(nextDish?.recipe.length ? fromRecipe(nextDish) : []);
+    setManualPriceDisplay(
+      manualPriceDisplayFromCents(nextDish?.manual_price_cents ?? null, locale)
+    );
+    setManualPriceUsdCents(nextDish?.manual_price_cents ?? null);
   }
 
   function handleOpenChange(next: boolean) {
@@ -183,7 +208,8 @@ export function DishFormDialog({
       category: form.category,
       image_url: form.image_url.trim() || null,
       recipe_yield: Number(form.recipe_yield),
-      base_price_cents: Math.round(Math.max(0, Number(form.base_price_usd) || 0) * 100),
+      manual_price_cents: manualPriceUsdCents,
+      base_price_cents: effectivePriceCents,
       recipe,
     };
 
@@ -249,7 +275,7 @@ export function DishFormDialog({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {DISH_CATEGORIES.map((cat) => (
+                    {categoryOptions.map((cat) => (
                       <SelectItem key={cat} value={cat}>
                         {t(`categories.${cat}`)}
                       </SelectItem>
@@ -274,25 +300,21 @@ export function DishFormDialog({
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="dish-base-price">{t("fields.basePrice")}</Label>
-                <Input
-                  id="dish-base-price"
-                  type="number"
-                  min={0}
-                  step="0.01"
-                  value={form.base_price_usd}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, base_price_usd: e.target.value }))
-                  }
-                  disabled={pending}
-                />
-                <p className="text-xs text-neutral-500">
-                  {t("pricePreview", {
-                    price: formatCurrency(Number(form.base_price_usd) || 0, locale),
-                  })}
-                </p>
-              </div>
+              <ManualPriceInput
+                label={priceLabel}
+                locale={locale}
+                usdCents={manualPriceUsdCents ?? ingredientCostCents}
+                value={manualPriceDisplay}
+                onChange={(display, cents) => {
+                  setManualPriceDisplay(display);
+                  setManualPriceUsdCents(display.trim() === "" ? null : cents);
+                }}
+              />
+              <p className="text-xs text-neutral-500">
+                {t("ingredientCostLabel")}: {formatCurrency(costPerPerson, locale)}
+                {" · "}
+                {t("finalPriceLabel")}: {formatCurrency(centsToUsd(effectivePriceCents), locale)}
+              </p>
 
               <div className="space-y-2 sm:col-span-3">
                 <Label htmlFor="dish-image">{t("fields.imageUrl")}</Label>

@@ -11,7 +11,6 @@ import { WizardNav } from "@/components/guest/wizard-nav";
 import { advanceWizardStep, saveDraftAndExit, saveSnacksStep } from "@/app/[locale]/(guest)/guest/trip/actions";
 import type { GuestCatalogItem, GuestSnacksCatalog } from "@/lib/catalog/fetch-guest-catalogs";
 import { parseSnacksPayload, serializeSnacksPayload } from "@/lib/guest/snacks-selection";
-import { formatCurrency, centsToUsd } from "@/lib/utils";
 
 interface StepSnacksProps {
   tripId: string;
@@ -23,48 +22,51 @@ interface StepSnacksProps {
 function CatalogCheckboxList({
   items,
   selectedIds,
+  showOther,
+  otherText,
   onToggle,
-  customNotes,
-  onCustomNote,
-  locale,
+  onShowOther,
+  onOtherText,
+  otherLabel,
 }: {
   items: GuestCatalogItem[];
   selectedIds: string[];
+  showOther: boolean;
+  otherText: string;
   onToggle: (id: string) => void;
-  customNotes: Record<string, string>;
-  onCustomNote: (id: string, value: string) => void;
-  locale: string;
+  onShowOther: (on: boolean) => void;
+  onOtherText: (value: string) => void;
+  otherLabel: string;
 }) {
-  if (!items.length) {
-    return <p className="text-sm text-neutral-500">—</p>;
-  }
-
   return (
     <div className="grid gap-2 sm:grid-cols-2">
       {items.map((item) => (
-        <div key={item.id} className="space-y-1.5">
-          <label className="flex items-center gap-2 text-sm">
-            <Checkbox
-              checked={selectedIds.includes(item.id)}
-              onCheckedChange={() => onToggle(item.id)}
-            />
-            <span className="min-w-0 flex-1 break-words">
-              {item.name}
-              <span className="ml-1 text-xs text-neutral-500">
-                ({formatCurrency(centsToUsd(item.base_price_cents), locale)})
-              </span>
-            </span>
-          </label>
-          {item.allows_custom_note && selectedIds.includes(item.id) && (
-            <Input
-              type="text"
-              value={customNotes[item.id] ?? ""}
-              onChange={(e) => onCustomNote(item.id, e.target.value)}
-              className="ml-6 h-9 text-sm"
-            />
-          )}
-        </div>
+        <label key={item.id} className="flex items-center gap-2 text-sm">
+          <Checkbox
+            checked={selectedIds.includes(item.id)}
+            onCheckedChange={() => onToggle(item.id)}
+          />
+          <span className="min-w-0 flex-1 break-words">{item.name}</span>
+        </label>
       ))}
+      <div className="space-y-1.5 sm:col-span-2">
+        <label className="flex items-center gap-2 text-sm">
+          <Checkbox checked={showOther} onCheckedChange={(v) => onShowOther(v === true)} />
+          <span>{otherLabel}</span>
+        </label>
+        {showOther && (
+          <Input
+            type="text"
+            value={otherText}
+            onChange={(e) => onOtherText(e.target.value)}
+            placeholder="Especifica qué necesitas..."
+            className="ml-6 h-9 text-sm"
+          />
+        )}
+      </div>
+      {!items.length && !showOther ? (
+        <p className="text-sm text-neutral-500 sm:col-span-2">—</p>
+      ) : null}
     </div>
   );
 }
@@ -83,7 +85,20 @@ export function StepSnacks({ tripId, locale, catalog, initial }: StepSnacksProps
   const [charcuterieComplements, setCharcuterieComplements] = useState<string[]>(
     parsedInitial.charcuterie.complements
   );
-  const [customNotes, setCustomNotes] = useState<Record<string, string>>({});
+  const [snackOtherOn, setSnackOtherOn] = useState(Boolean(parsedInitial.otherSnack?.trim()));
+  const [otherSnack, setOtherSnack] = useState(parsedInitial.otherSnack ?? "");
+  const [alwaysOtherOn, setAlwaysOtherOn] = useState(Boolean(parsedInitial.otherAlways?.trim()));
+  const [otherAlways, setOtherAlways] = useState(parsedInitial.otherAlways ?? "");
+  const [meatsOtherOn, setMeatsOtherOn] = useState(Boolean(parsedInitial.charcuterie.otherMeats?.trim()));
+  const [otherMeats, setOtherMeats] = useState(parsedInitial.charcuterie.otherMeats ?? "");
+  const [cheesesOtherOn, setCheesesOtherOn] = useState(Boolean(parsedInitial.charcuterie.otherCheeses?.trim()));
+  const [otherCheeses, setOtherCheeses] = useState(parsedInitial.charcuterie.otherCheeses ?? "");
+  const [complementsOtherOn, setComplementsOtherOn] = useState(
+    Boolean(parsedInitial.charcuterie.otherComplements?.trim())
+  );
+  const [otherComplements, setOtherComplements] = useState(
+    parsedInitial.charcuterie.otherComplements ?? ""
+  );
 
   function toggleId(list: string[], setList: (v: string[]) => void, id: string) {
     setList(list.includes(id) ? list.filter((x) => x !== id) : [...list, id]);
@@ -97,12 +112,12 @@ export function StepSnacks({ tripId, locale, catalog, initial }: StepSnacksProps
         meats: charcuterieMeats,
         cheeses: charcuterieCheeses,
         complements: charcuterieComplements,
-        otherMeats: null,
-        otherCheeses: null,
-        otherComplements: null,
+        otherMeats: meatsOtherOn ? otherMeats.trim() || null : null,
+        otherCheeses: cheesesOtherOn ? otherCheeses.trim() || null : null,
+        otherComplements: complementsOtherOn ? otherComplements.trim() || null : null,
       },
-      otherSnack: parsedInitial.otherSnack,
-      otherAlways: parsedInitial.otherAlways,
+      otherSnack: snackOtherOn ? otherSnack.trim() || null : null,
+      otherAlways: alwaysOtherOn ? otherAlways.trim() || null : null,
     });
     await saveSnacksStep({ tripId, payload });
   }
@@ -136,10 +151,15 @@ export function StepSnacks({ tripId, locale, catalog, initial }: StepSnacksProps
             <CatalogCheckboxList
               items={catalog.snacks}
               selectedIds={snackIds}
+              showOther={snackOtherOn}
+              otherText={otherSnack}
               onToggle={(id) => toggleId(snackIds, setSnackIds, id)}
-              customNotes={customNotes}
-              onCustomNote={(id, v) => setCustomNotes((p) => ({ ...p, [id]: v }))}
-              locale={locale}
+              onShowOther={(on) => {
+                setSnackOtherOn(on);
+                if (!on) setOtherSnack("");
+              }}
+              onOtherText={setOtherSnack}
+              otherLabel={t("otherOption")}
             />
           </section>
 
@@ -148,10 +168,15 @@ export function StepSnacks({ tripId, locale, catalog, initial }: StepSnacksProps
             <CatalogCheckboxList
               items={catalog.alwaysOnboard}
               selectedIds={alwaysIds}
+              showOther={alwaysOtherOn}
+              otherText={otherAlways}
               onToggle={(id) => toggleId(alwaysIds, setAlwaysIds, id)}
-              customNotes={customNotes}
-              onCustomNote={(id, v) => setCustomNotes((p) => ({ ...p, [id]: v }))}
-              locale={locale}
+              onShowOther={(on) => {
+                setAlwaysOtherOn(on);
+                if (!on) setOtherAlways("");
+              }}
+              onOtherText={setOtherAlways}
+              otherLabel={t("otherOption")}
             />
           </section>
 
@@ -168,10 +193,15 @@ export function StepSnacks({ tripId, locale, catalog, initial }: StepSnacksProps
                 <CatalogCheckboxList
                   items={catalog.charcuterie.meats}
                   selectedIds={charcuterieMeats}
+                  showOther={meatsOtherOn}
+                  otherText={otherMeats}
                   onToggle={(id) => toggleId(charcuterieMeats, setCharcuterieMeats, id)}
-                  customNotes={customNotes}
-                  onCustomNote={(id, v) => setCustomNotes((p) => ({ ...p, [id]: v }))}
-                  locale={locale}
+                  onShowOther={(on) => {
+                    setMeatsOtherOn(on);
+                    if (!on) setOtherMeats("");
+                  }}
+                  onOtherText={setOtherMeats}
+                  otherLabel={t("otherOption")}
                 />
               </div>
               <div className="space-y-2">
@@ -179,10 +209,15 @@ export function StepSnacks({ tripId, locale, catalog, initial }: StepSnacksProps
                 <CatalogCheckboxList
                   items={catalog.charcuterie.cheeses}
                   selectedIds={charcuterieCheeses}
+                  showOther={cheesesOtherOn}
+                  otherText={otherCheeses}
                   onToggle={(id) => toggleId(charcuterieCheeses, setCharcuterieCheeses, id)}
-                  customNotes={customNotes}
-                  onCustomNote={(id, v) => setCustomNotes((p) => ({ ...p, [id]: v }))}
-                  locale={locale}
+                  onShowOther={(on) => {
+                    setCheesesOtherOn(on);
+                    if (!on) setOtherCheeses("");
+                  }}
+                  onOtherText={setOtherCheeses}
+                  otherLabel={t("otherOption")}
                 />
               </div>
             </div>
@@ -191,10 +226,15 @@ export function StepSnacks({ tripId, locale, catalog, initial }: StepSnacksProps
               <CatalogCheckboxList
                 items={catalog.charcuterie.complements}
                 selectedIds={charcuterieComplements}
+                showOther={complementsOtherOn}
+                otherText={otherComplements}
                 onToggle={(id) => toggleId(charcuterieComplements, setCharcuterieComplements, id)}
-                customNotes={customNotes}
-                onCustomNote={(id, v) => setCustomNotes((p) => ({ ...p, [id]: v }))}
-                locale={locale}
+                onShowOther={(on) => {
+                  setComplementsOtherOn(on);
+                  if (!on) setOtherComplements("");
+                }}
+                onOtherText={setOtherComplements}
+                otherLabel={t("otherOption")}
               />
             </div>
           </section>

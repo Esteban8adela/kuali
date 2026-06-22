@@ -22,6 +22,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  ManualPriceInput,
+  manualPriceDisplayFromCents,
+} from "@/components/admin/manual-price-input";
 import { formatCurrency, centsToUsd } from "@/lib/utils";
 
 interface CatalogRow {
@@ -31,11 +35,18 @@ interface CatalogRow {
   base_price_cents: number;
 }
 
+type CatalogI18n =
+  | "admin.charcuterie"
+  | "admin.alwaysOnboard"
+  | "admin.snacks";
+
 interface NamedCatalogManagerProps {
   items: CatalogRow[];
   locale: string;
-  i18nNamespace: "admin.charcuterie" | "admin.alwaysOnboard";
+  i18nNamespace: CatalogI18n;
   categories?: readonly string[];
+  embedded?: boolean;
+  defaultCategory?: string;
   onCreate: (input: Record<string, unknown>) => Promise<unknown>;
   onUpdate: (id: string, input: Record<string, unknown>) => Promise<unknown>;
   onDelete: (id: string) => Promise<unknown>;
@@ -46,6 +57,8 @@ export function NamedCatalogManager({
   locale,
   i18nNamespace,
   categories,
+  embedded = false,
+  defaultCategory,
   onCreate,
   onUpdate,
   onDelete,
@@ -57,15 +70,20 @@ export function NamedCatalogManager({
   const [editing, setEditing] = useState<CatalogRow | null>(null);
   const [pending, startTransition] = useTransition();
   const [name, setName] = useState("");
-  const [category, setCategory] = useState(categories?.[0] ?? "");
-  const [basePrice, setBasePrice] = useState("0");
+  const [category, setCategory] = useState(defaultCategory ?? categories?.[0] ?? "");
+  const [priceDisplay, setPriceDisplay] = useState("0");
+  const [priceUsdCents, setPriceUsdCents] = useState(0);
   const [error, setError] = useState<string | null>(null);
+
+  const priceLabel =
+    locale === "es" ? t("fields.manualPriceMxn") : t("fields.manualPriceUsd");
 
   function openCreate() {
     setEditing(null);
     setName("");
-    setCategory(categories?.[0] ?? "");
-    setBasePrice("0");
+    setCategory(defaultCategory ?? categories?.[0] ?? "");
+    setPriceDisplay("0");
+    setPriceUsdCents(0);
     setError(null);
     setDialogOpen(true);
   }
@@ -73,8 +91,10 @@ export function NamedCatalogManager({
   function openEdit(item: CatalogRow) {
     setEditing(item);
     setName(item.name);
-    setCategory(item.category ?? categories?.[0] ?? "");
-    setBasePrice(String((item.base_price_cents / 100).toFixed(2)));
+    setCategory(item.category ?? defaultCategory ?? categories?.[0] ?? "");
+    const display = manualPriceDisplayFromCents(item.base_price_cents, locale);
+    setPriceDisplay(display || "0");
+    setPriceUsdCents(item.base_price_cents);
     setError(null);
     setDialogOpen(true);
   }
@@ -83,8 +103,8 @@ export function NamedCatalogManager({
     e.preventDefault();
     const payload = {
       name: name.trim(),
-      category: categories ? category : undefined,
-      base_price_cents: Math.round(Math.max(0, parseFloat(basePrice) || 0) * 100),
+      category: defaultCategory ?? category,
+      base_price_cents: priceUsdCents,
     };
 
     startTransition(async () => {
@@ -107,72 +127,85 @@ export function NamedCatalogManager({
     });
   }
 
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="font-display text-3xl text-[#1B3A4B]">{t("title")}</h1>
-          <p className="mt-1 text-sm text-neutral-500">{t("subtitle")}</p>
-        </div>
-        <Button variant="gold" size="lg" onClick={openCreate}>
-          <Plus className="h-4 w-4" />
-          {t("addButton")}
-        </Button>
-      </div>
-
-      <Card className="border-0 shadow-sm">
-        <CardContent className="p-0">
-          {items.length === 0 ? (
-            <p className="px-6 py-12 text-center text-neutral-500">{t("empty")}</p>
-          ) : (
-            <table className="w-full min-w-[560px] text-sm">
-              <thead>
-                <tr className="border-b border-[#1B3A4B]/10 bg-[#1B3A4B]/5 text-left text-xs uppercase tracking-wider text-neutral-600">
-                  <th className="px-4 py-3 font-medium">{t("columns.name")}</th>
-                  {categories ? (
-                    <th className="px-4 py-3 font-medium">{t("columns.category")}</th>
+  const table = (
+    <Card className={embedded ? "border-0 shadow-none" : "border-0 shadow-sm"}>
+      <CardContent className="p-0">
+        {items.length === 0 ? (
+          <p className="px-6 py-8 text-center text-neutral-500">{t("empty")}</p>
+        ) : (
+          <table className="w-full min-w-[480px] text-sm">
+            <thead>
+              <tr className="border-b border-[#1B3A4B]/10 bg-[#1B3A4B]/5 text-left text-xs uppercase tracking-wider text-neutral-600">
+                <th className="px-4 py-3 font-medium">{t("columns.name")}</th>
+                {categories && !defaultCategory ? (
+                  <th className="px-4 py-3 font-medium">{t("columns.category")}</th>
+                ) : null}
+                <th className="px-4 py-3 font-medium">{t("columns.basePrice")}</th>
+                <th className="px-4 py-3 text-right font-medium">{t("columns.actions")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((item) => (
+                <tr key={item.id} className="border-b border-neutral-100 hover:bg-[#C4A052]/5">
+                  <td className="px-4 py-3 font-medium text-[#1B3A4B]">{item.name}</td>
+                  {categories && !defaultCategory ? (
+                    <td className="px-4 py-3">
+                      {item.category
+                        ? t(`categories.${item.category}` as "categories.meats")
+                        : "—"}
+                    </td>
                   ) : null}
-                  <th className="px-4 py-3 font-medium">{t("columns.basePrice")}</th>
-                  <th className="px-4 py-3 text-right font-medium">{t("columns.actions")}</th>
+                  <td className="px-4 py-3">
+                    {formatCurrency(centsToUsd(item.base_price_cents), locale)}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex justify-end gap-1">
+                      <Button type="button" variant="ghost" size="icon" onClick={() => openEdit(item)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(item.id)}
+                        disabled={pending}
+                      >
+                        <Trash2 className="h-4 w-4 text-red-600" />
+                      </Button>
+                    </div>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {items.map((item) => (
-                  <tr key={item.id} className="border-b border-neutral-100 hover:bg-[#C4A052]/5">
-                    <td className="px-4 py-3 font-medium text-[#1B3A4B]">{item.name}</td>
-                    {categories ? (
-                      <td className="px-4 py-3">
-                        {item.category
-                          ? t(`categories.${item.category}` as "categories.meats")
-                          : "—"}
-                      </td>
-                    ) : null}
-                    <td className="px-4 py-3">
-                      {formatCurrency(centsToUsd(item.base_price_cents), locale)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex justify-end gap-1">
-                        <Button type="button" variant="ghost" size="icon" onClick={() => openEdit(item)}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(item.id)}
-                          disabled={pending}
-                        >
-                          <Trash2 className="h-4 w-4 text-red-600" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </CardContent>
-      </Card>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </CardContent>
+    </Card>
+  );
+
+  return (
+    <div className={embedded ? "space-y-4" : "space-y-6"}>
+      {!embedded ? (
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="font-display text-3xl text-[#1B3A4B]">{t("title")}</h1>
+            <p className="mt-1 text-sm text-neutral-500">{t("subtitle")}</p>
+          </div>
+          <Button variant="gold" size="lg" onClick={openCreate}>
+            <Plus className="h-4 w-4" />
+            {t("addButton")}
+          </Button>
+        </div>
+      ) : (
+        <div className="flex justify-end">
+          <Button variant="gold" size="sm" onClick={openCreate}>
+            <Plus className="h-4 w-4" />
+            {t("addButton")}
+          </Button>
+        </div>
+      )}
+
+      {table}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-md">
@@ -191,7 +224,7 @@ export function NamedCatalogManager({
                 required
               />
             </div>
-            {categories ? (
+            {categories && !defaultCategory ? (
               <div>
                 <Label>{t("fields.category")}</Label>
                 <Select value={category} onValueChange={setCategory}>
@@ -208,23 +241,16 @@ export function NamedCatalogManager({
                 </Select>
               </div>
             ) : null}
-            <div>
-              <Label htmlFor="item-price">{t("fields.basePrice")}</Label>
-              <Input
-                id="item-price"
-                type="number"
-                min="0"
-                step="0.01"
-                className="mt-1.5"
-                value={basePrice}
-                onChange={(e) => setBasePrice(e.target.value)}
-              />
-              <p className="mt-1 text-xs text-neutral-500">
-                {t("pricePreview", {
-                  price: formatCurrency(parseFloat(basePrice) || 0, locale),
-                })}
-              </p>
-            </div>
+            <ManualPriceInput
+              label={priceLabel}
+              locale={locale}
+              usdCents={priceUsdCents}
+              value={priceDisplay}
+              onChange={(display, cents) => {
+                setPriceDisplay(display);
+                setPriceUsdCents(cents);
+              }}
+            />
             {error ? <p className="text-sm text-red-600">{error}</p> : null}
             <div className="flex justify-end gap-2 pt-2">
               <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>

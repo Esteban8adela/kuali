@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -22,7 +22,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { BEVERAGE_CATEGORIES } from "@/lib/validations/beverage";
+import { BEVERAGE_CATEGORY_KEYS, SPIRIT_SUBCATEGORIES } from "@/lib/constants/beverages";
+import {
+  ManualPriceInput,
+  manualPriceDisplayFromCents,
+} from "@/components/admin/manual-price-input";
 import {
   createBeverage,
   deleteBeverage,
@@ -43,18 +47,29 @@ export function BeveragesManager({ items, locale }: BeveragesManagerProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<CatalogItemRow | null>(null);
   const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({
     name_en: "",
     name_es: "",
     category: "spirit",
-    subcategory: "",
-    base_price: "0",
+    subcategory: SPIRIT_SUBCATEGORIES[0] as string,
   });
-  const [error, setError] = useState<string | null>(null);
+  const [priceDisplay, setPriceDisplay] = useState("0");
+  const [priceUsdCents, setPriceUsdCents] = useState(0);
 
-  function openCreate() {
+  const priceLabel =
+    locale === "es" ? t("fields.manualPriceMxn") : t("fields.manualPriceUsd");
+
+  function openCreate(category = "spirit") {
     setEditing(null);
-    setForm({ name_en: "", name_es: "", category: "spirit", subcategory: "", base_price: "0" });
+    setForm({
+      name_en: "",
+      name_es: "",
+      category,
+      subcategory: category === "spirit" ? SPIRIT_SUBCATEGORIES[0] : "",
+    });
+    setPriceDisplay("0");
+    setPriceUsdCents(0);
     setError(null);
     setDialogOpen(true);
   }
@@ -65,9 +80,11 @@ export function BeveragesManager({ items, locale }: BeveragesManagerProps) {
       name_en: item.name_en,
       name_es: item.name_es,
       category: item.category,
-      subcategory: item.subcategory ?? "",
-      base_price: String((item.base_price_cents / 100).toFixed(2)),
+      subcategory: item.subcategory ?? (item.category === "spirit" ? SPIRIT_SUBCATEGORIES[0] : ""),
     });
+    const display = manualPriceDisplayFromCents(item.base_price_cents, locale);
+    setPriceDisplay(display || "0");
+    setPriceUsdCents(item.base_price_cents);
     setError(null);
     setDialogOpen(true);
   }
@@ -78,8 +95,8 @@ export function BeveragesManager({ items, locale }: BeveragesManagerProps) {
       name_en: form.name_en.trim(),
       name_es: form.name_es.trim(),
       category: form.category,
-      subcategory: form.subcategory.trim() || null,
-      base_price_cents: Math.round(Math.max(0, parseFloat(form.base_price) || 0) * 100),
+      subcategory: form.category === "spirit" ? form.subcategory : null,
+      base_price_cents: priceUsdCents,
     };
 
     startTransition(async () => {
@@ -105,66 +122,91 @@ export function BeveragesManager({ items, locale }: BeveragesManagerProps) {
   const displayName = (item: CatalogItemRow) =>
     locale === "es" ? item.name_es : item.name_en;
 
+  const sectionMeta: Record<string, { title: string; desc: string }> = {
+    spirit: { title: t("sections.spirits"), desc: t("sections.spiritsDesc") },
+    mixer: { title: t("sections.mixers"), desc: t("sections.mixersDesc") },
+    beer: { title: t("sections.beers"), desc: t("sections.beersDesc") },
+    wine: { title: t("sections.wines"), desc: t("sections.winesDesc") },
+  };
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="font-display text-3xl text-[#1B3A4B]">{t("title")}</h1>
-          <p className="mt-1 text-sm text-neutral-500">{t("subtitle")}</p>
-        </div>
-        <Button variant="gold" size="lg" onClick={openCreate}>
-          <Plus className="h-4 w-4" />
-          {t("addButton")}
-        </Button>
+    <div className="space-y-8">
+      <div>
+        <h1 className="font-display text-3xl text-[#1B3A4B]">{t("title")}</h1>
+        <p className="mt-1 text-sm text-neutral-500">{t("subtitle")}</p>
       </div>
 
-      <Card className="border-0 shadow-sm">
-        <CardContent className="p-0">
-          {items.length === 0 ? (
-            <p className="px-6 py-12 text-center text-neutral-500">{t("empty")}</p>
-          ) : (
-            <table className="w-full min-w-[720px] text-sm">
-              <thead>
-                <tr className="border-b border-[#1B3A4B]/10 bg-[#1B3A4B]/5 text-left text-xs uppercase tracking-wider text-neutral-600">
-                  <th className="px-4 py-3 font-medium">{t("columns.name")}</th>
-                  <th className="px-4 py-3 font-medium">{t("columns.category")}</th>
-                  <th className="px-4 py-3 font-medium">{t("columns.subcategory")}</th>
-                  <th className="px-4 py-3 font-medium">{t("columns.basePrice")}</th>
-                  <th className="px-4 py-3 text-right font-medium">{t("columns.actions")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((item) => (
-                  <tr key={item.id} className="border-b border-neutral-100 hover:bg-[#C4A052]/5">
-                    <td className="px-4 py-3 font-medium text-[#1B3A4B]">{displayName(item)}</td>
-                    <td className="px-4 py-3">{t(`categories.${item.category}` as "categories.spirit")}</td>
-                    <td className="px-4 py-3 text-neutral-600">{item.subcategory ?? "—"}</td>
-                    <td className="px-4 py-3">
-                      {formatCurrency(centsToUsd(item.base_price_cents), locale)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex justify-end gap-1">
-                        <Button type="button" variant="ghost" size="icon" onClick={() => openEdit(item)}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(item.id)}
-                          disabled={pending}
-                        >
-                          <Trash2 className="h-4 w-4 text-red-600" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </CardContent>
-      </Card>
+      <div className="grid gap-6">
+        {BEVERAGE_CATEGORY_KEYS.map((cat) => {
+          const sectionItems = items.filter((i) => i.category === cat);
+          const meta = sectionMeta[cat];
+          return (
+            <Card key={cat} className="border-0 shadow-sm">
+              <CardHeader className="flex flex-row items-start justify-between gap-4">
+                <div>
+                  <CardTitle>{meta.title}</CardTitle>
+                  <CardDescription>{meta.desc}</CardDescription>
+                </div>
+                <Button variant="gold" size="sm" onClick={() => openCreate(cat)}>
+                  <Plus className="h-4 w-4" />
+                  {t("addButton")}
+                </Button>
+              </CardHeader>
+              <CardContent className="p-0 pb-4">
+                {sectionItems.length === 0 ? (
+                  <p className="px-6 py-6 text-center text-sm text-neutral-500">{t("empty")}</p>
+                ) : (
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-[#1B3A4B]/10 bg-[#1B3A4B]/5 text-left text-xs uppercase text-neutral-600">
+                        <th className="px-4 py-2 font-medium">{t("columns.name")}</th>
+                        {cat === "spirit" ? (
+                          <th className="px-4 py-2 font-medium">{t("columns.subcategory")}</th>
+                        ) : null}
+                        <th className="px-4 py-2 font-medium">{t("columns.basePrice")}</th>
+                        <th className="px-4 py-2 text-right font-medium">{t("columns.actions")}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sectionItems.map((item) => (
+                        <tr key={item.id} className="border-b border-neutral-100">
+                          <td className="px-4 py-2.5 font-medium">{displayName(item)}</td>
+                          {cat === "spirit" ? (
+                            <td className="px-4 py-2.5 text-neutral-600">
+                              {item.subcategory
+                                ? t(`spiritTypes.${item.subcategory}` as "spiritTypes.rum")
+                                : "—"}
+                            </td>
+                          ) : null}
+                          <td className="px-4 py-2.5">
+                            {formatCurrency(centsToUsd(item.base_price_cents), locale)}
+                          </td>
+                          <td className="px-4 py-2.5">
+                            <div className="flex justify-end gap-1">
+                              <Button type="button" variant="ghost" size="icon" onClick={() => openEdit(item)}>
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleDelete(item.id)}
+                                disabled={pending}
+                              >
+                                <Trash2 className="h-4 w-4 text-red-600" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-md">
@@ -193,50 +235,36 @@ export function BeveragesManager({ items, locale }: BeveragesManagerProps) {
                 required
               />
             </div>
-            <div>
-              <Label>{t("fields.category")}</Label>
-              <Select
-                value={form.category}
-                onValueChange={(v) => setForm((f) => ({ ...f, category: v }))}
-              >
-                <SelectTrigger className="mt-1.5">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {BEVERAGE_CATEGORIES.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
-                      {t(`categories.${cat}`)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="bev-sub">{t("fields.subcategory")}</Label>
-              <Input
-                id="bev-sub"
-                className="mt-1.5"
-                value={form.subcategory}
-                onChange={(e) => setForm((f) => ({ ...f, subcategory: e.target.value }))}
-              />
-            </div>
-            <div>
-              <Label htmlFor="bev-price">{t("fields.basePrice")}</Label>
-              <Input
-                id="bev-price"
-                type="number"
-                min="0"
-                step="0.01"
-                className="mt-1.5"
-                value={form.base_price}
-                onChange={(e) => setForm((f) => ({ ...f, base_price: e.target.value }))}
-              />
-              <p className="mt-1 text-xs text-neutral-500">
-                {t("pricePreview", {
-                  price: formatCurrency(parseFloat(form.base_price) || 0, locale),
-                })}
-              </p>
-            </div>
+            {form.category === "spirit" ? (
+              <div>
+                <Label>{t("fields.spiritType")}</Label>
+                <Select
+                  value={form.subcategory}
+                  onValueChange={(v) => setForm((f) => ({ ...f, subcategory: v }))}
+                >
+                  <SelectTrigger className="mt-1.5">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SPIRIT_SUBCATEGORIES.map((sub) => (
+                      <SelectItem key={sub} value={sub}>
+                        {t(`spiritTypes.${sub}`)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : null}
+            <ManualPriceInput
+              label={priceLabel}
+              locale={locale}
+              usdCents={priceUsdCents}
+              value={priceDisplay}
+              onChange={(display, cents) => {
+                setPriceDisplay(display);
+                setPriceUsdCents(cents);
+              }}
+            />
             {error ? <p className="text-sm text-red-600">{error}</p> : null}
             <div className="flex justify-end gap-2 pt-2">
               <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>

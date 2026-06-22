@@ -289,6 +289,8 @@
         "addWithoutBrand": "Agregar sin marca",
         "chefDefaultHelp": "Si no se especifica cantidad o marca, quedará a consideración del Chef.",
         "addBrand": "Agregar marca…",
+        "addOther": "Agregar otro",
+        "otherPlaceholder": "Especifica qué necesitas...",
         "addWine": "Agregar vino…",
         "addBeer": "Agregar cerveza…",
         "addMixer": "Agregar mixer…",
@@ -313,6 +315,7 @@
         "charcuterieCheeses": "Quesos",
         "charcuterieComplements": "Complementos",
         "charcuterieHelp": "(Selección de charcutería premium)",
+        "otherOption": "Otro",
         "charcuterieOtherPlaceholder": "Especifique su preferencia…",
         "charcuterieItems": {
           "meats": {
@@ -386,6 +389,26 @@
   },
   "chef": {
     "greeting": "Hola, Chef",
+    "nav": {
+      "dashboard": "Dashboard (Próximos viajes)",
+      "history": "Historial",
+      "catalogs": "Catálogos (solo lectura)"
+    },
+    "history": {
+      "title": "Historial de viajes",
+      "subtitle": "Viajes pasados y órdenes de servicio archivadas."
+    },
+    "catalog": {
+      "title": "Catálogos (solo lectura)",
+      "subtitle": "Consulta platillos, snacks y bebidas configurados por el administrador.",
+      "dishesSection": "Platillos",
+      "snacksSection": "Snacks",
+      "beveragesSection": "Bebidas",
+      "nameColumn": "Nombre",
+      "categoryColumn": "Categoría",
+      "priceColumn": "Precio",
+      "empty": "Sin ítems en este catálogo."
+    },
     "dashboard": "Operaciones",
     "orders": "Órdenes en vivo",
     "allergies": "Alergias críticas",
@@ -443,6 +466,12 @@
       "dishPending": "Platillo pendiente / no encontrado",
       "kidsMenus": "{count} menú(s) infantil(es)",
       "complements": "Snacks y complementos",
+      "snacksToBuy": "Snacks a comprar",
+      "alwaysOnboard": "Siempre a bordo",
+      "charcuterieSection": "Charcutería",
+      "charcuterieMeats": "Carnes",
+      "charcuterieCheeses": "Quesos",
+      "charcuterieComplements": "Complementos",
       "noneSelected": "Ninguno seleccionado",
       "barBottles": "Selección de botellas del bar",
       "byob": "El huésped llevará sus propias botellas (BYOB)",
@@ -492,14 +521,85 @@
     "menus": "Catálogo de menús",
     "guests": "Huéspedes",
     "trips": "Viajes",
-    "catalogNav": "Catálogo y recetas",
+    "catalogNav": "Ingredientes",
+    "dishesNav": "Platillos",
+    "kidsMenuNav": "Menú infantil",
+    "pantryNav": "Snacks y despensa",
     "snacksNav": "Catálogo de snacks",
     "beveragesNav": "Bebidas y licores",
     "charcuterieNav": "Charcutería",
     "alwaysOnboardNav": "Siempre a bordo",
     "catalog": {
       "ingredientsTab": "Ingredientes",
-      "dishesTab": "Platillos"
+      "dishesTab": "Platillos",
+      "kidsMenuTab": "Menú infantil",
+      "pantryTab": "Snacks y despensa",
+      "beveragesTab": "Bebidas"
+    },
+    "pantry": {
+      "title": "Snacks y despensa",
+      "subtitle": "Gestione snacks, siempre a bordo y charcutería en un solo lugar.",
+      "snacksCard": "Snacks",
+      "snacksCardDesc": "Papas, dulces y botanas para comprar.",
+      "alwaysOnboardCard": "Siempre a bordo",
+      "alwaysOnboardCardDesc": "Checklist base de provisiones.",
+      "charcuterieCard": "Charcutería",
+      "charcuterieCardDesc": "Carnes, quesos y complementos.",
+      "charcuterieMeats": "Carnes",
+      "charcuterieCheeses": "Quesos",
+      "charcuterieComplements": "Acompañamientos"
+    },
+    "kidsDishes": {
+      "title": "Menú infantil",
+      "subtitle": "Platillos por tiempo de comida para niños.",
+      "addButton": "Agregar platillo infantil",
+      "addTitle": "Nuevo platillo infantil",
+      "editTitle": "Editar platillo infantil",
+      "formSubtitle": "Defina categoría infantil, receta y precio manual opcional.",
+      "empty": "Aún no hay platillos infantiles.",
+      "saveError": "No se pudo guardar el platillo.",
+      "deleteConfirm": "¿Eliminar este platillo?",
+      "edit": "Editar",
+      "delete": "Eliminar",
+      "recipeLineCount": "{count, plural, =0 {Sin ingredientes} one {# ingrediente} other {# ingredientes}}",
+      "ingredientCostLabel": "Costo por ingredientes (por persona)",
+      "finalPriceLabel": "Precio final",
+      "columns": {
+        "name": "Nombre",
+        "category": "Categoría",
+        "description": "Descripción",
+        "recipeLines": "Receta",
+        "actions": "Acciones"
+      },
+      "fields": {
+        "name": "Nombre",
+        "description": "Descripción",
+        "category": "Categoría",
+        "recipeYield": "Rendimiento (porciones)",
+        "imageUrl": "URL de imagen",
+        "manualPriceMxn": "Precio manual (MXN)",
+        "manualPriceUsd": "Precio manual (USD)"
+      },
+      "categories": {
+        "kids_breakfast": "Desayuno infantil",
+        "kids_lunch_main": "Plato fuerte comida",
+        "kids_lunch_dessert": "Postre comida",
+        "kids_dinner": "Cena infantil"
+      },
+      "recipe": {
+        "title": "Constructor de receta",
+        "subtitle": "Cantidades totales del lote; por persona se calcula automáticamente.",
+        "addLine": "Añadir ingrediente",
+        "empty": "Sin líneas de receta.",
+        "noIngredients": "Cree ingredientes primero.",
+        "ingredient": "Ingrediente",
+        "selectIngredient": "Seleccionar ingrediente",
+        "totalQuantity": "Cantidad total",
+        "equivPerPerson": "Eq. a {amount} {unit} por persona",
+        "removeLine": "Eliminar línea",
+        "totalDishCost": "Costo total del platillo",
+        "totalCostPerPerson": "Costo por persona"
+      }
     },
     "ingredientsNav": "Ingredientes",
     "ingredients": {
@@ -572,8 +672,12 @@
         "category": "Categoría",
         "recipeYield": "Rendimiento (porciones)",
         "imageUrl": "URL de imagen",
-        "basePrice": "Precio base (USD)"
+        "basePrice": "Precio base (USD)",
+        "manualPriceMxn": "Precio manual (MXN)",
+        "manualPriceUsd": "Precio manual (USD)"
       },
+      "ingredientCostLabel": "Costo por ingredientes (por persona)",
+      "finalPriceLabel": "Precio final",
       "pricePreview": "Vista previa: {price}",
       "categories": {
         "breakfast": "Desayuno",
@@ -623,7 +727,9 @@
       "fields": {
         "name": "Nombre",
         "category": "Categoría",
-        "basePrice": "Precio base (USD)"
+        "basePrice": "Precio base (USD)",
+        "manualPriceMxn": "Precio manual (MXN)",
+        "manualPriceUsd": "Precio manual (USD)"
       },
       "categories": {
         "chips": "Papas / chips",
@@ -656,7 +762,30 @@
         "nameEs": "Nombre (ES)",
         "category": "Categoría",
         "subcategory": "Subcategoría",
-        "basePrice": "Precio base (USD)"
+        "spiritType": "Tipo de licor",
+        "basePrice": "Precio base (USD)",
+        "manualPriceMxn": "Precio manual (MXN)",
+        "manualPriceUsd": "Precio manual (USD)"
+      },
+      "sections": {
+        "spirits": "Licores",
+        "spiritsDesc": "Ron, tequila, vodka, ginebra, whiskey y más.",
+        "mixers": "Mezcladores",
+        "mixersDesc": "Jugos, sodas y complementos para cocteles.",
+        "beers": "Cervezas",
+        "beersDesc": "Cervezas y radlers.",
+        "wines": "Vinos",
+        "winesDesc": "Vinos tintos, blancos y rosados."
+      },
+      "spiritTypes": {
+        "rum": "Ron",
+        "tequila": "Tequila",
+        "vodka": "Vodka",
+        "gin": "Ginebra",
+        "whiskey": "Whiskey",
+        "mezcal": "Mezcal",
+        "cognac": "Cognac",
+        "brandy": "Brandy"
       },
       "categories": {
         "spirit": "Licor",
@@ -685,7 +814,9 @@
       "fields": {
         "name": "Nombre",
         "category": "Categoría",
-        "basePrice": "Precio base (USD)"
+        "basePrice": "Precio base (USD)",
+        "manualPriceMxn": "Precio manual (MXN)",
+        "manualPriceUsd": "Precio manual (USD)"
       },
       "categories": {
         "meats": "Carnes",

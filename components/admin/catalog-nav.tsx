@@ -17,11 +17,14 @@ export function CatalogNav({ locale }: CatalogNavProps) {
   const tabs = [
     { href: `${base}/ingredients`, label: t("ingredientsTab") },
     { href: `${base}/dishes`, label: t("dishesTab") },
+    { href: `${base}/kids-menu`, label: t("kidsMenuTab") },
+    { href: `${base}/pantry`, label: t("pantryTab") },
+    { href: `${base}/beverages`, label: t("beveragesTab") },
   ] as const;
 
   return (
     <div className="mb-8 border-b border-[#1B3A4B]/10">
-      <div className="flex gap-1">
+      <div className="flex flex-wrap gap-1">
         {tabs.map(({ href, label }) => {
           const active = pathname.startsWith(href);
           return (
