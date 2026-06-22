@@ -1,16 +1,13 @@
 "use client";
 
-import { useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import { calculateFoodAllowanceUsd } from "@/lib/pricing/food-allowance";
+import { formatCurrency, centsToUsd } from "@/lib/utils";
+import { parseSnacksPayload } from "@/lib/guest/snacks-selection";
+import type { PricingCatalog } from "@/lib/pricing/fetch-pricing-catalog";
 import { formatChefGuestDisplayName, participantGuestNumber } from "@/lib/guest/participant-names";
 import { parseAllergiesFromDb } from "@/lib/guest/preference-state";
-import {
-  extractBarBottleLines,
-  extractCharcuterie,
-  extractSnackKeys,
-} from "@/lib/chef/format-service-order";
+import { extractBarBottleLines } from "@/lib/chef/format-service-order";
 import {
   breakfastDishRows,
   dinnerDishRows,
@@ -43,40 +40,46 @@ function formatDateRange(
   return fmt.format(new Date(`${(startNorm ?? endNorm)!}T12:00:00`));
 }
 
-function zeroPrice(locale: string): string {
-  return new Intl.NumberFormat(locale === "es" ? "es-MX" : "en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-  }).format(0);
+function MenuCell({
+  rows,
+  pending,
+}: {
+  rows: Array<{ label: string; value: string | null }>;
+  pending: string;
+}) {
+  const visible = rows.filter((r) => r.value && r.value !== pending);
+  if (!visible.length) return <span>—</span>;
+  return (
+    <ul className="space-y-0.5">
+      {visible.map((row) => (
+        <li key={row.label} className="block">
+          <span className="text-neutral-500">{row.label}:</span>{" "}
+          <span className="font-medium">{row.value}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function priceForId(catalog: PricingCatalog, map: keyof PricingCatalog, id: string, locale: string): string {
+  const table = catalog[map] as Record<string, number>;
+  return formatCurrency(centsToUsd(table[id] ?? 0), locale);
 }
 
 export function ShoppingListReport({ data, locale }: ShoppingListReportProps) {
   const t = useTranslations("chef.shoppingList");
   const tMenu = useTranslations("guest.wizard.menu");
-  const tSnacks = useTranslations("guest.wizard.snacks");
   const tAllergies = useTranslations("guest.wizard.preferences.allergyOptions");
   const tDiet = useTranslations("guest.wizard.preferences.dietStyles");
 
-  const { trip, principal_guest_name, participants, itinerary, dishNames, barOrder, snacksData } =
+  const { trip, principal_guest_name, participants, itinerary, dishNames, barOrder, snacksData, tripCostUsd, pricingCatalog } =
     data;
 
-  const zeroUsd = useMemo(() => zeroPrice(locale), [locale]);
   const pending = tMenu("noSelection");
   const dates = formatDateRange(trip.start_date, trip.end_date, locale, t("datesTbd"));
   const pax = trip.adult_count + trip.child_count;
 
-  const foodTotal = calculateFoodAllowanceUsd(
-    trip.adult_count,
-    trip.child_count,
-    trip.start_date,
-    trip.end_date
-  );
-  const foodFormatted = new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(foodTotal);
+  const foodFormatted = formatCurrency(tripCostUsd, locale);
 
   const attentionAlerts = participants
     .map((participant) => {
@@ -113,64 +116,57 @@ export function ShoppingListReport({ data, locale }: ShoppingListReportProps) {
     comments: string | null;
   }>;
 
-  const snackKeys = extractSnackKeys(snacksData, "snacks");
-  const alwaysKeys = extractSnackKeys(snacksData, "alwaysOnboard");
-  const otherSnack = typeof snacksData.otherSnack === "string" ? snacksData.otherSnack : "";
-  const otherAlways = typeof snacksData.otherAlways === "string" ? snacksData.otherAlways : "";
-  const charcuterie = extractCharcuterie(snacksData);
+  const parsedSnacks = parseSnacksPayload(snacksData);
   const barLines = extractBarBottleLines(barOrder);
 
-  function snackLabel(key: string, otherText: string) {
-    if (key === "other" && otherText) return otherText;
-    return tSnacks(`items.${key}` as "items.chips");
-  }
+  const pantryRows: Array<{ item: string; qty: string; unitPrice: string }> = [];
+  const snackRows: Array<{ item: string; qty: string; unitPrice: string }> = [];
+  const barRows: Array<{ item: string; qty: string; unitPrice: string }> = [];
 
-  function alwaysLabel(key: string, otherText: string) {
-    if (key === "other" && otherText) return otherText;
-    return tSnacks(`alwaysItems.${key}` as "alwaysItems.pico_de_gallo");
-  }
-
-  const pantryRows: Array<{ item: string; qty: string }> = [];
-  const snackRows: Array<{ item: string; qty: string }> = [];
-  const barRows: Array<{ item: string; qty: string }> = [];
-
-  for (const key of snackKeys) {
-    snackRows.push({ item: snackLabel(key, otherSnack), qty: "1" });
-  }
-  for (const key of alwaysKeys) {
-    pantryRows.push({ item: alwaysLabel(key, otherAlways), qty: "1" });
-  }
-  for (const key of charcuterie.meats) {
+  for (const id of parsedSnacks.snackItemIds) {
     snackRows.push({
-      item:
-        key === "other" && charcuterie.otherMeats
-          ? charcuterie.otherMeats
-          : tSnacks(`charcuterieItems.meats.${key}` as "charcuterieItems.meats.serrano_ham"),
+      item: pricingCatalog.namesById[id] ?? id,
       qty: "1",
+      unitPrice: priceForId(pricingCatalog, "snackPricesCents", id, locale),
     });
   }
-  for (const key of charcuterie.cheeses) {
-    snackRows.push({
-      item:
-        key === "other" && charcuterie.otherCheeses
-          ? charcuterie.otherCheeses
-          : tSnacks(`charcuterieItems.cheeses.${key}` as "charcuterieItems.cheeses.brie"),
-      qty: "1",
-    });
-  }
-  for (const key of charcuterie.complements) {
+  for (const id of parsedSnacks.alwaysOnboardItemIds) {
     pantryRows.push({
-      item:
-        key === "other" && charcuterie.otherComplements
-          ? charcuterie.otherComplements
-          : tSnacks(
-              `charcuterieItems.complements.${key}` as "charcuterieItems.complements.grapes"
-            ),
+      item: pricingCatalog.namesById[id] ?? id,
       qty: "1",
+      unitPrice: priceForId(pricingCatalog, "alwaysOnboardPricesCents", id, locale),
+    });
+  }
+  for (const id of parsedSnacks.charcuterie.meats) {
+    snackRows.push({
+      item: pricingCatalog.namesById[id] ?? id,
+      qty: "1",
+      unitPrice: priceForId(pricingCatalog, "charcuteriePricesCents", id, locale),
+    });
+  }
+  for (const id of parsedSnacks.charcuterie.cheeses) {
+    snackRows.push({
+      item: pricingCatalog.namesById[id] ?? id,
+      qty: "1",
+      unitPrice: priceForId(pricingCatalog, "charcuteriePricesCents", id, locale),
+    });
+  }
+  for (const id of parsedSnacks.charcuterie.complements) {
+    pantryRows.push({
+      item: pricingCatalog.namesById[id] ?? id,
+      qty: "1",
+      unitPrice: priceForId(pricingCatalog, "charcuteriePricesCents", id, locale),
     });
   }
   for (const line of barLines) {
-    barRows.push({ item: line.label, qty: line.quantity === "—" ? "1" : line.quantity });
+    const catalogId = line.catalogItemId;
+    barRows.push({
+      item: line.label,
+      qty: line.quantity === "—" ? "1" : line.quantity,
+      unitPrice: catalogId
+        ? priceForId(pricingCatalog, "beveragePricesCents", catalogId, locale)
+        : formatCurrency(0, locale),
+    });
   }
 
   return (
@@ -254,11 +250,9 @@ export function ShoppingListReport({ data, locale }: ShoppingListReportProps) {
                   const lunch = mealByKey(day.meals, "lunch");
                   const dinner = mealByKey(day.meals, "dinner");
 
-                  const fmtRows = (rows: Array<{ label: string; value: string | null }>) =>
-                    rows
-                      .filter((r) => r.value && r.value !== pending)
-                      .map((r) => `${r.label}: ${r.value}`)
-                      .join(" · ") || "—";
+                  const fmtRows = (rows: Array<{ label: string; value: string | null }>) => (
+                    <MenuCell rows={rows} pending={pending} />
+                  );
 
                   return (
                     <tr key={day.date} className="border-b border-neutral-200 align-top">
@@ -328,7 +322,7 @@ export function ShoppingListReport({ data, locale }: ShoppingListReportProps) {
                     <tr key={`${title}-${row.item}-${i}`} className="border-b border-neutral-100">
                       <td className="px-2 py-1.5">{row.item}</td>
                       <td className="px-2 py-1.5">{row.qty}</td>
-                      <td className="px-2 py-1.5 text-right text-neutral-500">{zeroUsd}</td>
+                      <td className="px-2 py-1.5 text-right text-neutral-500">{row.unitPrice}</td>
                     </tr>
                   ))}
                 </tbody>

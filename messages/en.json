@@ -494,6 +494,9 @@
     "trips": "Trips",
     "catalogNav": "Catalog & recipes",
     "snacksNav": "Snacks catalog",
+    "beveragesNav": "Beverages & spirits",
+    "charcuterieNav": "Charcuterie",
+    "alwaysOnboardNav": "Always onboard",
     "catalog": {
       "ingredientsTab": "Ingredients",
       "dishesTab": "Dishes"
@@ -568,16 +571,20 @@
         "description": "Description",
         "category": "Category",
         "recipeYield": "Recipe yield (servings)",
-        "imageUrl": "Image URL"
+        "imageUrl": "Image URL",
+        "basePrice": "Base price (USD)"
       },
+      "pricePreview": "Preview: {price}",
       "categories": {
         "breakfast": "Breakfast",
         "lunch_appetizer": "Lunch appetizer",
         "lunch_main": "Lunch main",
         "lunch_dessert": "Lunch dessert",
         "dinner": "Dinner",
-        "kids": "Kids",
-        "snack": "Snack"
+        "kids_breakfast": "Kids — breakfast",
+        "kids_lunch_main": "Kids — lunch main",
+        "kids_lunch_dessert": "Kids — lunch dessert",
+        "kids_dinner": "Kids — dinner"
       },
       "recipe": {
         "title": "Recipe builder",
@@ -624,6 +631,87 @@
         "healthy": "Healthy",
         "instant": "Instant",
         "other": "Other"
+      }
+    },
+    "beverages": {
+      "title": "Beverages & spirits catalog",
+      "subtitle": "Manage bar inventory (spirits, wines, beers, mixers).",
+      "addButton": "Add beverage",
+      "addTitle": "New beverage",
+      "editTitle": "Edit beverage",
+      "formSubtitle": "Base prices stored in USD.",
+      "empty": "No beverages registered yet.",
+      "saveError": "Could not save. Please try again.",
+      "deleteConfirm": "Delete this beverage?",
+      "pricePreview": "Preview: {price}",
+      "columns": {
+        "name": "Name",
+        "category": "Category",
+        "subcategory": "Subcategory",
+        "basePrice": "Base price",
+        "actions": "Actions"
+      },
+      "fields": {
+        "nameEn": "Name (EN)",
+        "nameEs": "Name (ES)",
+        "category": "Category",
+        "subcategory": "Subcategory",
+        "basePrice": "Base price (USD)"
+      },
+      "categories": {
+        "spirit": "Spirit",
+        "wine": "Wine",
+        "beer": "Beer",
+        "mixer": "Mixer"
+      }
+    },
+    "charcuterie": {
+      "title": "Charcuterie catalog",
+      "subtitle": "Cold cuts, cheeses, and complements for the guest wizard.",
+      "addButton": "Add item",
+      "addTitle": "New item",
+      "editTitle": "Edit item",
+      "formSubtitle": "Base prices stored in USD.",
+      "empty": "No items registered yet.",
+      "saveError": "Could not save.",
+      "deleteConfirm": "Delete this item?",
+      "pricePreview": "Preview: {price}",
+      "columns": {
+        "name": "Name",
+        "category": "Category",
+        "basePrice": "Base price",
+        "actions": "Actions"
+      },
+      "fields": {
+        "name": "Name",
+        "category": "Category",
+        "basePrice": "Base price (USD)"
+      },
+      "categories": {
+        "meats": "Meats",
+        "cheeses": "Cheeses",
+        "complements": "Complements"
+      }
+    },
+    "alwaysOnboard": {
+      "title": "Always onboard",
+      "subtitle": "Base provisioning checklist always available on board.",
+      "addButton": "Add item",
+      "addTitle": "New item",
+      "editTitle": "Edit item",
+      "formSubtitle": "Base prices stored in USD.",
+      "empty": "No items registered yet.",
+      "saveError": "Could not save.",
+      "deleteConfirm": "Delete this item?",
+      "pricePreview": "Preview: {price}",
+      "columns": {
+        "name": "Name",
+        "basePrice": "Base price",
+        "actions": "Actions"
+      },
+      "fields": {
+        "name": "Name",
+        "basePrice": "Base price (USD)"
       }
     }
   }

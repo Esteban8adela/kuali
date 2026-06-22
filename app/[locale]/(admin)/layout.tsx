@@ -40,6 +40,15 @@ export default async function AdminLayout({
               <Link href={`/${locale}/admin/snacks`} className="rounded px-3 py-2 hover:bg-white/10">
                 {t("snacksNav")}
               </Link>
+              <Link href={`/${locale}/admin/beverages`} className="rounded px-3 py-2 hover:bg-white/10">
+                {t("beveragesNav")}
+              </Link>
+              <Link href={`/${locale}/admin/charcuterie`} className="rounded px-3 py-2 hover:bg-white/10">
+                {t("charcuterieNav")}
+              </Link>
+              <Link href={`/${locale}/admin/always-onboard`} className="rounded px-3 py-2 hover:bg-white/10">
+                {t("alwaysOnboardNav")}
+              </Link>
             </nav>
           </aside>
           <main className="flex-1 bg-[#FAFAF8] p-6 md:p-10">{children}</main>

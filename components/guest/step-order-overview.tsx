@@ -8,11 +8,10 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { WizardNav } from "@/components/guest/wizard-nav";
 import { confirmTripOrder } from "@/app/[locale]/(guest)/guest/trip/actions";
-import { calculateFoodAllowanceUsd } from "@/lib/pricing/food-allowance";
+import { formatCurrency } from "@/lib/utils";
+import { parseSnacksPayload } from "@/lib/guest/snacks-selection";
 import {
   extractBarBottleLines,
-  extractCharcuterie,
-  extractSnackKeys,
 } from "@/lib/chef/format-service-order";
 import type { OrderOverviewData } from "@/lib/guest/fetch-order-overview";
 import type { MenuDayPlan } from "@/lib/guest/menu-itinerary";
@@ -130,7 +129,6 @@ function MenuDaySummary({
 export function StepOrderOverview({ data, locale }: StepOrderOverviewProps) {
   const t = useTranslations("guest.wizard.overview");
   const tMenu = useTranslations("guest.wizard.menu");
-  const tSnacks = useTranslations("guest.wizard.snacks");
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -138,21 +136,9 @@ export function StepOrderOverview({ data, locale }: StepOrderOverviewProps) {
   const isDraft = data.status === "draft";
   const isSubmittedEdit = data.status === "submitted";
   const showSubmittedBadge = isSubmittedEdit || data.status === "active";
-  const foodTotal = calculateFoodAllowanceUsd(
-    data.adultCount,
-    data.childCount,
-    data.startDate,
-    data.endDate
-  );
-  const foodFormatted = new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(foodTotal);
+  const foodFormatted = formatCurrency(data.tripCostUsd, locale);
 
-  const snackKeys = extractSnackKeys(data.snacksData, "snacks");
-  const alwaysKeys = extractSnackKeys(data.snacksData, "alwaysOnboard");
-  const charcuterie = extractCharcuterie(data.snacksData);
+  const parsedSnacks = parseSnacksPayload(data.snacksData);
   const barLines = extractBarBottleLines(data.barOrder);
   const byob = Boolean(data.barOrder.byob);
   const specificRequest =
@@ -160,22 +146,8 @@ export function StepOrderOverview({ data, locale }: StepOrderOverviewProps) {
       ? data.barOrder.specific_bottle_request.trim()
       : "";
 
-  function snackLabel(key: string, field: "items" | "alwaysItems", otherText: string | null) {
-    if (key === "other" && otherText) return otherText;
-    return field === "items"
-      ? tSnacks(`items.${key}` as "items.chips")
-      : tSnacks(`alwaysItems.${key}` as "alwaysItems.pico_de_gallo");
-  }
-
-  function charcuterieLabels(
-    keys: string[],
-    prefix: "meats" | "cheeses" | "complements",
-    otherText: string | null
-  ) {
-    return keys.map((key) => {
-      if (key === "other" && otherText) return otherText;
-      return tSnacks(`charcuterieItems.${prefix}.${key}` as "charcuterieItems.meats.serrano_ham");
-    });
+  function catalogLabel(id: string): string {
+    return data.catalogNames[id] ?? id;
   }
 
   function handlePrimaryAction() {
@@ -258,50 +230,28 @@ export function StepOrderOverview({ data, locale }: StepOrderOverviewProps) {
             <div className="rounded-xl border border-neutral-200 bg-white p-5 text-sm text-neutral-700">
               <p>
                 <span className="font-medium">{t("snacksLabel")}:</span>{" "}
-                {snackKeys.length
-                  ? snackKeys
-                      .map((k) =>
-                        snackLabel(
-                          k,
-                          "items",
-                          typeof data.snacksData.otherSnack === "string"
-                            ? data.snacksData.otherSnack
-                            : null
-                        )
-                      )
-                      .join(", ")
+                {parsedSnacks.snackItemIds.length
+                  ? parsedSnacks.snackItemIds.map(catalogLabel).join(", ")
                   : t("noneSelected")}
               </p>
               <p className="mt-2">
                 <span className="font-medium">{t("alwaysOnboardLabel")}:</span>{" "}
-                {alwaysKeys.length
-                  ? alwaysKeys
-                      .map((k) =>
-                        snackLabel(
-                          k,
-                          "alwaysItems",
-                          typeof data.snacksData.otherAlways === "string"
-                            ? data.snacksData.otherAlways
-                            : null
-                        )
-                      )
-                      .join(", ")
+                {parsedSnacks.alwaysOnboardItemIds.length
+                  ? parsedSnacks.alwaysOnboardItemIds.map(catalogLabel).join(", ")
                   : t("noneSelected")}
               </p>
-              {(charcuterie.meats.length > 0 ||
-                charcuterie.cheeses.length > 0 ||
-                charcuterie.complements.length > 0) && (
+              {(parsedSnacks.charcuterie.meats.length > 0 ||
+                parsedSnacks.charcuterie.cheeses.length > 0 ||
+                parsedSnacks.charcuterie.complements.length > 0) && (
                 <p className="mt-2">
                   <span className="font-medium">{t("charcuterieLabel")}:</span>{" "}
                   {[
-                    ...charcuterieLabels(charcuterie.meats, "meats", charcuterie.otherMeats),
-                    ...charcuterieLabels(charcuterie.cheeses, "cheeses", charcuterie.otherCheeses),
-                    ...charcuterieLabels(
-                      charcuterie.complements,
-                      "complements",
-                      charcuterie.otherComplements
-                    ),
-                  ].join(", ")}
+                    ...parsedSnacks.charcuterie.meats,
+                    ...parsedSnacks.charcuterie.cheeses,
+                    ...parsedSnacks.charcuterie.complements,
+                  ]
+                    .map(catalogLabel)
+                    .join(", ")}
                 </p>
               )}
             </div>

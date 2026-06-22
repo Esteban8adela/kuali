@@ -4,6 +4,8 @@ import { parseMenuOrder } from "@/lib/guest/menu-itinerary";
 import { collectDishIdsFromItinerary } from "@/lib/chef/collect-menu-dish-ids";
 import { normalizeBarOrder } from "@/lib/trip/wizard";
 import { normalizeDateOnlyInput } from "@/lib/trip/date-validation";
+import { calculateTripCostUsd } from "@/lib/pricing/calculate-trip-cost";
+import { fetchPricingCatalog } from "@/lib/pricing/fetch-pricing-catalog";
 
 export interface OrderOverviewData {
   tripId: string;
@@ -17,6 +19,8 @@ export interface OrderOverviewData {
   dishNames: Record<string, string>;
   snacksData: Record<string, unknown>;
   barOrder: Record<string, unknown>;
+  catalogNames: Record<string, string>;
+  tripCostUsd: number;
 }
 
 export async function fetchOrderOverview(tripId: string): Promise<OrderOverviewData | null> {
@@ -45,6 +49,16 @@ export async function fetchOrderOverview(tripId: string): Promise<OrderOverviewD
   const snacksData =
     snacksRaw && typeof snacksRaw === "object" ? (snacksRaw as Record<string, unknown>) : {};
 
+  const catalog = await fetchPricingCatalog();
+  const tripCostUsd = calculateTripCostUsd({
+    itinerary,
+    adultCount: trip.adult_count ?? 0,
+    childCount: trip.child_count ?? 0,
+    barOrder,
+    snacksData,
+    catalog,
+  });
+
   return {
     tripId: trip.id,
     startDate: normalizeDateOnlyInput(trip.start_date),
@@ -57,5 +71,7 @@ export async function fetchOrderOverview(tripId: string): Promise<OrderOverviewD
     dishNames,
     snacksData,
     barOrder,
+    tripCostUsd,
+    catalogNames: catalog.namesById,
   };
 }

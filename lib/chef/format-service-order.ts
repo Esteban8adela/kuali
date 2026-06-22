@@ -5,6 +5,7 @@ export interface BarBottleLine {
   category: string;
   label: string;
   quantity: string;
+  catalogItemId?: string | null;
 }
 
 export function extractBarBottleLines(barOrder: Record<string, unknown>): BarBottleLine[] {
@@ -20,6 +21,7 @@ export function extractBarBottleLines(barOrder: Record<string, unknown>): BarBot
           category,
           label: label || "—",
           quantity: item.quantity != null ? String(item.quantity) : "—",
+          catalogItemId: item.catalogItemId,
         });
       }
     }
@@ -35,6 +37,7 @@ export function extractBarBottleLines(barOrder: Record<string, unknown>): BarBot
         category: key,
         label: label || "—",
         quantity: item.quantity != null ? String(item.quantity) : "—",
+        catalogItemId: item.catalogItemId,
       });
     }
   }

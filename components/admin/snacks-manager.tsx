@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { Pencil, Plus, Trash2 } from "lucide-react";
@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { SnackFormDialog } from "@/components/admin/snack-form-dialog";
 import { deleteSnack } from "@/app/[locale]/(admin)/admin/snacks/actions";
 import type { Snack } from "@/lib/types/database";
+import { formatCurrency, centsToUsd } from "@/lib/utils";
 
 interface SnacksManagerProps {
   snacks: Snack[];
@@ -22,16 +23,6 @@ export function SnacksManager({ snacks, locale }: SnacksManagerProps) {
   const [editing, setEditing] = useState<Snack | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-
-  const currency = useMemo(
-    () =>
-      new Intl.NumberFormat(locale === "es" ? "es-MX" : "en-US", {
-        style: "currency",
-        currency: "USD",
-        minimumFractionDigits: 2,
-      }),
-    [locale]
-  );
 
   function openCreate() {
     setEditing(null);
@@ -97,7 +88,7 @@ export function SnacksManager({ snacks, locale }: SnacksManagerProps) {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-neutral-700">
-                        {currency.format(item.base_price_cents / 100)}
+                        {formatCurrency(centsToUsd(item.base_price_cents), locale)}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex justify-end gap-1">

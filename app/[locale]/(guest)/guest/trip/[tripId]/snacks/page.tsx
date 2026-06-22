@@ -5,6 +5,7 @@ import { WizardProgress } from "@/components/guest/wizard-progress";
 import { StepSnacks } from "@/components/guest/step-snacks";
 import { fetchTripStepStatus } from "@/lib/trip/fetch-trip-step-status";
 import { normalizeBarOrder } from "@/lib/trip/wizard";
+import { fetchGuestSnacksCatalog } from "@/lib/catalog/fetch-guest-catalogs";
 
 export default async function TripSnacksPage({
   params,
@@ -25,14 +26,14 @@ export default async function TripSnacksPage({
   const barOrder = normalizeBarOrder(trip.bar_order);
   const initial = (barOrder.snacks ?? {}) as Record<string, unknown>;
   const stepStatus = await fetchTripStepStatus(tripId, locale);
+  const catalog = await fetchGuestSnacksCatalog();
 
   return (
     <>
       <WizardProgress currentStep={4} tripId={tripId} locale={locale} stepStatus={stepStatus} />
       <main className="px-4 py-8 md:px-8">
-        <StepSnacks tripId={tripId} locale={locale} initial={initial} />
+        <StepSnacks tripId={tripId} locale={locale} catalog={catalog} initial={initial} />
       </main>
     </>
   );
 }
-

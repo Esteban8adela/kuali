@@ -8,6 +8,7 @@ export interface CatalogItem {
   name_es: string;
   sort_order: number;
   is_active: boolean;
+  base_price_cents: number;
 }
 
 export interface BarLineSelection {

@@ -27,6 +27,7 @@ import {
 import { buildItineraryDates } from "@/lib/trip/itinerary-days";
 import { normalizeDateOnlyInput } from "@/lib/trip/date-validation";
 import type { DishesByCategory } from "@/lib/guest/fetch-dishes-catalog";
+import { kidsCategoryForMeal } from "@/lib/constants/dishes";
 
 type MealKey = "breakfast" | "lunch" | "dinner";
 
@@ -507,7 +508,7 @@ export function StepMenuSelection({
                               <DishSinglePicker
                                 compact
                                 label={t("kidsMenuDish")}
-                                dishes={dishesByCategory.kids}
+                                dishes={dishesByCategory[kidsCategoryForMeal(mealKey)]}
                                 value={meal.selected_kids_dish_id}
                                 onChange={(id) =>
                                   updateMeal(dayIndex, mealKey, (m) => ({

@@ -494,6 +494,9 @@
     "trips": "Viajes",
     "catalogNav": "Catálogo y recetas",
     "snacksNav": "Catálogo de snacks",
+    "beveragesNav": "Bebidas y licores",
+    "charcuterieNav": "Charcutería",
+    "alwaysOnboardNav": "Siempre a bordo",
     "catalog": {
       "ingredientsTab": "Ingredientes",
       "dishesTab": "Platillos"
@@ -568,16 +571,20 @@
         "description": "Descripción",
         "category": "Categoría",
         "recipeYield": "Rendimiento (porciones)",
-        "imageUrl": "URL de imagen"
+        "imageUrl": "URL de imagen",
+        "basePrice": "Precio base (USD)"
       },
+      "pricePreview": "Vista previa: {price}",
       "categories": {
         "breakfast": "Desayuno",
         "lunch_appetizer": "Entrada comida",
         "lunch_main": "Plato fuerte comida",
         "lunch_dessert": "Postre comida",
         "dinner": "Cena",
-        "kids": "Niños",
-        "snack": "Snack"
+        "kids_breakfast": "Niños — desayuno",
+        "kids_lunch_main": "Niños — plato fuerte comida",
+        "kids_lunch_dessert": "Niños — postre comida",
+        "kids_dinner": "Niños — cena"
       },
       "recipe": {
         "title": "Constructor de receta",
@@ -624,6 +631,87 @@
         "healthy": "Saludable",
         "instant": "Instantáneos",
         "other": "Otro"
+      }
+    },
+    "beverages": {
+      "title": "Catálogo de bebidas y licores",
+      "subtitle": "Administre el inventario de bar (espíritus, vinos, cervezas y mezcladores).",
+      "addButton": "Agregar bebida",
+      "addTitle": "Nueva bebida",
+      "editTitle": "Editar bebida",
+      "formSubtitle": "Precios base en USD.",
+      "empty": "Aún no hay bebidas registradas.",
+      "saveError": "No se pudo guardar. Inténtelo de nuevo.",
+      "deleteConfirm": "¿Eliminar esta bebida?",
+      "pricePreview": "Vista previa: {price}",
+      "columns": {
+        "name": "Nombre",
+        "category": "Categoría",
+        "subcategory": "Subcategoría",
+        "basePrice": "Precio base",
+        "actions": "Acciones"
+      },
+      "fields": {
+        "nameEn": "Nombre (EN)",
+        "nameEs": "Nombre (ES)",
+        "category": "Categoría",
+        "subcategory": "Subcategoría",
+        "basePrice": "Precio base (USD)"
+      },
+      "categories": {
+        "spirit": "Licor",
+        "wine": "Vino",
+        "beer": "Cerveza",
+        "mixer": "Mezclador"
+      }
+    },
+    "charcuterie": {
+      "title": "Catálogo de charcutería",
+      "subtitle": "Carnes frías, quesos y complementos para el guest wizard.",
+      "addButton": "Agregar ítem",
+      "addTitle": "Nuevo ítem",
+      "editTitle": "Editar ítem",
+      "formSubtitle": "Precios base en USD.",
+      "empty": "Sin ítems registrados.",
+      "saveError": "No se pudo guardar.",
+      "deleteConfirm": "¿Eliminar este ítem?",
+      "pricePreview": "Vista previa: {price}",
+      "columns": {
+        "name": "Nombre",
+        "category": "Categoría",
+        "basePrice": "Precio base",
+        "actions": "Acciones"
+      },
+      "fields": {
+        "name": "Nombre",
+        "category": "Categoría",
+        "basePrice": "Precio base (USD)"
+      },
+      "categories": {
+        "meats": "Carnes",
+        "cheeses": "Quesos",
+        "complements": "Complementos"
+      }
+    },
+    "alwaysOnboard": {
+      "title": "Siempre a bordo",
+      "subtitle": "Checklist base de provisiones siempre disponibles.",
+      "addButton": "Agregar ítem",
+      "addTitle": "Nuevo ítem",
+      "editTitle": "Editar ítem",
+      "formSubtitle": "Precios base en USD.",
+      "empty": "Sin ítems registrados.",
+      "saveError": "No se pudo guardar.",
+      "deleteConfirm": "¿Eliminar este ítem?",
+      "pricePreview": "Vista previa: {price}",
+      "columns": {
+        "name": "Nombre",
+        "basePrice": "Precio base",
+        "actions": "Acciones"
+      },
+      "fields": {
+        "name": "Nombre",
+        "basePrice": "Precio base (USD)"
       }
     }
   }

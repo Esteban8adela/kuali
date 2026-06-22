@@ -9,7 +9,9 @@ import {
   globalMealScheduleSchema,
   finalizeTripSchema,
 } from "@/lib/validations/guest-wizard";
-import { calculateFoodAllowanceUsd } from "@/lib/pricing/food-allowance";
+import { calculateTripCostUsd } from "@/lib/pricing/calculate-trip-cost";
+import { fetchPricingCatalog } from "@/lib/pricing/fetch-pricing-catalog";
+import { parseMenuOrder } from "@/lib/guest/menu-itinerary";
 import { clampWizardStep, normalizeBarOrder } from "@/lib/trip/wizard";
 import { coerceToDateOnlyString } from "@/lib/trip/date-validation";
 import { BLOCKING_TRIP_STATUSES, dateRangesOverlap, TRIP_DATES_UNAVAILABLE_MESSAGE } from "@/lib/trip/trip-date-collision";
@@ -239,11 +241,7 @@ export async function saveGlobalMealSchedule(input: unknown) {
 
 export async function saveSnacksStep(input: {
   tripId: string;
-  snacks: string[];
-  alwaysOnboard: string[];
-  charcuterieSelections: CharcuterieSelections;
-  otherSnack?: string | null;
-  otherAlways?: string | null;
+  payload: Record<string, unknown>;
 }) {
   const supabase = await createClient();
   const { data: trip } = await supabase
@@ -252,15 +250,13 @@ export async function saveSnacksStep(input: {
     .eq("id", input.tripId)
     .single();
 
+  const charcuterie = (input.payload.charcuterie_selections ?? {}) as CharcuterieSelections;
+
   const nextBar = {
     ...normalizeBarOrder(trip?.bar_order),
     snacks: {
-      snacks: input.snacks,
-      alwaysOnboard: input.alwaysOnboard,
-      charcuterie_selections: input.charcuterieSelections,
-      crudites: hasCharcuterieSelections(input.charcuterieSelections),
-      otherSnack: input.otherSnack ?? null,
-      otherAlways: input.otherAlways ?? null,
+      ...input.payload,
+      crudites: hasCharcuterieSelections(charcuterie),
     },
   };
 
@@ -308,23 +304,31 @@ export async function confirmTripOrder(tripId: string) {
   const supabase = await createClient();
   const { data: trip } = await supabase
     .from("trips")
-    .select("adult_count, child_count, start_date, end_date")
+    .select("adult_count, child_count, menu_order, bar_order")
     .eq("id", tripId)
     .single();
 
-  const foodAllowanceUsd = calculateFoodAllowanceUsd(
-    trip?.adult_count ?? 0,
-    trip?.child_count ?? 0,
-    trip?.start_date,
-    trip?.end_date
-  );
+  const catalog = await fetchPricingCatalog();
+  const barOrder = normalizeBarOrder(trip?.bar_order);
+  const snacksRaw = barOrder.snacks;
+  const snacksData =
+    snacksRaw && typeof snacksRaw === "object" ? (snacksRaw as Record<string, unknown>) : {};
+
+  const totalUsd = calculateTripCostUsd({
+    itinerary: parseMenuOrder(trip?.menu_order),
+    adultCount: trip?.adult_count ?? 0,
+    childCount: trip?.child_count ?? 0,
+    barOrder,
+    snacksData,
+    catalog,
+  });
 
   const { error } = await supabase
     .from("trips")
     .update({
       status: "submitted",
       wizard_step: clampWizardStep(6),
-      estimated_total_cents: Math.round(foodAllowanceUsd * 100),
+      estimated_total_cents: Math.round(totalUsd * 100),
     })
     .eq("id", tripId);
 

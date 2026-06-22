@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { SNACK_CATEGORIES } from "@/lib/constants/snacks";
 import { createSnack, updateSnack } from "@/app/[locale]/(admin)/admin/snacks/actions";
+import { formatCurrency } from "@/lib/utils";
 import type { Snack } from "@/lib/types/database";
 
 interface SnackFormValues {
@@ -64,16 +65,6 @@ export function SnackFormDialog({
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<SnackFormValues>(snack ? fromSnack(snack) : emptyForm());
   const isEdit = Boolean(snack);
-
-  const currency = useMemo(
-    () =>
-      new Intl.NumberFormat(locale === "es" ? "es-MX" : "en-US", {
-        style: "currency",
-        currency: "USD",
-        minimumFractionDigits: 2,
-      }),
-    [locale]
-  );
 
   function handleOpenChange(next: boolean) {
     if (next) {
@@ -156,7 +147,9 @@ export function SnackFormDialog({
               onChange={(e) => setForm((f) => ({ ...f, base_price: e.target.value }))}
             />
             <p className="mt-1 text-xs text-neutral-500">
-              {t("pricePreview", { price: currency.format(parseFloat(form.base_price || "0") || 0) })}
+              {t("pricePreview", {
+                price: formatCurrency(parseFloat(form.base_price || "0") || 0, locale),
+              })}
             </p>
           </div>
           {error ? <p className="text-sm text-red-600">{error}</p> : null}

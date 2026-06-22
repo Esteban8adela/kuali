@@ -9,198 +9,102 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { WizardNav } from "@/components/guest/wizard-nav";
 import { advanceWizardStep, saveDraftAndExit, saveSnacksStep } from "@/app/[locale]/(guest)/guest/trip/actions";
-import {
-  CHARCUTERIE_CHEESE_KEYS,
-  CHARCUTERIE_COMPLEMENT_KEYS,
-  CHARCUTERIE_MEAT_KEYS,
-  parseCharcuterieSelections,
-  serializeCharcuterieSelections,
-  type CharcuterieSelections,
-} from "@/lib/guest/charcuterie-selections";
-
-const SNACK_KEYS = ["chips", "maruchan", "mango_snacks", "candies", "other"] as const;
-const ALWAYS_KEYS = ["pico_de_gallo", "salsas", "cacahuates", "fruit", "other"] as const;
-
-const LEGACY_SNACK_MAP: Record<string, string> = {
-  Papas: "chips",
-  Maruchan: "maruchan",
-  Manguitos: "mango_snacks",
-  Dulces: "candies",
-  Otro: "other",
-  Other: "other",
-};
-
-const LEGACY_ALWAYS_MAP: Record<string, string> = {
-  "Pico de gallo": "pico_de_gallo",
-  Salsas: "salsas",
-  Cacahuates: "cacahuates",
-  Fruta: "fruit",
-  Otro: "other",
-  Other: "other",
-};
-
-function normalizeKeys(values: string[], legacyMap: Record<string, string>): string[] {
-  return values.map((v) => legacyMap[v] ?? v);
-}
+import type { GuestCatalogItem, GuestSnacksCatalog } from "@/lib/catalog/fetch-guest-catalogs";
+import { parseSnacksPayload, serializeSnacksPayload } from "@/lib/guest/snacks-selection";
+import { formatCurrency, centsToUsd } from "@/lib/utils";
 
 interface StepSnacksProps {
   tripId: string;
   locale: string;
+  catalog: GuestSnacksCatalog;
   initial?: Record<string, unknown>;
 }
 
-type CharcuterieCategory = "meats" | "cheeses" | "complements";
-
-interface CharcuterieCheckboxGroupProps {
-  title: string;
-  keys: readonly string[];
-  selected: string[];
-  otherValue: string;
-  translationPrefix: string;
-  onToggle: (key: string) => void;
-  onOtherChange: (value: string) => void;
-  otherPlaceholder: string;
-  t: ReturnType<typeof useTranslations<"guest.wizard.snacks">>;
-}
-
-function CharcuterieCheckboxGroup({
-  title,
-  keys,
-  selected,
-  otherValue,
-  translationPrefix,
+function CatalogCheckboxList({
+  items,
+  selectedIds,
   onToggle,
-  onOtherChange,
-  otherPlaceholder,
-  t,
-}: CharcuterieCheckboxGroupProps) {
+  customNotes,
+  onCustomNote,
+  locale,
+}: {
+  items: GuestCatalogItem[];
+  selectedIds: string[];
+  onToggle: (id: string) => void;
+  customNotes: Record<string, string>;
+  onCustomNote: (id: string, value: string) => void;
+  locale: string;
+}) {
+  if (!items.length) {
+    return <p className="text-sm text-neutral-500">—</p>;
+  }
+
   return (
-    <div className="min-w-0 space-y-3">
-      <Label className="text-sm font-medium text-gray-800">{title}</Label>
-      <div className="space-y-2">
-        {keys.map((key) => (
-          <div key={key} className="min-w-0 space-y-1.5">
-            <label className="flex items-center gap-2 text-sm text-gray-700">
-              <Checkbox checked={selected.includes(key)} onCheckedChange={() => onToggle(key)} />
-              <span className="min-w-0 break-words">
-                {t(
-                  `${translationPrefix}.${key}` as
-                    | "charcuterieItems.meats.serrano_ham"
-                    | "charcuterieItems.meats.prosciutto"
-                    | "charcuterieItems.meats.salami"
-                    | "charcuterieItems.meats.pepperoni"
-                    | "charcuterieItems.meats.other"
-                    | "charcuterieItems.cheeses.brie"
-                    | "charcuterieItems.cheeses.goat_cheese"
-                    | "charcuterieItems.cheeses.manchego"
-                    | "charcuterieItems.cheeses.parmesan"
-                    | "charcuterieItems.cheeses.other"
-                    | "charcuterieItems.complements.grapes"
-                    | "charcuterieItems.complements.strawberries"
-                    | "charcuterieItems.complements.olives"
-                    | "charcuterieItems.complements.fig_jam"
-                    | "charcuterieItems.complements.artisan_crackers"
-                    | "charcuterieItems.complements.other"
-                )}
+    <div className="grid gap-2 sm:grid-cols-2">
+      {items.map((item) => (
+        <div key={item.id} className="space-y-1.5">
+          <label className="flex items-center gap-2 text-sm">
+            <Checkbox
+              checked={selectedIds.includes(item.id)}
+              onCheckedChange={() => onToggle(item.id)}
+            />
+            <span className="min-w-0 flex-1 break-words">
+              {item.name}
+              <span className="ml-1 text-xs text-neutral-500">
+                ({formatCurrency(centsToUsd(item.base_price_cents), locale)})
               </span>
-            </label>
-            {key === "other" && selected.includes("other") && (
-              <div className="min-w-0 overflow-hidden pl-6">
-                <Input
-                  type="text"
-                  value={otherValue}
-                  onChange={(e) => onOtherChange(e.target.value)}
-                  placeholder={otherPlaceholder}
-                  className="h-9 w-full min-w-0 text-sm"
-                />
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
+            </span>
+          </label>
+          {item.allows_custom_note && selectedIds.includes(item.id) && (
+            <Input
+              type="text"
+              value={customNotes[item.id] ?? ""}
+              onChange={(e) => onCustomNote(item.id, e.target.value)}
+              className="ml-6 h-9 text-sm"
+            />
+          )}
+        </div>
+      ))}
     </div>
   );
 }
 
-export function StepSnacks({ tripId, locale, initial }: StepSnacksProps) {
+export function StepSnacks({ tripId, locale, catalog, initial }: StepSnacksProps) {
   const t = useTranslations("guest.wizard.snacks");
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const [snacks, setSnacks] = useState<string[]>(
-    normalizeKeys((initial?.snacks as string[]) ?? [], LEGACY_SNACK_MAP)
+
+  const parsedInitial = parseSnacksPayload(initial ?? {});
+
+  const [snackIds, setSnackIds] = useState<string[]>(parsedInitial.snackItemIds);
+  const [alwaysIds, setAlwaysIds] = useState<string[]>(parsedInitial.alwaysOnboardItemIds);
+  const [charcuterieMeats, setCharcuterieMeats] = useState<string[]>(parsedInitial.charcuterie.meats);
+  const [charcuterieCheeses, setCharcuterieCheeses] = useState<string[]>(parsedInitial.charcuterie.cheeses);
+  const [charcuterieComplements, setCharcuterieComplements] = useState<string[]>(
+    parsedInitial.charcuterie.complements
   );
-  const [always, setAlways] = useState<string[]>(
-    normalizeKeys((initial?.alwaysOnboard as string[]) ?? [], LEGACY_ALWAYS_MAP)
-  );
-  const [charcuterie, setCharcuterie] = useState<CharcuterieSelections>(() =>
-    parseCharcuterieSelections(initial?.charcuterie_selections)
-  );
-  const [otherSnack, setOtherSnack] = useState<string>(
-    typeof initial?.otherSnack === "string" ? initial.otherSnack : ""
-  );
-  const [otherAlways, setOtherAlways] = useState<string>(
-    typeof initial?.otherAlways === "string" ? initial.otherAlways : ""
-  );
+  const [customNotes, setCustomNotes] = useState<Record<string, string>>({});
 
-  function toggleSnack(value: string) {
-    const next = snacks.includes(value) ? snacks.filter((x) => x !== value) : [...snacks, value];
-    setSnacks(next);
-    if (value === "other" && snacks.includes("other")) {
-      setOtherSnack("");
-    }
-  }
-
-  function toggleAlways(value: string) {
-    const next = always.includes(value) ? always.filter((x) => x !== value) : [...always, value];
-    setAlways(next);
-    if (value === "other" && always.includes("other")) {
-      setOtherAlways("");
-    }
-  }
-
-  function toggleCharcuterie(category: CharcuterieCategory, key: string) {
-    setCharcuterie((prev) => {
-      const list = prev[category];
-      const isRemoving = list.includes(key);
-      const nextList = isRemoving ? list.filter((x) => x !== key) : [...list, key];
-
-      if (key === "other" && isRemoving) {
-        const otherKey =
-          category === "meats"
-            ? "otherMeats"
-            : category === "cheeses"
-              ? "otherCheeses"
-              : "otherComplements";
-        return { ...prev, [category]: nextList, [otherKey]: null };
-      }
-
-      return { ...prev, [category]: nextList };
-    });
-  }
-
-  function updateCharcuterieOther(
-    category: CharcuterieCategory,
-    value: string
-  ) {
-    const otherKey =
-      category === "meats"
-        ? "otherMeats"
-        : category === "cheeses"
-          ? "otherCheeses"
-          : "otherComplements";
-    setCharcuterie((prev) => ({ ...prev, [otherKey]: value }));
+  function toggleId(list: string[], setList: (v: string[]) => void, id: string) {
+    setList(list.includes(id) ? list.filter((x) => x !== id) : [...list, id]);
   }
 
   async function persistSnacks() {
-    const charcuterieSelections = serializeCharcuterieSelections(charcuterie);
-    await saveSnacksStep({
-      tripId,
-      snacks,
-      alwaysOnboard: always,
-      charcuterieSelections,
-      otherSnack: snacks.includes("other") ? otherSnack.trim() : null,
-      otherAlways: always.includes("other") ? otherAlways.trim() : null,
+    const payload = serializeSnacksPayload({
+      snackItemIds: snackIds,
+      alwaysOnboardItemIds: alwaysIds,
+      charcuterie: {
+        meats: charcuterieMeats,
+        cheeses: charcuterieCheeses,
+        complements: charcuterieComplements,
+        otherMeats: null,
+        otherCheeses: null,
+        otherComplements: null,
+      },
+      otherSnack: parsedInitial.otherSnack,
+      otherAlways: parsedInitial.otherAlways,
     });
+    await saveSnacksStep({ tripId, payload });
   }
 
   function handleContinue() {
@@ -229,54 +133,26 @@ export function StepSnacks({ tripId, locale, initial }: StepSnacksProps) {
         <CardContent className="space-y-8">
           <section className="space-y-3">
             <Label>{t("snacksToBuy")}</Label>
-            <div className="grid gap-2 sm:grid-cols-2">
-              {SNACK_KEYS.map((key) => (
-                <div key={key} className="space-y-1.5">
-                  <label className="flex items-center gap-2 text-sm">
-                    <Checkbox
-                      checked={snacks.includes(key)}
-                      onCheckedChange={() => toggleSnack(key)}
-                    />
-                    <span>{t(`items.${key}`)}</span>
-                  </label>
-                  {key === "other" && snacks.includes("other") && (
-                    <Input
-                      type="text"
-                      value={otherSnack}
-                      onChange={(e) => setOtherSnack(e.target.value)}
-                      placeholder={t("otherPlaceholder")}
-                      className="ml-6 h-9 text-sm"
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
+            <CatalogCheckboxList
+              items={catalog.snacks}
+              selectedIds={snackIds}
+              onToggle={(id) => toggleId(snackIds, setSnackIds, id)}
+              customNotes={customNotes}
+              onCustomNote={(id, v) => setCustomNotes((p) => ({ ...p, [id]: v }))}
+              locale={locale}
+            />
           </section>
 
           <section className="space-y-3">
             <Label>{t("alwaysOnboard")}</Label>
-            <div className="grid gap-2 sm:grid-cols-2">
-              {ALWAYS_KEYS.map((key) => (
-                <div key={key} className="space-y-1.5">
-                  <label className="flex items-center gap-2 text-sm">
-                    <Checkbox
-                      checked={always.includes(key)}
-                      onCheckedChange={() => toggleAlways(key)}
-                    />
-                    <span>{t(`alwaysItems.${key}`)}</span>
-                  </label>
-                  {key === "other" && always.includes("other") && (
-                    <Input
-                      type="text"
-                      value={otherAlways}
-                      onChange={(e) => setOtherAlways(e.target.value)}
-                      placeholder={t("alwaysOtherPlaceholder")}
-                      className="ml-6 h-9 text-sm"
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
+            <CatalogCheckboxList
+              items={catalog.alwaysOnboard}
+              selectedIds={alwaysIds}
+              onToggle={(id) => toggleId(alwaysIds, setAlwaysIds, id)}
+              customNotes={customNotes}
+              onCustomNote={(id, v) => setCustomNotes((p) => ({ ...p, [id]: v }))}
+              locale={locale}
+            />
           </section>
 
           <section className="min-w-0 space-y-4 overflow-hidden rounded-xl border border-[#C4A052]/20 bg-[#C4A052]/5 p-5">
@@ -286,43 +162,39 @@ export function StepSnacks({ tripId, locale, initial }: StepSnacksProps) {
               </Label>
               <p className="mt-0.5 text-xs text-gray-500">{t("charcuterieHelp")}</p>
             </div>
-
             <div className="grid min-w-0 grid-cols-1 gap-8 md:grid-cols-2">
-              <CharcuterieCheckboxGroup
-                title={t("charcuterieMeats")}
-                keys={CHARCUTERIE_MEAT_KEYS}
-                selected={charcuterie.meats}
-                otherValue={charcuterie.otherMeats ?? ""}
-                translationPrefix="charcuterieItems.meats"
-                onToggle={(key) => toggleCharcuterie("meats", key)}
-                onOtherChange={(value) => updateCharcuterieOther("meats", value)}
-                otherPlaceholder={t("charcuterieOtherPlaceholder")}
-                t={t}
-              />
-              <CharcuterieCheckboxGroup
-                title={t("charcuterieCheeses")}
-                keys={CHARCUTERIE_CHEESE_KEYS}
-                selected={charcuterie.cheeses}
-                otherValue={charcuterie.otherCheeses ?? ""}
-                translationPrefix="charcuterieItems.cheeses"
-                onToggle={(key) => toggleCharcuterie("cheeses", key)}
-                onOtherChange={(value) => updateCharcuterieOther("cheeses", value)}
-                otherPlaceholder={t("charcuterieOtherPlaceholder")}
-                t={t}
-              />
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">{t("charcuterieMeats")}</Label>
+                <CatalogCheckboxList
+                  items={catalog.charcuterie.meats}
+                  selectedIds={charcuterieMeats}
+                  onToggle={(id) => toggleId(charcuterieMeats, setCharcuterieMeats, id)}
+                  customNotes={customNotes}
+                  onCustomNote={(id, v) => setCustomNotes((p) => ({ ...p, [id]: v }))}
+                  locale={locale}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">{t("charcuterieCheeses")}</Label>
+                <CatalogCheckboxList
+                  items={catalog.charcuterie.cheeses}
+                  selectedIds={charcuterieCheeses}
+                  onToggle={(id) => toggleId(charcuterieCheeses, setCharcuterieCheeses, id)}
+                  customNotes={customNotes}
+                  onCustomNote={(id, v) => setCustomNotes((p) => ({ ...p, [id]: v }))}
+                  locale={locale}
+                />
+              </div>
             </div>
-
             <div className="min-w-0 border-t border-[#C4A052]/15 pt-5">
-              <CharcuterieCheckboxGroup
-                title={t("charcuterieComplements")}
-                keys={CHARCUTERIE_COMPLEMENT_KEYS}
-                selected={charcuterie.complements}
-                otherValue={charcuterie.otherComplements ?? ""}
-                translationPrefix="charcuterieItems.complements"
-                onToggle={(key) => toggleCharcuterie("complements", key)}
-                onOtherChange={(value) => updateCharcuterieOther("complements", value)}
-                otherPlaceholder={t("charcuterieOtherPlaceholder")}
-                t={t}
+              <Label className="text-sm font-medium">{t("charcuterieComplements")}</Label>
+              <CatalogCheckboxList
+                items={catalog.charcuterie.complements}
+                selectedIds={charcuterieComplements}
+                onToggle={(id) => toggleId(charcuterieComplements, setCharcuterieComplements, id)}
+                customNotes={customNotes}
+                onCustomNote={(id, v) => setCustomNotes((p) => ({ ...p, [id]: v }))}
+                locale={locale}
               />
             </div>
           </section>

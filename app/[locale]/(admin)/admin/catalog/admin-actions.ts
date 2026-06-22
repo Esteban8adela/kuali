@@ -43,6 +43,7 @@ function mapDishRow(row: Record<string, unknown>): DishWithRecipe {
     category: row.category as string,
     image_url: (row.image_url as string | null) ?? null,
     recipe_yield: Number(row.recipe_yield ?? 1),
+    base_price_cents: Number(row.base_price_cents ?? 0),
     created_at: row.created_at as string,
     updated_at: row.updated_at as string,
     recipe: rawLines.map((line) => ({
@@ -183,6 +184,7 @@ export async function createDish(input: unknown) {
       category: parsed.category,
       image_url: normalizeImageUrl(parsed.image_url),
       recipe_yield: parsed.recipe_yield,
+      base_price_cents: parsed.base_price_cents,
     })
     .select("*")
     .single();
@@ -214,6 +216,7 @@ export async function updateDish(id: string, input: unknown) {
       category: parsed.category,
       image_url: normalizeImageUrl(parsed.image_url),
       recipe_yield: parsed.recipe_yield,
+      base_price_cents: parsed.base_price_cents,
     })
     .eq("id", id)
     .select("*")

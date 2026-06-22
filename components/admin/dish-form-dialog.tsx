@@ -27,6 +27,7 @@ import {
   updateDish,
 } from "@/app/[locale]/(admin)/admin/catalog/admin-actions";
 import type { DishWithRecipe, Ingredient } from "@/lib/types/database";
+import { formatCurrency } from "@/lib/utils";
 
 interface RecipeRow {
   key: string;
@@ -40,6 +41,7 @@ interface DishFormValues {
   category: DishCategory;
   image_url: string;
   recipe_yield: string;
+  base_price_usd: string;
 }
 
 const emptyForm = (): DishFormValues => ({
@@ -48,6 +50,7 @@ const emptyForm = (): DishFormValues => ({
   category: "lunch_main",
   image_url: "",
   recipe_yield: "1",
+  base_price_usd: "0",
 });
 
 function fromDish(dish: DishWithRecipe): DishFormValues {
@@ -57,6 +60,7 @@ function fromDish(dish: DishWithRecipe): DishFormValues {
     category: dish.category as DishCategory,
     image_url: dish.image_url ?? "",
     recipe_yield: String(dish.recipe_yield ?? 1),
+    base_price_usd: String((dish.base_price_cents ?? 0) / 100),
   };
 }
 
@@ -110,16 +114,6 @@ export function DishFormDialog({
   const [recipeRows, setRecipeRows] = useState<RecipeRow[]>(() => fromRecipe(dish));
 
   const isEdit = Boolean(dish);
-
-  const currency = useMemo(
-    () =>
-      new Intl.NumberFormat(locale === "es" ? "es-MX" : "en-US", {
-        style: "currency",
-        currency: "MXN",
-        minimumFractionDigits: 2,
-      }),
-    [locale]
-  );
 
   const ingredientById = useMemo(() => {
     const map = new Map<string, Ingredient>();
@@ -189,6 +183,7 @@ export function DishFormDialog({
       category: form.category,
       image_url: form.image_url.trim() || null,
       recipe_yield: Number(form.recipe_yield),
+      base_price_cents: Math.round(Math.max(0, Number(form.base_price_usd) || 0) * 100),
       recipe,
     };
 
@@ -280,6 +275,26 @@ export function DishFormDialog({
               </div>
 
               <div className="space-y-2">
+                <Label htmlFor="dish-base-price">{t("fields.basePrice")}</Label>
+                <Input
+                  id="dish-base-price"
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={form.base_price_usd}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, base_price_usd: e.target.value }))
+                  }
+                  disabled={pending}
+                />
+                <p className="text-xs text-neutral-500">
+                  {t("pricePreview", {
+                    price: formatCurrency(Number(form.base_price_usd) || 0, locale),
+                  })}
+                </p>
+              </div>
+
+              <div className="space-y-2 sm:col-span-3">
                 <Label htmlFor="dish-image">{t("fields.imageUrl")}</Label>
                 <Input
                   id="dish-image"
@@ -400,7 +415,7 @@ export function DishFormDialog({
                   {t("recipe.totalDishCost")}
                 </span>
                 <span className="text-sm font-semibold text-neutral-700">
-                  {currency.format(totalDishCost)}
+                  {formatCurrency(totalDishCost, locale)}
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -408,7 +423,7 @@ export function DishFormDialog({
                   {t("recipe.totalCostPerPerson")}
                 </span>
                 <span className="font-display text-lg text-[#C4A052]">
-                  {currency.format(costPerPerson)}
+                  {formatCurrency(costPerPerson, locale)}
                 </span>
               </div>
             </div>

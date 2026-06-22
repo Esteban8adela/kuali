@@ -88,6 +88,7 @@ export interface Dish {
   category: string;
   image_url: string | null;
   recipe_yield: number;
+  base_price_cents: number;
   created_at: string;
   updated_at: string;
 }
@@ -107,8 +108,45 @@ export interface Snack {
   name: string;
   category: string;
   base_price_cents: number;
+  allows_custom_note: boolean;
   is_active: boolean;
   sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CharcuterieItem {
+  id: string;
+  name: string;
+  category: "meats" | "cheeses" | "complements";
+  base_price_cents: number;
+  allows_custom_note: boolean;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AlwaysOnboardItem {
+  id: string;
+  name: string;
+  base_price_cents: number;
+  allows_custom_note: boolean;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CatalogItemRow {
+  id: string;
+  category: string;
+  subcategory: string | null;
+  name_en: string;
+  name_es: string;
+  base_price_cents: number;
+  sort_order: number;
+  is_active: boolean;
   created_at: string;
   updated_at: string;
 }

@@ -7,6 +7,8 @@ import { collectDishIdsFromItinerary } from "@/lib/chef/collect-menu-dish-ids";
 import { parseMenuOrder, type MenuDayPlan } from "@/lib/guest/menu-itinerary";
 import { areTripDatesValid, normalizeDateOnlyInput } from "@/lib/trip/date-validation";
 import { normalizeBarOrder } from "@/lib/trip/wizard";
+import { calculateTripCostUsd } from "@/lib/pricing/calculate-trip-cost";
+import { fetchPricingCatalog, type PricingCatalog } from "@/lib/pricing/fetch-pricing-catalog";
 import type { GuestPreferences, Trip } from "@/lib/types/database";
 
 const CHEF_VISIBLE_STATUSES: Trip["status"][] = ["submitted", "active", "completed", "settled"];
@@ -52,6 +54,8 @@ export interface ChefTripDetailsPayload {
   dishNames: Record<string, string>;
   barOrder: Record<string, unknown>;
   snacksData: Record<string, unknown>;
+  tripCostUsd: number;
+  pricingCatalog: PricingCatalog;
 }
 
 async function assertChefAccess() {
@@ -175,6 +179,16 @@ export async function getTripDetails(tripId: string): Promise<ChefTripDetailsPay
       ? (snacksRaw as Record<string, unknown>)
       : {};
 
+  const pricingCatalog = await fetchPricingCatalog();
+  const tripCostUsd = calculateTripCostUsd({
+    itinerary,
+    adultCount: trip.adult_count ?? 0,
+    childCount: trip.child_count ?? 0,
+    barOrder,
+    snacksData,
+    catalog: pricingCatalog,
+  });
+
   return {
     trip: trip as ChefTripDetailsPayload["trip"],
     principal_guest_name: resolvePrincipalGuestName(
@@ -185,5 +199,7 @@ export async function getTripDetails(tripId: string): Promise<ChefTripDetailsPay
     dishNames,
     barOrder,
     snacksData,
+    tripCostUsd,
+    pricingCatalog,
   };
 }
