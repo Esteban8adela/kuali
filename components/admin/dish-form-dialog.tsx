@@ -42,16 +42,20 @@ interface RecipeRow {
 }
 
 interface DishFormValues {
-  name: string;
-  description: string;
+  name_en: string;
+  name_es: string;
+  description_en: string;
+  description_es: string;
   category: DishCategory;
   image_url: string;
   recipe_yield: string;
 }
 
 const emptyForm = (defaultCategory: DishCategory): DishFormValues => ({
-  name: "",
-  description: "",
+  name_en: "",
+  name_es: "",
+  description_en: "",
+  description_es: "",
   category: defaultCategory,
   image_url: "",
   recipe_yield: "1",
@@ -59,8 +63,10 @@ const emptyForm = (defaultCategory: DishCategory): DishFormValues => ({
 
 function fromDish(dish: DishWithRecipe): DishFormValues {
   return {
-    name: dish.name,
-    description: dish.description ?? "",
+    name_en: dish.name_en ?? dish.name,
+    name_es: dish.name_es ?? dish.name,
+    description_en: dish.description_en ?? dish.description ?? "",
+    description_es: dish.description_es ?? dish.description ?? "",
     category: dish.category as DishCategory,
     image_url: dish.image_url ?? "",
     recipe_yield: String(dish.recipe_yield ?? 1),
@@ -159,8 +165,7 @@ export function DishFormDialog({
   const ingredientCostCents = Math.round(costPerPerson * 100);
   const effectivePriceCents = manualPriceUsdCents ?? ingredientCostCents;
 
-  const priceLabel =
-    locale === "es" ? t("fields.manualPriceMxn") : t("fields.manualPriceUsd");
+  const priceLabel = t("fields.basePriceUnit");
 
   function resetState(nextDish?: DishWithRecipe | null) {
     setError(null);
@@ -203,8 +208,10 @@ export function DishFormDialog({
       }));
 
     const payload = {
-      name: form.name.trim(),
-      description: form.description.trim() || null,
+      name_en: form.name_en.trim(),
+      name_es: form.name_es.trim(),
+      description_en: form.description_en.trim() || null,
+      description_es: form.description_es.trim() || null,
       category: form.category,
       image_url: form.image_url.trim() || null,
       recipe_yield: Number(form.recipe_yield),
@@ -238,27 +245,52 @@ export function DishFormDialog({
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="dish-name">{t("fields.name")}</Label>
-              <Input
-                id="dish-name"
-                value={form.name}
-                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                required
-                disabled={pending}
-              />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="dish-name-es">{t("fields.nameEs")}</Label>
+                <Input
+                  id="dish-name-es"
+                  value={form.name_es}
+                  onChange={(e) => setForm((f) => ({ ...f, name_es: e.target.value }))}
+                  required
+                  disabled={pending}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="dish-name-en">{t("fields.nameEn")}</Label>
+                <Input
+                  id="dish-name-en"
+                  value={form.name_en}
+                  onChange={(e) => setForm((f) => ({ ...f, name_en: e.target.value }))}
+                  required
+                  disabled={pending}
+                />
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="dish-description">{t("fields.description")}</Label>
-              <textarea
-                id="dish-description"
-                value={form.description}
-                onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                rows={3}
-                disabled={pending}
-                className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#C4A052]/40 disabled:cursor-not-allowed disabled:opacity-50"
-              />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="dish-description-es">{t("fields.descriptionEs")}</Label>
+                <textarea
+                  id="dish-description-es"
+                  value={form.description_es}
+                  onChange={(e) => setForm((f) => ({ ...f, description_es: e.target.value }))}
+                  rows={3}
+                  disabled={pending}
+                  className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#C4A052]/40 disabled:cursor-not-allowed disabled:opacity-50"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="dish-description-en">{t("fields.descriptionEn")}</Label>
+                <textarea
+                  id="dish-description-en"
+                  value={form.description_en}
+                  onChange={(e) => setForm((f) => ({ ...f, description_en: e.target.value }))}
+                  rows={3}
+                  disabled={pending}
+                  className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#C4A052]/40 disabled:cursor-not-allowed disabled:opacity-50"
+                />
+              </div>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-3">

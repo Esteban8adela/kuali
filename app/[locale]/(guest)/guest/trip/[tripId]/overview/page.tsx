@@ -14,7 +14,7 @@ export default async function TripOverviewPage({
   setRequestLocale(locale);
 
   const [overview, stepStatus] = await Promise.all([
-    fetchOrderOverview(tripId),
+    fetchOrderOverview(tripId, locale),
     fetchTripStepStatus(tripId, locale),
   ]);
 

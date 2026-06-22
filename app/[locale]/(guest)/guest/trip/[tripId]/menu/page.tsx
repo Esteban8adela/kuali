@@ -25,7 +25,7 @@ export default async function TripMenuPage({
       .select("start_date, end_date, child_count, menu_order")
       .eq("id", tripId)
       .single(),
-    fetchDishesCatalog(),
+    fetchDishesCatalog(locale),
     fetchTripStepStatus(tripId, locale),
   ]);
 

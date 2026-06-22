@@ -28,12 +28,26 @@ function revalidateSnacks() {
   revalidatePath(SNACKS_PATH, "layout");
 }
 
+function snackRow(parsed: ReturnType<typeof snackSchema.parse>) {
+  const primaryName = parsed.name_es;
+  return {
+    name: primaryName,
+    name_en: parsed.name_en,
+    name_es: parsed.name_es,
+    description_en: parsed.description_en?.trim() || null,
+    description_es: parsed.description_es?.trim() || null,
+    category: parsed.category ?? "general",
+    base_price_cents: parsed.base_price_cents,
+    sort_order: parsed.sort_order ?? 0,
+    is_active: parsed.is_active ?? true,
+  };
+}
+
 export async function getSnacks(): Promise<Snack[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("snacks")
     .select("*")
-    .order("category", { ascending: true })
     .order("sort_order", { ascending: true })
     .order("name", { ascending: true });
 
@@ -47,13 +61,7 @@ export async function createSnack(input: unknown) {
 
   const { data, error } = await supabase
     .from("snacks")
-    .insert({
-      name: parsed.name,
-      category: parsed.category,
-      base_price_cents: parsed.base_price_cents,
-      sort_order: parsed.sort_order ?? 0,
-      is_active: parsed.is_active ?? true,
-    })
+    .insert(snackRow(parsed))
     .select("*")
     .single();
 
@@ -68,13 +76,7 @@ export async function updateSnack(id: string, input: unknown) {
 
   const { data, error } = await supabase
     .from("snacks")
-    .update({
-      name: parsed.name,
-      category: parsed.category,
-      base_price_cents: parsed.base_price_cents,
-      sort_order: parsed.sort_order ?? 0,
-      is_active: parsed.is_active ?? true,
-    })
+    .update(snackRow(parsed))
     .eq("id", id)
     .select("*")
     .single();

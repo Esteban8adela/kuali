@@ -300,7 +300,9 @@
           "vodka": "Vodka",
           "gin": "Gin",
           "mezcal": "Mezcal",
-          "whiskey": "Whiskey"
+          "whiskey": "Whiskey",
+          "cognac": "Cognac",
+          "brandy": "Brandy"
         }
       },
       "snacks": {
@@ -383,7 +385,13 @@
         "confirmOrder": "Confirm order",
         "saveAndReturn": "Save changes and return home",
         "alreadySubmitted": "Order confirmed",
-        "confirmError": "Could not confirm the order. Please try again."
+        "confirmError": "Could not confirm the order. Please try again.",
+        "priceBreakdownTitle": "View detailed price breakdown",
+        "breakdownConcept": "Item",
+        "breakdownQty": "Qty",
+        "breakdownUnit": "Unit price",
+        "breakdownSubtotal": "Subtotal",
+        "breakdownTotal": "Estimated total"
       }
     }
   },
@@ -518,9 +526,8 @@
       "emptyPast": "No past reservations.",
       "emptyFuture": "No upcoming reservations."
     },
-    "menus": "Menu catalog",
     "guests": "Guests",
-    "trips": "Trips",
+    "catalogSectionTitle": "Catalogs & inventory",
     "catalogNav": "Catalog & recipes",
     "snacksNav": "Snacks catalog",
     "beveragesNav": "Beverages & spirits",
@@ -554,6 +561,7 @@
         "name": "Name",
         "unit": "Unit of measure",
         "cost": "Cost per unit",
+        "costPerUnit": "Cost (USD / {unit})",
         "category": "Stock category"
       },
       "categories": {
@@ -597,11 +605,18 @@
       },
       "fields": {
         "name": "Name",
+        "nameEn": "Name (EN)",
+        "nameEs": "Name (ES)",
         "description": "Description",
+        "descriptionEn": "Description (EN)",
+        "descriptionEs": "Description (ES)",
         "category": "Category",
         "recipeYield": "Recipe yield (servings)",
         "imageUrl": "Image URL",
-        "basePrice": "Base price (USD)"
+        "basePrice": "Base price (USD)",
+        "basePriceUnit": "Base Price (USD / unit)",
+        "manualPriceMxn": "Manual price (MXN)",
+        "manualPriceUsd": "Manual price (USD)"
       },
       "pricePreview": "Preview: {price}",
       "categories": {
@@ -632,11 +647,11 @@
     },
     "snacks": {
       "title": "Snacks catalog",
-      "subtitle": "Manage snacks separately from kitchen dishes (name, category, and base price).",
+      "subtitle": "Manage snacks separately from kitchen dishes.",
       "addButton": "Add snack",
       "addTitle": "New snack",
       "editTitle": "Edit snack",
-      "formSubtitle": "Set name, category, and base price in USD.",
+      "formSubtitle": "Set bilingual names and base price in USD.",
       "empty": "No snacks registered yet.",
       "saveError": "Could not save the snack. Please try again.",
       "deleteConfirm": "Delete this snack? This cannot be undone.",
@@ -651,8 +666,15 @@
       },
       "fields": {
         "name": "Name",
+        "nameEn": "Name (EN)",
+        "nameEs": "Name (ES)",
+        "descriptionEn": "Description (EN)",
+        "descriptionEs": "Description (ES)",
         "category": "Category",
-        "basePrice": "Base price (USD)"
+        "basePrice": "Base price (USD)",
+        "basePriceUnit": "Base Price (USD / unit)",
+        "manualPriceMxn": "Manual price (MXN)",
+        "manualPriceUsd": "Manual price (USD)"
       },
       "categories": {
         "chips": "Chips / crisps",
@@ -683,9 +705,16 @@
       "fields": {
         "nameEn": "Name (EN)",
         "nameEs": "Name (ES)",
+        "descriptionEn": "Description (EN)",
+        "descriptionEs": "Description (ES)",
+        "presentation": "Presentation / Size",
         "category": "Category",
         "subcategory": "Subcategory",
-        "basePrice": "Base price (USD)"
+        "spiritType": "Spirit type",
+        "basePrice": "Base price (USD)",
+        "basePriceUnit": "Base Price (USD / unit)",
+        "manualPriceMxn": "Manual price (MXN)",
+        "manualPriceUsd": "Manual price (USD)"
       },
       "categories": {
         "spirit": "Spirit",
@@ -714,7 +743,8 @@
       "fields": {
         "name": "Name",
         "category": "Category",
-        "basePrice": "Base price (USD)"
+        "basePrice": "Base price (USD)",
+        "basePriceUnit": "Base Price (USD / unit)"
       },
       "categories": {
         "meats": "Meats",
@@ -740,7 +770,10 @@
       },
       "fields": {
         "name": "Name",
-        "basePrice": "Base price (USD)"
+        "basePrice": "Base price (USD)",
+        "basePriceUnit": "Base Price (USD / unit)",
+        "manualPriceMxn": "Manual Price (MXN)",
+        "manualPriceUsd": "Manual Price (USD)"
       }
     }
   }

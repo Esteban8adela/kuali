@@ -6,6 +6,9 @@ export interface CatalogItem {
   subcategory: string | null;
   name_en: string;
   name_es: string;
+  description_en?: string | null;
+  description_es?: string | null;
+  presentation?: string | null;
   sort_order: number;
   is_active: boolean;
   base_price_cents: number;

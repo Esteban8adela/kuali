@@ -84,7 +84,11 @@ export interface Ingredient {
 export interface Dish {
   id: string;
   name: string;
+  name_en: string | null;
+  name_es: string | null;
   description: string | null;
+  description_en: string | null;
+  description_es: string | null;
   category: string;
   image_url: string | null;
   recipe_yield: number;
@@ -107,6 +111,10 @@ export interface DishWithRecipe extends Dish {
 export interface Snack {
   id: string;
   name: string;
+  name_en: string | null;
+  name_es: string | null;
+  description_en: string | null;
+  description_es: string | null;
   category: string;
   base_price_cents: number;
   allows_custom_note: boolean;
@@ -145,6 +153,9 @@ export interface CatalogItemRow {
   subcategory: string | null;
   name_en: string;
   name_es: string;
+  description_en: string | null;
+  description_es: string | null;
+  presentation: string | null;
   base_price_cents: number;
   sort_order: number;
   is_active: boolean;

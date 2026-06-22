@@ -5,7 +5,12 @@ import { collectDishIdsFromItinerary } from "@/lib/chef/collect-menu-dish-ids";
 import { normalizeBarOrder } from "@/lib/trip/wizard";
 import { normalizeDateOnlyInput } from "@/lib/trip/date-validation";
 import { calculateTripCostUsd } from "@/lib/pricing/calculate-trip-cost";
+import {
+  calculateTripBreakdown,
+  type PriceBreakdownLine,
+} from "@/lib/pricing/calculate-trip-breakdown";
 import { fetchPricingCatalog } from "@/lib/pricing/fetch-pricing-catalog";
+import { localizedDishName } from "@/lib/catalog/utils";
 
 export interface OrderOverviewData {
   tripId: string;
@@ -21,9 +26,13 @@ export interface OrderOverviewData {
   barOrder: Record<string, unknown>;
   catalogNames: Record<string, string>;
   tripCostUsd: number;
+  priceBreakdown: PriceBreakdownLine[];
 }
 
-export async function fetchOrderOverview(tripId: string): Promise<OrderOverviewData | null> {
+export async function fetchOrderOverview(
+  tripId: string,
+  locale = "en"
+): Promise<OrderOverviewData | null> {
   const supabase = await createClient();
   const { data: trip } = await supabase
     .from("trips")
@@ -38,9 +47,12 @@ export async function fetchOrderOverview(tripId: string): Promise<OrderOverviewD
   const dishNames: Record<string, string> = {};
 
   if (dishIds.length > 0) {
-    const { data: dishes } = await supabase.from("dishes").select("id, name").in("id", dishIds);
+    const { data: dishes } = await supabase
+      .from("dishes")
+      .select("id, name, name_en, name_es")
+      .in("id", dishIds);
     for (const dish of dishes ?? []) {
-      dishNames[dish.id] = dish.name;
+      dishNames[dish.id] = localizedDishName(dish, locale);
     }
   }
 
@@ -49,14 +61,19 @@ export async function fetchOrderOverview(tripId: string): Promise<OrderOverviewD
   const snacksData =
     snacksRaw && typeof snacksRaw === "object" ? (snacksRaw as Record<string, unknown>) : {};
 
-  const catalog = await fetchPricingCatalog();
-  const tripCostUsd = calculateTripCostUsd({
+  const catalog = await fetchPricingCatalog(locale);
+  const costInput = {
     itinerary,
     adultCount: trip.adult_count ?? 0,
     childCount: trip.child_count ?? 0,
     barOrder,
     snacksData,
     catalog,
+  };
+  const tripCostUsd = calculateTripCostUsd(costInput);
+  const priceBreakdown = calculateTripBreakdown({
+    ...costInput,
+    dishNames,
   });
 
   return {
@@ -73,5 +90,6 @@ export async function fetchOrderOverview(tripId: string): Promise<OrderOverviewD
     barOrder,
     tripCostUsd,
     catalogNames: catalog.namesById,
+    priceBreakdown,
   };
 }

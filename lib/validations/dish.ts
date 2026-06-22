@@ -7,8 +7,10 @@ export const recipeLineSchema = z.object({
 });
 
 export const dishSchema = z.object({
-  name: z.string().trim().min(1, "Name is required"),
-  description: z.string().trim().optional().nullable(),
+  name_en: z.string().trim().min(1, "English name is required"),
+  name_es: z.string().trim().min(1, "Spanish name is required"),
+  description_en: z.string().trim().optional().nullable(),
+  description_es: z.string().trim().optional().nullable(),
   category: z.enum(DISH_CATEGORIES),
   recipe_yield: z.coerce.number().positive("Recipe yield must be greater than zero"),
   manual_price_cents: z.coerce.number().int().min(0).optional().nullable(),

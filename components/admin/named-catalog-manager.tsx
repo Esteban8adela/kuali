@@ -31,6 +31,10 @@ import { formatCurrency, centsToUsd } from "@/lib/utils";
 interface CatalogRow {
   id: string;
   name: string;
+  name_en?: string;
+  name_es?: string;
+  description_en?: string | null;
+  description_es?: string | null;
   category?: string;
   base_price_cents: number;
 }
@@ -46,6 +50,7 @@ interface NamedCatalogManagerProps {
   i18nNamespace: CatalogI18n;
   categories?: readonly string[];
   embedded?: boolean;
+  bilingual?: boolean;
   defaultCategory?: string;
   onCreate: (input: Record<string, unknown>) => Promise<unknown>;
   onUpdate: (id: string, input: Record<string, unknown>) => Promise<unknown>;
@@ -58,6 +63,7 @@ export function NamedCatalogManager({
   i18nNamespace,
   categories,
   embedded = false,
+  bilingual = false,
   defaultCategory,
   onCreate,
   onUpdate,
@@ -70,27 +76,43 @@ export function NamedCatalogManager({
   const [editing, setEditing] = useState<CatalogRow | null>(null);
   const [pending, startTransition] = useTransition();
   const [name, setName] = useState("");
+  const [nameEn, setNameEn] = useState("");
+  const [nameEs, setNameEs] = useState("");
+  const [descriptionEn, setDescriptionEn] = useState("");
+  const [descriptionEs, setDescriptionEs] = useState("");
   const [category, setCategory] = useState(defaultCategory ?? categories?.[0] ?? "");
   const [priceDisplay, setPriceDisplay] = useState("0");
   const [priceUsdCents, setPriceUsdCents] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   const priceLabel =
-    locale === "es" ? t("fields.manualPriceMxn") : t("fields.manualPriceUsd");
+    locale === "es" ? t("fields.basePriceUnit") : t("fields.basePriceUnit");
 
-  function openCreate() {
-    setEditing(null);
+  function resetForm() {
     setName("");
+    setNameEn("");
+    setNameEs("");
+    setDescriptionEn("");
+    setDescriptionEs("");
     setCategory(defaultCategory ?? categories?.[0] ?? "");
     setPriceDisplay("0");
     setPriceUsdCents(0);
     setError(null);
+  }
+
+  function openCreate() {
+    setEditing(null);
+    resetForm();
     setDialogOpen(true);
   }
 
   function openEdit(item: CatalogRow) {
     setEditing(item);
     setName(item.name);
+    setNameEn(item.name_en ?? item.name);
+    setNameEs(item.name_es ?? item.name);
+    setDescriptionEn(item.description_en ?? "");
+    setDescriptionEs(item.description_es ?? "");
     setCategory(item.category ?? defaultCategory ?? categories?.[0] ?? "");
     const display = manualPriceDisplayFromCents(item.base_price_cents, locale);
     setPriceDisplay(display || "0");
@@ -101,11 +123,20 @@ export function NamedCatalogManager({
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const payload = {
-      name: name.trim(),
-      category: defaultCategory ?? category,
-      base_price_cents: priceUsdCents,
-    };
+    const payload = bilingual
+      ? {
+          name_en: nameEn.trim(),
+          name_es: nameEs.trim(),
+          description_en: descriptionEn.trim() || null,
+          description_es: descriptionEs.trim() || null,
+          category: defaultCategory ?? category,
+          base_price_cents: priceUsdCents,
+        }
+      : {
+          name: name.trim(),
+          category: defaultCategory ?? category,
+          base_price_cents: priceUsdCents,
+        };
 
     startTransition(async () => {
       try {
@@ -125,6 +156,13 @@ export function NamedCatalogManager({
       await onDelete(id);
       router.refresh();
     });
+  }
+
+  function displayName(item: CatalogRow): string {
+    if (bilingual) {
+      return locale === "es" ? item.name_es ?? item.name : item.name_en ?? item.name;
+    }
+    return item.name;
   }
 
   const table = (
@@ -147,7 +185,7 @@ export function NamedCatalogManager({
             <tbody>
               {items.map((item) => (
                 <tr key={item.id} className="border-b border-neutral-100 hover:bg-[#C4A052]/5">
-                  <td className="px-4 py-3 font-medium text-[#1B3A4B]">{item.name}</td>
+                  <td className="px-4 py-3 font-medium text-[#1B3A4B]">{displayName(item)}</td>
                   {categories && !defaultCategory ? (
                     <td className="px-4 py-3">
                       {item.category
@@ -214,16 +252,61 @@ export function NamedCatalogManager({
             <DialogDescription>{t("formSubtitle")}</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Label htmlFor="item-name">{t("fields.name")}</Label>
-              <Input
-                id="item-name"
-                className="mt-1.5"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
-            </div>
+            {bilingual ? (
+              <>
+                <div>
+                  <Label htmlFor="item-name-es">{t("fields.nameEs")}</Label>
+                  <Input
+                    id="item-name-es"
+                    className="mt-1.5"
+                    value={nameEs}
+                    onChange={(e) => setNameEs(e.target.value)}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="item-name-en">{t("fields.nameEn")}</Label>
+                  <Input
+                    id="item-name-en"
+                    className="mt-1.5"
+                    value={nameEn}
+                    onChange={(e) => setNameEn(e.target.value)}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="item-desc-es">{t("fields.descriptionEs")}</Label>
+                  <textarea
+                    id="item-desc-es"
+                    className="mt-1.5 flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+                    value={descriptionEs}
+                    onChange={(e) => setDescriptionEs(e.target.value)}
+                    rows={2}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="item-desc-en">{t("fields.descriptionEn")}</Label>
+                  <textarea
+                    id="item-desc-en"
+                    className="mt-1.5 flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+                    value={descriptionEn}
+                    onChange={(e) => setDescriptionEn(e.target.value)}
+                    rows={2}
+                  />
+                </div>
+              </>
+            ) : (
+              <div>
+                <Label htmlFor="item-name">{t("fields.name")}</Label>
+                <Input
+                  id="item-name"
+                  className="mt-1.5"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
+              </div>
+            )}
             {categories && !defaultCategory ? (
               <div>
                 <Label>{t("fields.category")}</Label>

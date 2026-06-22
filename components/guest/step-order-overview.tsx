@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { WizardNav } from "@/components/guest/wizard-nav";
 import { confirmTripOrder } from "@/app/[locale]/(guest)/guest/trip/actions";
 import { formatCurrency } from "@/lib/utils";
+import { OrderPriceBreakdown } from "@/components/guest/order-price-breakdown";
 import { parseSnacksPayload } from "@/lib/guest/snacks-selection";
 import {
   extractBarBottleLines,
@@ -288,6 +289,7 @@ export function StepOrderOverview({ data, locale }: StepOrderOverviewProps) {
           <section className="rounded-xl border-2 border-[#C4A052]/40 bg-[#C4A052]/5 p-6">
             <h3 className="font-display text-xl text-[#1B3A4B]">{t("foodBudgetTitle")}</h3>
             <p className="mt-2 text-3xl font-semibold text-[#1B3A4B]">{foodFormatted}</p>
+            <OrderPriceBreakdown lines={data.priceBreakdown} locale={locale} />
             <p className="mt-3 text-xs text-gray-500">{t("foodBudgetDisclaimer")}</p>
             <p className="mt-2 text-sm text-neutral-600">{t("finalCostNote")}</p>
           </section>

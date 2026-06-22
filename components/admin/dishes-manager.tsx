@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { DishFormDialog } from "@/components/admin/dish-form-dialog";
 import { deleteDish } from "@/app/[locale]/(admin)/admin/catalog/admin-actions";
 import type { DishWithRecipe, Ingredient } from "@/lib/types/database";
+import { localizedDishName } from "@/lib/catalog/utils";
 
 import {
   KIDS_DISH_CATEGORIES,
@@ -94,14 +95,18 @@ export function DishesManager({
                       key={dish.id}
                       className="border-b border-neutral-100 transition hover:bg-[#C4A052]/5"
                     >
-                      <td className="px-4 py-3 font-medium text-[#1B3A4B]">{dish.name}</td>
+                      <td className="px-4 py-3 font-medium text-[#1B3A4B]">
+                        {localizedDishName(dish, locale)}
+                      </td>
                       <td className="px-4 py-3">
                         <span className="inline-flex rounded-full bg-[#1B3A4B]/5 px-2.5 py-0.5 text-xs font-medium text-[#1B3A4B]">
                           {t(`categories.${dish.category}` as "categories.breakfast")}
                         </span>
                       </td>
                       <td className="max-w-xs truncate px-4 py-3 text-neutral-600">
-                        {dish.description || "—"}
+                        {(locale === "es"
+                          ? dish.description_es ?? dish.description
+                          : dish.description_en ?? dish.description) || "—"}
                       </td>
                       <td className="px-4 py-3 text-neutral-600">
                         {t("recipeLineCount", { count: dish.recipe.length })}

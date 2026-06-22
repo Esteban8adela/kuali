@@ -120,6 +120,7 @@ export function CatalogMultiPicker({
                 type="number"
                 min={1}
                 className="h-9 w-16 text-center"
+                step={1}
                 value={qty}
                 onChange={(e) => updateQty(index, parseInt(e.target.value, 10) || 1)}
               />

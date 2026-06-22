@@ -159,12 +159,14 @@ export function IngredientFormDialog({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="ingredient-cost">{t("fields.cost")}</Label>
+              <Label htmlFor="ingredient-cost">
+                {t("fields.costPerUnit", { unit: t(`units.${form.unit}` as "units.kg") })}
+              </Label>
               <Input
                 id="ingredient-cost"
                 type="number"
                 min={0}
-                step="0.01"
+                step={form.unit === "kg" || form.unit === "g" ? "0.1" : "any"}
                 value={form.cost_per_unit}
                 onChange={(e) =>
                   setForm((f) => ({ ...f, cost_per_unit: e.target.value }))

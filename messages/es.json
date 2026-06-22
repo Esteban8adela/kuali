@@ -300,7 +300,9 @@
           "vodka": "Vodka",
           "gin": "Ginebra",
           "mezcal": "Mezcal",
-          "whiskey": "Whisky"
+          "whiskey": "Whisky",
+          "cognac": "Cognac",
+          "brandy": "Brandy"
         }
       },
       "snacks": {
@@ -383,7 +385,13 @@
         "confirmOrder": "Confirmar orden",
         "saveAndReturn": "Guardar cambios y volver al inicio",
         "alreadySubmitted": "Orden confirmada",
-        "confirmError": "No se pudo confirmar la orden. Inténtelo de nuevo."
+        "confirmError": "No se pudo confirmar la orden. Inténtelo de nuevo.",
+        "priceBreakdownTitle": "Ver desglose detallado de precios",
+        "breakdownConcept": "Concepto",
+        "breakdownQty": "Cantidad",
+        "breakdownUnit": "Precio unitario",
+        "breakdownSubtotal": "Subtotal",
+        "breakdownTotal": "Total estimado"
       }
     }
   },
@@ -518,9 +526,8 @@
       "emptyPast": "No hay reservas pasadas.",
       "emptyFuture": "No hay reservas futuras."
     },
-    "menus": "Catálogo de menús",
     "guests": "Huéspedes",
-    "trips": "Viajes",
+    "catalogSectionTitle": "Catálogos e inventario",
     "catalogNav": "Ingredientes",
     "dishesNav": "Platillos",
     "kidsMenuNav": "Menú infantil",
@@ -573,12 +580,17 @@
       },
       "fields": {
         "name": "Nombre",
+        "nameEn": "Nombre (EN)",
+        "nameEs": "Nombre (ES)",
         "description": "Descripción",
+        "descriptionEn": "Descripción (EN)",
+        "descriptionEs": "Descripción (ES)",
         "category": "Categoría",
         "recipeYield": "Rendimiento (porciones)",
         "imageUrl": "URL de imagen",
         "manualPriceMxn": "Precio manual (MXN)",
-        "manualPriceUsd": "Precio manual (USD)"
+        "manualPriceUsd": "Precio manual (USD)",
+        "basePriceUnit": "Precio Base (USD / unidad)"
       },
       "categories": {
         "kids_breakfast": "Desayuno infantil",
@@ -625,6 +637,7 @@
         "name": "Nombre",
         "unit": "Unidad de medida",
         "cost": "Costo por unidad",
+        "costPerUnit": "Costo (USD / {unit})",
         "category": "Categoría de stock"
       },
       "categories": {
@@ -668,11 +681,16 @@
       },
       "fields": {
         "name": "Nombre",
+        "nameEn": "Nombre (EN)",
+        "nameEs": "Nombre (ES)",
         "description": "Descripción",
+        "descriptionEn": "Descripción (EN)",
+        "descriptionEs": "Descripción (ES)",
         "category": "Categoría",
         "recipeYield": "Rendimiento (porciones)",
         "imageUrl": "URL de imagen",
         "basePrice": "Precio base (USD)",
+        "basePriceUnit": "Precio Base (USD / unidad)",
         "manualPriceMxn": "Precio manual (MXN)",
         "manualPriceUsd": "Precio manual (USD)"
       },
@@ -707,11 +725,11 @@
     },
     "snacks": {
       "title": "Catálogo de snacks",
-      "subtitle": "Administre snacks independientes del menú de cocina (nombre, categoría y precio base).",
+      "subtitle": "Administre snacks independientes del menú de cocina.",
       "addButton": "Agregar snack",
       "addTitle": "Nuevo snack",
       "editTitle": "Editar snack",
-      "formSubtitle": "Defina nombre, categoría y precio base en USD.",
+      "formSubtitle": "Defina nombres bilingües y precio base en USD.",
       "empty": "Aún no hay snacks registrados.",
       "saveError": "No se pudo guardar el snack. Inténtelo de nuevo.",
       "deleteConfirm": "¿Eliminar este snack? Esta acción no se puede deshacer.",
@@ -726,8 +744,13 @@
       },
       "fields": {
         "name": "Nombre",
+        "nameEn": "Nombre (EN)",
+        "nameEs": "Nombre (ES)",
+        "descriptionEn": "Descripción (EN)",
+        "descriptionEs": "Descripción (ES)",
         "category": "Categoría",
         "basePrice": "Precio base (USD)",
+        "basePriceUnit": "Precio Base (USD / unidad)",
         "manualPriceMxn": "Precio manual (MXN)",
         "manualPriceUsd": "Precio manual (USD)"
       },
@@ -760,10 +783,14 @@
       "fields": {
         "nameEn": "Nombre (EN)",
         "nameEs": "Nombre (ES)",
+        "descriptionEn": "Descripción (EN)",
+        "descriptionEs": "Descripción (ES)",
+        "presentation": "Presentación / Tamaño",
         "category": "Categoría",
         "subcategory": "Subcategoría",
         "spiritType": "Tipo de licor",
         "basePrice": "Precio base (USD)",
+        "basePriceUnit": "Precio Base (USD / unidad)",
         "manualPriceMxn": "Precio manual (MXN)",
         "manualPriceUsd": "Precio manual (USD)"
       },
@@ -815,6 +842,7 @@
         "name": "Nombre",
         "category": "Categoría",
         "basePrice": "Precio base (USD)",
+        "basePriceUnit": "Precio Base (USD / unidad)",
         "manualPriceMxn": "Precio manual (MXN)",
         "manualPriceUsd": "Precio manual (USD)"
       },
@@ -842,7 +870,10 @@
       },
       "fields": {
         "name": "Nombre",
-        "basePrice": "Precio base (USD)"
+        "basePrice": "Precio base (USD)",
+        "basePriceUnit": "Precio Base (USD / unidad)",
+        "manualPriceMxn": "Precio Manual (MXN)",
+        "manualPriceUsd": "Precio Manual (USD)"
       }
     }
   }

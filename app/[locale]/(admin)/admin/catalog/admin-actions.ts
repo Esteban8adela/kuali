@@ -39,7 +39,11 @@ function mapDishRow(row: Record<string, unknown>): DishWithRecipe {
   return {
     id: row.id as string,
     name: row.name as string,
+    name_en: (row.name_en as string | null) ?? null,
+    name_es: (row.name_es as string | null) ?? null,
     description: (row.description as string | null) ?? null,
+    description_en: (row.description_en as string | null) ?? null,
+    description_es: (row.description_es as string | null) ?? null,
     category: row.category as string,
     image_url: (row.image_url as string | null) ?? null,
     recipe_yield: Number(row.recipe_yield ?? 1),
@@ -181,8 +185,12 @@ export async function createDish(input: unknown) {
   const { data: dish, error } = await supabase
     .from("dishes")
     .insert({
-      name: parsed.name,
-      description: parsed.description?.trim() || null,
+      name: parsed.name_es,
+      name_en: parsed.name_en,
+      name_es: parsed.name_es,
+      description: parsed.description_es?.trim() || null,
+      description_en: parsed.description_en?.trim() || null,
+      description_es: parsed.description_es?.trim() || null,
       category: parsed.category,
       image_url: normalizeImageUrl(parsed.image_url),
       recipe_yield: parsed.recipe_yield,
@@ -214,8 +222,12 @@ export async function updateDish(id: string, input: unknown) {
   const { data: dish, error } = await supabase
     .from("dishes")
     .update({
-      name: parsed.name,
-      description: parsed.description?.trim() || null,
+      name: parsed.name_es,
+      name_en: parsed.name_en,
+      name_es: parsed.name_es,
+      description: parsed.description_es?.trim() || null,
+      description_en: parsed.description_en?.trim() || null,
+      description_es: parsed.description_es?.trim() || null,
       category: parsed.category,
       image_url: normalizeImageUrl(parsed.image_url),
       recipe_yield: parsed.recipe_yield,

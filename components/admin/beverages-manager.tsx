@@ -23,6 +23,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { BEVERAGE_CATEGORY_KEYS, SPIRIT_SUBCATEGORIES } from "@/lib/constants/beverages";
+import { sortBeverages } from "@/lib/catalog/utils";
 import {
   ManualPriceInput,
   manualPriceDisplayFromCents,
@@ -51,20 +52,25 @@ export function BeveragesManager({ items, locale }: BeveragesManagerProps) {
   const [form, setForm] = useState({
     name_en: "",
     name_es: "",
+    description_en: "",
+    description_es: "",
+    presentation: "",
     category: "spirit",
     subcategory: SPIRIT_SUBCATEGORIES[0] as string,
   });
   const [priceDisplay, setPriceDisplay] = useState("0");
   const [priceUsdCents, setPriceUsdCents] = useState(0);
 
-  const priceLabel =
-    locale === "es" ? t("fields.manualPriceMxn") : t("fields.manualPriceUsd");
+  const priceLabel = t("fields.basePriceUnit");
 
   function openCreate(category = "spirit") {
     setEditing(null);
     setForm({
       name_en: "",
       name_es: "",
+      description_en: "",
+      description_es: "",
+      presentation: "",
       category,
       subcategory: category === "spirit" ? SPIRIT_SUBCATEGORIES[0] : "",
     });
@@ -79,6 +85,9 @@ export function BeveragesManager({ items, locale }: BeveragesManagerProps) {
     setForm({
       name_en: item.name_en,
       name_es: item.name_es,
+      description_en: item.description_en ?? "",
+      description_es: item.description_es ?? "",
+      presentation: item.presentation ?? "",
       category: item.category,
       subcategory: item.subcategory ?? (item.category === "spirit" ? SPIRIT_SUBCATEGORIES[0] : ""),
     });
@@ -94,6 +103,9 @@ export function BeveragesManager({ items, locale }: BeveragesManagerProps) {
     const payload = {
       name_en: form.name_en.trim(),
       name_es: form.name_es.trim(),
+      description_en: form.description_en.trim() || null,
+      description_es: form.description_es.trim() || null,
+      presentation: form.presentation.trim() || null,
       category: form.category,
       subcategory: form.category === "spirit" ? form.subcategory : null,
       base_price_cents: priceUsdCents,
@@ -119,8 +131,10 @@ export function BeveragesManager({ items, locale }: BeveragesManagerProps) {
     });
   }
 
-  const displayName = (item: CatalogItemRow) =>
-    locale === "es" ? item.name_es : item.name_en;
+  const displayName = (item: CatalogItemRow) => {
+    const name = locale === "es" ? item.name_es : item.name_en;
+    return item.presentation?.trim() ? `${name} (${item.presentation.trim()})` : name;
+  };
 
   const sectionMeta: Record<string, { title: string; desc: string }> = {
     spirit: { title: t("sections.spirits"), desc: t("sections.spiritsDesc") },
@@ -138,7 +152,7 @@ export function BeveragesManager({ items, locale }: BeveragesManagerProps) {
 
       <div className="grid gap-6">
         {BEVERAGE_CATEGORY_KEYS.map((cat) => {
-          const sectionItems = items.filter((i) => i.category === cat);
+          const sectionItems = sortBeverages(items.filter((i) => i.category === cat));
           const meta = sectionMeta[cat];
           return (
             <Card key={cat} className="border-0 shadow-sm">
@@ -216,6 +230,16 @@ export function BeveragesManager({ items, locale }: BeveragesManagerProps) {
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
+              <Label htmlFor="bev-name-es">{t("fields.nameEs")}</Label>
+              <Input
+                id="bev-name-es"
+                className="mt-1.5"
+                value={form.name_es}
+                onChange={(e) => setForm((f) => ({ ...f, name_es: e.target.value }))}
+                required
+              />
+            </div>
+            <div>
               <Label htmlFor="bev-name-en">{t("fields.nameEn")}</Label>
               <Input
                 id="bev-name-en"
@@ -226,13 +250,33 @@ export function BeveragesManager({ items, locale }: BeveragesManagerProps) {
               />
             </div>
             <div>
-              <Label htmlFor="bev-name-es">{t("fields.nameEs")}</Label>
+              <Label htmlFor="bev-desc-es">{t("fields.descriptionEs")}</Label>
+              <textarea
+                id="bev-desc-es"
+                className="mt-1.5 flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+                value={form.description_es}
+                onChange={(e) => setForm((f) => ({ ...f, description_es: e.target.value }))}
+                rows={2}
+              />
+            </div>
+            <div>
+              <Label htmlFor="bev-desc-en">{t("fields.descriptionEn")}</Label>
+              <textarea
+                id="bev-desc-en"
+                className="mt-1.5 flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+                value={form.description_en}
+                onChange={(e) => setForm((f) => ({ ...f, description_en: e.target.value }))}
+                rows={2}
+              />
+            </div>
+            <div>
+              <Label htmlFor="bev-presentation">{t("fields.presentation")}</Label>
               <Input
-                id="bev-name-es"
+                id="bev-presentation"
                 className="mt-1.5"
-                value={form.name_es}
-                onChange={(e) => setForm((f) => ({ ...f, name_es: e.target.value }))}
-                required
+                placeholder="750ml"
+                value={form.presentation}
+                onChange={(e) => setForm((f) => ({ ...f, presentation: e.target.value }))}
               />
             </div>
             {form.category === "spirit" ? (

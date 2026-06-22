@@ -4,7 +4,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NamedCatalogManager } from "@/components/admin/named-catalog-manager";
 import { CHARCUTERIE_CATEGORIES } from "@/lib/validations/charcuterie-item";
-import { SNACK_CATEGORIES } from "@/lib/constants/snacks";
 import {
   createCharcuterieItem,
   deleteCharcuterieItem,
@@ -21,6 +20,7 @@ import {
   updateAlwaysOnboardItem,
 } from "@/app/[locale]/(admin)/admin/always-onboard/actions";
 import type { CharcuterieItem, AlwaysOnboardItem, Snack } from "@/lib/types/database";
+import { localizedSnackName } from "@/lib/catalog/utils";
 import { useTranslations } from "next-intl";
 
 interface PantryManagerProps {
@@ -55,15 +55,18 @@ export function PantryManager({ snacks, alwaysOnboard, charcuterie, locale }: Pa
           <CardContent>
             <NamedCatalogManager
               embedded
+              bilingual
               items={snacks.map((i) => ({
                 id: i.id,
-                name: i.name,
-                category: i.category,
+                name: localizedSnackName(i, locale),
+                name_en: i.name_en ?? i.name,
+                name_es: i.name_es ?? i.name,
+                description_en: i.description_en,
+                description_es: i.description_es,
                 base_price_cents: i.base_price_cents,
               }))}
               locale={locale}
               i18nNamespace="admin.snacks"
-              categories={SNACK_CATEGORIES}
               onCreate={createSnack}
               onUpdate={updateSnack}
               onDelete={deleteSnack}
