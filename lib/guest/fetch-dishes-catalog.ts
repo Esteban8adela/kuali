@@ -19,7 +19,6 @@ export function emptyDishesByCategory(): DishesByCategory {
     lunch_dessert: [],
     dinner: [],
     kids: [],
-    snack: [],
   };
 }
 

@@ -102,6 +102,17 @@ export interface DishWithRecipe extends Dish {
   recipe: DishRecipeLine[];
 }
 
+export interface Snack {
+  id: string;
+  name: string;
+  category: string;
+  base_price_cents: number;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface TripStockLine {
   id: string;
   trip_id: string;

@@ -54,6 +54,7 @@ export default async function GuestDashboardPage({
     step3: "none",
     step4: "none",
     step5: "none",
+    step6: "none",
   };
 
   if (activeTrip) {

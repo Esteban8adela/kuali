@@ -37,6 +37,9 @@ export default async function AdminLayout({
               <Link href={`/${locale}/admin/catalog/ingredients`} className="rounded px-3 py-2 hover:bg-white/10">
                 {t("catalogNav")}
               </Link>
+              <Link href={`/${locale}/admin/snacks`} className="rounded px-3 py-2 hover:bg-white/10">
+                {t("snacksNav")}
+              </Link>
             </nav>
           </aside>
           <main className="flex-1 bg-[#FAFAF8] p-6 md:p-10">{children}</main>

@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { WizardProgress } from "@/components/guest/wizard-progress";
 import { StepPreferences } from "@/components/guest/step-preferences";
 import { fetchTripStepStatus } from "@/lib/trip/fetch-trip-step-status";
+
 export default async function TripPreferencesPage({
   params,
 }: {

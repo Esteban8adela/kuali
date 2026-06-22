@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,12 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
-import { finalizeTripBooking, saveBarStep, saveDraftAndExit } from "@/app/[locale]/(guest)/guest/trip/actions";
+import { advanceWizardStep, saveBarStep, saveDraftAndExit } from "@/app/[locale]/(guest)/guest/trip/actions";
 import { WizardNav } from "@/components/guest/wizard-nav";
 import { CatalogMultiPicker } from "@/components/guest/catalog-multi-picker";
 import { SPIRIT_SUBCATEGORIES } from "@/lib/catalog/default-catalog";
 import { filterCatalog } from "@/lib/catalog/utils";
-import { useWizardAutosave } from "@/hooks/use-wizard-autosave";
 import type { BarLineSelection, BarOrderPayload, CatalogItem } from "@/lib/catalog/types";
 
 function formatResidualLabel(key: string): string {
@@ -149,10 +148,23 @@ function emptySpirits(): Record<string, BarLineSelection[]> {
   return Object.fromEntries(SPIRIT_SUBCATEGORIES.map((s) => [s, []]));
 }
 
+function normalizeBarLineSelections(lines: BarLineSelection[] | undefined): BarLineSelection[] {
+  return (lines ?? []).map((line) => ({
+    ...line,
+    quantity: line.quantity == null || line.quantity < 1 ? 1 : line.quantity,
+  }));
+}
+
 function parseInitialBar(raw?: Record<string, unknown>): BarOrderPayload {
   const r = raw ?? {};
-  const spirits =
-    (r.spirits as Record<string, BarLineSelection[]>) ?? emptySpirits();
+  const spiritsRaw = (r.spirits as Record<string, BarLineSelection[]>) ?? emptySpirits();
+  const spirits = Object.fromEntries(
+    Object.entries({ ...emptySpirits(), ...spiritsRaw }).map(([key, lines]) => [
+      key,
+      normalizeBarLineSelections(lines),
+    ])
+  ) as Record<string, BarLineSelection[]>;
+
   return {
     byob: Boolean(r.byob),
     natural_water: false,
@@ -161,16 +173,21 @@ function parseInitialBar(raw?: Record<string, unknown>): BarOrderPayload {
     soda_diet: false,
     chef_recommendation: Boolean(r.chef_recommendation),
     house_wine_by_glass: Boolean(r.house_wine_by_glass),
-    spirits: { ...emptySpirits(), ...spirits },
-    wines: (r.wines as BarLineSelection[]) ?? [],
-    beers: (r.beers as BarLineSelection[]) ?? [],
-    mixers: (r.mixers as BarLineSelection[]) ?? [],
+    spirits,
+    wines: normalizeBarLineSelections(r.wines as BarLineSelection[] | undefined),
+    beers: normalizeBarLineSelections(r.beers as BarLineSelection[] | undefined),
+    mixers: normalizeBarLineSelections(r.mixers as BarLineSelection[] | undefined),
   };
 }
 
-export function StepBarBeverages({ tripId, catalog, initialBar, locale, userRole }: StepBarBeveragesProps) {
+export function StepBarBeverages({
+  tripId,
+  catalog,
+  initialBar,
+  locale,
+  userRole,
+}: StepBarBeveragesProps) {
   const t = useTranslations("guest.wizard.bar");
-  const tc = useTranslations("common");
   const router = useRouter();
   const [pending, startTransition] = useTransition();
 
@@ -195,32 +212,25 @@ export function StepBarBeverages({ tripId, catalog, initialBar, locale, userRole
     };
   }
 
-  const persistBar = useCallback(async () => {
+  async function persistBar() {
     await saveBarStep({ tripId, barOrder: buildPayload() });
-  }, [tripId, byob, specificRequest, spirits, wines, beers, mixers]);
+  }
 
-  useWizardAutosave(persistBar, [byob, specificRequest, spirits, wines, beers, mixers]);
-
-  function handleSubmit() {
+  function handleContinue() {
     startTransition(async () => {
-      await saveBarStep({ tripId, barOrder: buildPayload() });
-      await finalizeTripBooking({
-        tripId,
-        barOrder: buildPayload(),
-      });
-      router.push(`/${locale}/guest/dashboard`);
+      await persistBar();
+      await advanceWizardStep(tripId, 6);
+      router.push(`/${locale}/guest/trip/${tripId}/overview`);
     });
   }
 
   function handleSaveExit() {
     startTransition(async () => {
-      await saveBarStep({ tripId, barOrder: buildPayload() });
+      await persistBar();
       await saveDraftAndExit(tripId);
       router.push(`/${locale}/guest/dashboard`);
     });
   }
-
-  const help = t("chefDefaultHelp");
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -263,7 +273,6 @@ export function StepBarBeverages({ tripId, catalog, initialBar, locale, userRole
                 selections={spirits[sub] ?? []}
                 onChange={(next) => setSpirits((s) => ({ ...s, [sub]: next }))}
                 locale={locale}
-                helpText={help}
                 addLabel={t("addBrand")}
               />
             ))}
@@ -276,7 +285,6 @@ export function StepBarBeverages({ tripId, catalog, initialBar, locale, userRole
               selections={wines}
               onChange={setWines}
               locale={locale}
-              helpText={help}
               addLabel={t("addWine")}
             />
           </section>
@@ -288,7 +296,6 @@ export function StepBarBeverages({ tripId, catalog, initialBar, locale, userRole
               selections={beers}
               onChange={setBeers}
               locale={locale}
-              helpText={help}
               addLabel={t("addBeer")}
             />
           </section>
@@ -300,7 +307,6 @@ export function StepBarBeverages({ tripId, catalog, initialBar, locale, userRole
               selections={mixers}
               onChange={setMixers}
               locale={locale}
-              helpText={help}
               addLabel={t("addMixer")}
             />
           </section>
@@ -313,9 +319,8 @@ export function StepBarBeverages({ tripId, catalog, initialBar, locale, userRole
 
       <WizardNav
         backHref={`/${locale}/guest/trip/${tripId}/snacks`}
-        onContinue={handleSubmit}
+        onContinue={handleContinue}
         onSaveExit={handleSaveExit}
-        continueLabel={tc("save")}
         continueDisabled={pending}
         continueLoading={pending}
         saveExitLoading={pending}

@@ -5,7 +5,6 @@ export const DISH_CATEGORIES = [
   "lunch_dessert",
   "dinner",
   "kids",
-  "snack",
 ] as const;
 
 export type DishCategory = (typeof DISH_CATEGORIES)[number];

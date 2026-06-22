@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +8,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { WizardNav } from "@/components/guest/wizard-nav";
-import { useWizardAutosave } from "@/hooks/use-wizard-autosave";
 import { advanceWizardStep, saveDraftAndExit, saveSnacksStep } from "@/app/[locale]/(guest)/guest/trip/actions";
 import {
   CHARCUTERIE_CHEESE_KEYS,
@@ -76,14 +75,14 @@ function CharcuterieCheckboxGroup({
   t,
 }: CharcuterieCheckboxGroupProps) {
   return (
-    <div className="space-y-3">
+    <div className="min-w-0 space-y-3">
       <Label className="text-sm font-medium text-gray-800">{title}</Label>
       <div className="space-y-2">
         {keys.map((key) => (
-          <div key={key} className="space-y-1.5">
+          <div key={key} className="min-w-0 space-y-1.5">
             <label className="flex items-center gap-2 text-sm text-gray-700">
               <Checkbox checked={selected.includes(key)} onCheckedChange={() => onToggle(key)} />
-              <span>
+              <span className="min-w-0 break-words">
                 {t(
                   `${translationPrefix}.${key}` as
                     | "charcuterieItems.meats.serrano_ham"
@@ -106,13 +105,15 @@ function CharcuterieCheckboxGroup({
               </span>
             </label>
             {key === "other" && selected.includes("other") && (
-              <Input
-                type="text"
-                value={otherValue}
-                onChange={(e) => onOtherChange(e.target.value)}
-                placeholder={otherPlaceholder}
-                className="ml-6 h-9 text-sm"
-              />
+              <div className="min-w-0 overflow-hidden pl-6">
+                <Input
+                  type="text"
+                  value={otherValue}
+                  onChange={(e) => onOtherChange(e.target.value)}
+                  placeholder={otherPlaceholder}
+                  className="h-9 w-full min-w-0 text-sm"
+                />
+              </div>
             )}
           </div>
         ))}
@@ -190,7 +191,7 @@ export function StepSnacks({ tripId, locale, initial }: StepSnacksProps) {
     setCharcuterie((prev) => ({ ...prev, [otherKey]: value }));
   }
 
-  const persist = useCallback(async () => {
+  async function persistSnacks() {
     const charcuterieSelections = serializeCharcuterieSelections(charcuterie);
     await saveSnacksStep({
       tripId,
@@ -200,13 +201,11 @@ export function StepSnacks({ tripId, locale, initial }: StepSnacksProps) {
       otherSnack: snacks.includes("other") ? otherSnack.trim() : null,
       otherAlways: always.includes("other") ? otherAlways.trim() : null,
     });
-  }, [tripId, snacks, always, charcuterie, otherSnack, otherAlways]);
-
-  useWizardAutosave(persist, [snacks, always, charcuterie, otherSnack, otherAlways]);
+  }
 
   function handleContinue() {
     startTransition(async () => {
-      await persist();
+      await persistSnacks();
       await advanceWizardStep(tripId, 5);
       router.push(`/${locale}/guest/trip/${tripId}/bar`);
     });
@@ -214,7 +213,7 @@ export function StepSnacks({ tripId, locale, initial }: StepSnacksProps) {
 
   function handleSaveExit() {
     startTransition(async () => {
-      await persist();
+      await persistSnacks();
       await saveDraftAndExit(tripId);
       router.push(`/${locale}/guest/dashboard`);
     });
@@ -280,7 +279,7 @@ export function StepSnacks({ tripId, locale, initial }: StepSnacksProps) {
             </div>
           </section>
 
-          <section className="space-y-4 rounded-xl border border-[#C4A052]/20 bg-[#C4A052]/5 p-5">
+          <section className="min-w-0 space-y-4 overflow-hidden rounded-xl border border-[#C4A052]/20 bg-[#C4A052]/5 p-5">
             <div>
               <Label className="text-base font-medium text-gray-900">
                 {t("charcuterieSectionTitle")}
@@ -288,7 +287,7 @@ export function StepSnacks({ tripId, locale, initial }: StepSnacksProps) {
               <p className="mt-0.5 text-xs text-gray-500">{t("charcuterieHelp")}</p>
             </div>
 
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+            <div className="grid min-w-0 grid-cols-1 gap-8 md:grid-cols-2">
               <CharcuterieCheckboxGroup
                 title={t("charcuterieMeats")}
                 keys={CHARCUTERIE_MEAT_KEYS}
@@ -313,7 +312,7 @@ export function StepSnacks({ tripId, locale, initial }: StepSnacksProps) {
               />
             </div>
 
-            <div className="border-t border-[#C4A052]/15 pt-5">
+            <div className="min-w-0 border-t border-[#C4A052]/15 pt-5">
               <CharcuterieCheckboxGroup
                 title={t("charcuterieComplements")}
                 keys={CHARCUTERIE_COMPLEMENT_KEYS}

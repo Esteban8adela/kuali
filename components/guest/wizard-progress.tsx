@@ -6,8 +6,8 @@ import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 import type { StepStatus } from "@/lib/trip/step-status";
 
-const STEPS = ["details", "menu", "preferences", "snacks", "bar"] as const;
-const STEP_PATHS = ["details", "menu", "preferences", "snacks", "bar"] as const;
+const STEPS = ["details", "menu", "preferences", "snacks", "bar", "overview"] as const;
+const STEP_PATHS = ["details", "menu", "preferences", "snacks", "bar", "overview"] as const;
 
 interface WizardProgressProps {
   currentStep: number;
@@ -29,6 +29,7 @@ export function WizardProgress({
     stepStatus.step3,
     stepStatus.step4,
     stepStatus.step5,
+    stepStatus.step6,
   ];
   const completedCount = states.filter((s) => s === "complete").length;
   const progress = (completedCount / STEPS.length) * 100;
@@ -36,7 +37,7 @@ export function WizardProgress({
   return (
     <div className="sticky top-20 z-20 border-b border-[#C4A052]/15 bg-[#FAFAF8]/95 px-4 py-4 backdrop-blur-md md:px-8">
       <Progress value={progress} className="mb-4 h-0.5" />
-      <ol className="flex justify-between gap-2">
+      <ol className="flex justify-between gap-1 overflow-x-auto pb-1">
         {STEPS.map((step, i) => {
           const stepNum = i + 1;
           const active = stepNum === currentStep;
@@ -46,11 +47,11 @@ export function WizardProgress({
           const href = `/${locale}/guest/trip/${tripId}/${STEP_PATHS[i]}`;
 
           return (
-            <li key={step} className="flex-1 text-center">
+            <li key={step} className="min-w-[3.5rem] flex-1 text-center">
               <Link
                 href={href}
                 className={cn(
-                  "group inline-flex flex-col items-center gap-1 text-[10px] uppercase tracking-wider transition hover:opacity-80 md:text-xs",
+                  "group inline-flex flex-col items-center gap-1 text-[9px] uppercase tracking-wider transition hover:opacity-80 md:text-[10px]",
                   active && "font-medium text-[#C4A052]",
                   done && !active && "text-[#1B3A4B]",
                   partial && !active && "text-amber-700",
@@ -68,7 +69,7 @@ export function WizardProgress({
                 >
                   {done ? "✓" : stepNum}
                 </span>
-                <span className="hidden sm:inline">{t(step)}</span>
+                <span className="hidden max-w-[4.5rem] truncate sm:inline">{t(step)}</span>
               </Link>
             </li>
           );

@@ -30,7 +30,8 @@ export function WizardNav({
   const tc = useTranslations("common");
 
   return (
-    <div className="sticky bottom-0 -mx-6 mt-8 flex items-center justify-between gap-4 border-t border-[#C4A052]/10 bg-[#FAFAF8]/95 px-6 py-4 backdrop-blur md:-mx-0 md:rounded-b-xl">
+    <div className="sticky bottom-0 -mx-6 mt-8 flex flex-col gap-3 border-t border-[#C4A052]/10 bg-[#FAFAF8]/95 px-6 py-4 backdrop-blur md:-mx-0 md:rounded-b-xl">
+      <div className="flex items-center justify-between gap-4">
       <div className="flex min-w-0 items-center gap-2">
         {backHref && (
           <Button variant="outline" size="lg" asChild>
@@ -69,6 +70,7 @@ export function WizardNav({
             </Button>
           )}
         </div>
+      </div>
       </div>
     </div>
   );

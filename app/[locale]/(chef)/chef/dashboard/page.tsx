@@ -1,7 +1,8 @@
 import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
 import { getUpcomingTrips } from "@/app/[locale]/(chef)/chef/chef-actions";
-import { UpcomingTripsGrid } from "@/components/chef/upcoming-trips-grid";
+import { ChefTripsBoard } from "@/components/chef/chef-trips-board";
+import { categorizeChefTrips } from "@/lib/chef/categorize-trips";
 
 export default async function ChefDashboardPage({
   params,
@@ -13,6 +14,7 @@ export default async function ChefDashboardPage({
   const t = await getTranslations("chef.portal");
 
   const trips = await getUpcomingTrips();
+  const categorized = categorizeChefTrips(trips);
 
   return (
     <div className="space-y-8">
@@ -22,7 +24,7 @@ export default async function ChefDashboardPage({
         <p className="mt-2 max-w-2xl text-base text-neutral-600">{t("subtitle")}</p>
       </header>
 
-      <UpcomingTripsGrid trips={trips} locale={locale} />
+      <ChefTripsBoard categorized={categorized} locale={locale} />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { GenerateShoppingListButton } from "@/components/chef/generate-shopping-list-button";
+import { formatChefGuestDisplayName, participantGuestNumber } from "@/lib/guest/participant-names";
 import { parseAllergiesFromDb } from "@/lib/guest/preference-state";
 import {
   extractBarBottleLines,
@@ -41,57 +42,125 @@ function mealByKey(meals: MenuMealBlock[], key: string): MenuMealBlock | undefin
   return meals.find((meal) => meal.key === key);
 }
 
-interface GuestAlert {
+interface GuestPreferenceCard {
   guestName: string;
   guestType: string;
-  lines: string[];
-  critical: boolean;
+  allergies: string[];
+  dietStyle: string | null;
+  comments: string | null;
+  requiresAttention: boolean;
 }
 
-function buildGuestAlerts(
+function buildGuestPreferenceCards(
   participants: ChefTripParticipant[],
   allergyLabel: (key: string) => string,
   dietLabel: (key: string) => string,
-  noRestrictionsLabel: string
-): GuestAlert[] {
-  return participants
-    .map((participant) => {
-      const prefs = participant.guest_preferences;
-      if (!prefs) return null;
+  locale: string
+): GuestPreferenceCard[] {
+  return participants.map((participant) => {
+    const prefs = participant.guest_preferences;
+    const allergies: string[] = [];
 
-      const lines: string[] = [];
-      let critical = false;
-
-      if (prefs.no_dietary_restrictions) {
-        lines.push(noRestrictionsLabel);
-      } else {
-        const { allergies, allergiesOther } = parseAllergiesFromDb(prefs.allergies ?? []);
-        for (const allergy of allergies) {
-          if (allergy === "other") {
-            if (allergiesOther.trim()) lines.push(allergiesOther.trim());
-          } else {
-            lines.push(allergyLabel(allergy));
-          }
+    if (prefs && !prefs.no_dietary_restrictions) {
+      const { allergies: allergyKeys, allergiesOther } = parseAllergiesFromDb(prefs.allergies ?? []);
+      for (const allergy of allergyKeys) {
+        if (allergy === "other") {
+          if (allergiesOther.trim()) allergies.push(allergiesOther.trim());
+        } else {
+          allergies.push(allergyLabel(allergy));
         }
-        for (const diet of prefs.dietary_restrictions ?? []) {
-          if (diet.trim()) lines.push(dietLabel(diet));
-        }
-        for (const note of prefs.general_food_notes ?? []) {
-          if (note.trim()) lines.push(note.trim());
-        }
-        critical = allergies.length > 0 || Boolean(allergiesOther.trim());
       }
+    }
 
-      if (!lines.length) return null;
+    const dietKey = prefs?.dietary_restrictions?.[0]?.trim();
+    const dietStyle = dietKey ? dietLabel(dietKey) : null;
 
-      return {
-        guestName: participant.display_name,
-        guestType: participant.participant_type,
-        lines,
-        critical,
-      };
-    })
-    .filter((item): item is GuestAlert => item !== null);
+    const comments = prefs?.general_food_notes?.[0]?.trim() || null;
+    const requiresAttention =
+      allergies.length > 0 || Boolean(dietStyle) || Boolean(comments);
+
+    const guestType = participant.participant_type as "adult" | "child";
+    const guestNumber = participantGuestNumber(participants, participant.id, guestType);
+
+    return {
+      guestName: formatChefGuestDisplayName(
+        participant.display_name,
+        guestType,
+        guestNumber,
+        locale
+      ),
+      guestType: participant.participant_type,
+      allergies,
+      dietStyle,
+      comments,
+      requiresAttention,
+    };
+  });
+}
+
+function GuestAttentionCard({
+  guest,
+  t,
+}: {
+  guest: GuestPreferenceCard;
+  t: Awaited<ReturnType<typeof getTranslations<"chef.serviceOrder">>>;
+}) {
+  const hasAllergies = guest.allergies.length > 0;
+
+  return (
+    <li className="rounded-xl border-2 border-red-200 bg-red-50 px-5 py-4">
+      <p className="text-sm font-semibold uppercase tracking-wide text-red-800">
+        {guest.guestName}{" "}
+        <span className="font-normal normal-case text-red-700">
+          ({guest.guestType === "child" ? t("childGuest") : t("adultGuest")})
+        </span>
+      </p>
+      <ul className="mt-3 space-y-2 text-base">
+        <li>
+          <span className="font-semibold text-neutral-800">{t("allergiesLabel")}: </span>
+          <span
+            className={
+              hasAllergies ? "text-lg font-bold text-red-600 md:text-xl" : "text-neutral-600"
+            }
+          >
+            {hasAllergies ? guest.allergies.join(", ") : t("noAllergies")}
+          </span>
+        </li>
+        {guest.dietStyle ? (
+          <li>
+            <span className="font-semibold text-neutral-800">{t("dietStyleLabel")}: </span>
+            <span className="font-medium text-neutral-900">{guest.dietStyle}</span>
+          </li>
+        ) : null}
+        {guest.comments ? (
+          <li>
+            <span className="font-semibold text-neutral-700">{t("commentsLabel")}: </span>
+            <span className="text-neutral-600">{guest.comments}</span>
+          </li>
+        ) : null}
+      </ul>
+    </li>
+  );
+}
+
+function GuestNoRestrictionsCard({
+  guest,
+  t,
+}: {
+  guest: GuestPreferenceCard;
+  t: Awaited<ReturnType<typeof getTranslations<"chef.serviceOrder">>>;
+}) {
+  return (
+    <li className="rounded-xl border border-green-200 bg-green-50 px-5 py-3 text-green-800">
+      <p className="text-sm font-semibold text-green-900">
+        {guest.guestName}{" "}
+        <span className="font-normal text-green-700">
+          ({guest.guestType === "child" ? t("childGuest") : t("adultGuest")})
+        </span>
+      </p>
+      <p className="mt-1 text-sm font-medium">{t("noDietaryRestrictionsLegend")}</p>
+    </li>
+  );
 }
 
 interface ServiceOrderReportProps {
@@ -106,16 +175,17 @@ export async function ServiceOrderReport({ data, locale }: ServiceOrderReportPro
   const tDiet = await getTranslations("guest.wizard.preferences.dietStyles");
   const tMenu = await getTranslations("guest.wizard.menu");
 
-  const { trip, participants, itinerary, dishNames, barOrder, snacksData } = data;
+  const { trip, principal_guest_name, participants, itinerary, dishNames, barOrder, snacksData } = data;
   const pax = trip.adult_count + trip.child_count;
   const dates = formatDateRange(trip.start_date, trip.end_date, locale, t("datesTbd"));
-  const guestAlerts = buildGuestAlerts(
+  const allGuestPreferences = buildGuestPreferenceCards(
     participants,
     (key) => tAllergies(key as "gluten"),
     (key) => tDiet(key as "vegan"),
-    t("noRestrictions")
+    locale
   );
-  const criticalAlerts = guestAlerts.filter((alert) => alert.critical);
+  const attentionGuests = allGuestPreferences.filter((guest) => guest.requiresAttention);
+  const unrestrictedGuests = allGuestPreferences.filter((guest) => !guest.requiresAttention);
 
   const snackKeys = extractSnackKeys(snacksData, "snacks");
   const alwaysKeys = extractSnackKeys(snacksData, "alwaysOnboard");
@@ -151,7 +221,11 @@ export async function ServiceOrderReport({ data, locale }: ServiceOrderReportPro
           <ArrowLeft className="h-4 w-4" aria-hidden />
           {t("backToDashboard")}
         </Link>
-        <GenerateShoppingListButton label={t("generateShoppingList")} tripId={trip.id} />
+        <GenerateShoppingListButton
+          label={t("generateShoppingList")}
+          tripId={trip.id}
+          locale={locale}
+        />
       </div>
 
       <header className="rounded-2xl border border-[#1B3A4B]/15 bg-white p-8 shadow-sm">
@@ -159,8 +233,11 @@ export async function ServiceOrderReport({ data, locale }: ServiceOrderReportPro
           {t("serviceOrder")}
         </p>
         <h1 className="mt-2 font-display text-3xl text-[#1B3A4B] md:text-4xl">
-          {trip.notes?.trim() ? trip.notes.trim() : t("tripRef", { id: trip.id.slice(0, 8).toUpperCase() })}
+          {t("tripOfGuest", { name: principal_guest_name })}
         </h1>
+        <p className="mt-1 text-sm text-gray-400">
+          {t("tripRef", { id: trip.id.slice(0, 8).toUpperCase() })}
+        </p>
         <Badge variant="outline" className="mt-3 capitalize">
           {trip.status}
         </Badge>
@@ -188,31 +265,39 @@ export async function ServiceOrderReport({ data, locale }: ServiceOrderReportPro
           </div>
         </dl>
 
-        <div className="space-y-4">
-          <h3 className="text-sm font-semibold uppercase tracking-wider text-red-700">
-            {t("allergiesAndDiets")}
+        <div className="space-y-6">
+          <h3 className="text-sm font-semibold uppercase tracking-wider text-[#1B3A4B]">
+            {t("dietaryProfilesTitle")}
           </h3>
-          {criticalAlerts.length === 0 && guestAlerts.length === 0 ? (
+          {!allGuestPreferences.length ? (
             <p className="text-base text-neutral-600">{t("noPreferenceData")}</p>
           ) : (
-            <ul className="space-y-4">
-              {(criticalAlerts.length > 0 ? criticalAlerts : guestAlerts).map((alert) => (
-                <li
-                  key={alert.guestName}
-                  className="rounded-xl border-2 border-red-200 bg-red-50 px-5 py-4"
-                >
-                  <p className="text-sm font-semibold uppercase tracking-wide text-red-800">
-                    {alert.guestName}{" "}
-                    <span className="font-normal normal-case text-red-700">
-                      ({alert.guestType === "child" ? t("childGuest") : t("adultGuest")})
-                    </span>
+            <>
+              {attentionGuests.length > 0 ? (
+                <div className="space-y-3">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-red-700">
+                    {t("requiresAttentionGroup")}
                   </p>
-                  <p className="mt-2 text-xl font-bold leading-snug text-red-600 md:text-2xl">
-                    {alert.lines.join(" · ")}
+                  <ul className="space-y-4">
+                    {attentionGuests.map((guest) => (
+                      <GuestAttentionCard key={guest.guestName} guest={guest} t={t} />
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+              {unrestrictedGuests.length > 0 ? (
+                <div className="space-y-3">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-green-700">
+                    {t("noRestrictionsGroup")}
                   </p>
-                </li>
-              ))}
-            </ul>
+                  <ul className="grid gap-3 sm:grid-cols-2">
+                    {unrestrictedGuests.map((guest) => (
+                      <GuestNoRestrictionsCard key={guest.guestName} guest={guest} t={t} />
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+            </>
           )}
         </div>
       </section>
@@ -421,9 +506,10 @@ export async function ServiceOrderReport({ data, locale }: ServiceOrderReportPro
             <p className="font-medium text-neutral-800">{t("byob")}</p>
           ) : null}
           {specificRequest ? (
-            <p className="text-base text-neutral-800">
-              <span className="font-medium">{t("specificRequest")}:</span> {specificRequest}
-            </p>
+            <div className="mt-2 rounded-lg border border-gray-200 bg-gray-100 p-4">
+              <p className="text-sm font-medium text-gray-600">{t("specificRequest")}</p>
+              <p className="mt-1 text-base font-medium italic text-gray-800">{specificRequest}</p>
+            </div>
           ) : null}
           {barLines.length === 0 ? (
             <p className="text-neutral-600">{t("noBarSelections")}</p>

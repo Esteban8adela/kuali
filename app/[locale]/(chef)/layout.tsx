@@ -19,8 +19,8 @@ export default async function ChefLayout({
     <RoleGate allowed={["chef", "admin"]} locale={locale}>
       <div className="flex min-h-dvh flex-col">
         <AuthNavbar />
-        <div className="flex flex-1">
-          <aside className="hidden w-56 flex-col border-r border-[#C4A052]/15 bg-[#1B3A4B] p-6 text-white md:flex">
+        <div className="flex flex-1 items-start print:block">
+          <aside className="sticky top-20 hidden h-[calc(100dvh-5rem)] w-56 shrink-0 flex-col overflow-y-auto border-r border-[#C4A052]/15 bg-[#1B3A4B] p-6 text-white print:hidden md:flex">
             <nav className="flex flex-col gap-2 text-sm">
               <Link href={`/${locale}/chef/dashboard`} className="rounded px-3 py-2 hover:bg-white/10">
                 {t("dashboard")}
@@ -33,7 +33,7 @@ export default async function ChefLayout({
               </Link>
             </nav>
           </aside>
-          <main className="flex-1 bg-[#FAFAF8] p-6 md:p-10">{children}</main>
+          <main className="flex-1 bg-[#FAFAF8] p-6 md:p-10 print:bg-white print:p-0">{children}</main>
         </div>
       </div>
     </RoleGate>

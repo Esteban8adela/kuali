@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { X } from "lucide-react";
+import { Minus, Plus, X } from "lucide-react";
 import type { BarLineSelection, CatalogItem } from "@/lib/catalog/types";
 import { catalogLabel } from "@/lib/catalog/utils";
 
@@ -22,8 +22,12 @@ interface CatalogMultiPickerProps {
   selections: BarLineSelection[];
   onChange: (next: BarLineSelection[]) => void;
   locale: string;
-  helpText: string;
   addLabel: string;
+}
+
+function normalizeQuantity(value: number | null | undefined): number {
+  if (value == null || value < 1) return 1;
+  return value;
 }
 
 export function CatalogMultiPicker({
@@ -32,7 +36,6 @@ export function CatalogMultiPicker({
   selections,
   onChange,
   locale,
-  helpText,
   addLabel,
 }: CatalogMultiPickerProps) {
   const selectId = useId();
@@ -49,16 +52,16 @@ export function CatalogMultiPicker({
       {
         catalogItemId: item.id,
         label: catalogLabel(item, locale),
-        quantity: null,
+        quantity: 1,
       },
     ]);
   }
 
-  function updateQty(index: number, raw: string) {
+  function updateQty(index: number, nextQty: number) {
     const next = [...selections];
     next[index] = {
       ...next[index],
-      quantity: raw === "" ? null : Math.max(0, parseInt(raw, 10) || 0),
+      quantity: Math.max(1, nextQty),
     };
     onChange(next);
   }
@@ -70,32 +73,53 @@ export function CatalogMultiPicker({
   return (
     <div className="space-y-3">
       <Label className="text-base font-medium text-[#1B3A4B]">{title}</Label>
-      {selections.map((sel, index) => (
-        <div
-          key={`${sel.catalogItemId ?? "blank"}-${index}`}
-          className="flex flex-wrap items-center gap-2 rounded-lg border border-[#C4A052]/25 bg-white p-3"
-        >
-          <span className="min-w-[120px] flex-1 text-sm font-medium text-[#1B3A4B]">
-            {sel.label || (
-              <span className="italic text-amber-600">{t("chefChoice")}</span>
-            )}
-          </span>
-          <div className="flex items-center gap-2">
-            <Label className="text-xs text-neutral-500">Qty</Label>
-            <Input
-              type="number"
-              min={0}
-              className="h-9 w-20"
-              placeholder="—"
-              value={sel.quantity ?? ""}
-              onChange={(e) => updateQty(index, e.target.value)}
-            />
+      {selections.map((sel, index) => {
+        const qty = normalizeQuantity(sel.quantity);
+        return (
+          <div
+            key={`${sel.catalogItemId ?? "blank"}-${index}`}
+            className="flex flex-wrap items-center gap-2 rounded-lg border border-[#C4A052]/25 bg-white p-3"
+          >
+            <span className="min-w-[120px] flex-1 text-sm font-medium text-[#1B3A4B]">
+              {sel.label}
+            </span>
+            <div className="flex items-center gap-1">
+              <Label className="sr-only">{t("quantity")}</Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-9 w-9 shrink-0"
+                disabled={qty <= 1}
+                onClick={() => updateQty(index, qty - 1)}
+                aria-label={t("decreaseQuantity")}
+              >
+                <Minus className="h-4 w-4" />
+              </Button>
+              <Input
+                type="number"
+                min={1}
+                className="h-9 w-16 text-center"
+                value={qty}
+                onChange={(e) => updateQty(index, parseInt(e.target.value, 10) || 1)}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-9 w-9 shrink-0"
+                onClick={() => updateQty(index, qty + 1)}
+                aria-label={t("increaseQuantity")}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+            <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
+              <X className="h-4 w-4" />
+            </Button>
           </div>
-          <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-      ))}
+        );
+      })}
 
       <div className="flex flex-wrap items-center gap-2">
         {available.length > 0 && (
@@ -113,7 +137,6 @@ export function CatalogMultiPicker({
           </Select>
         )}
       </div>
-      <p className="text-xs text-neutral-500">{helpText}</p>
     </div>
   );
 }

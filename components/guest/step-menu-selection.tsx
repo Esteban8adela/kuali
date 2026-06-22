@@ -16,7 +16,6 @@ import {
 import { saveMenuSelection, advanceWizardStep, saveDraftAndExit } from "@/app/[locale]/(guest)/guest/trip/actions";
 import { WizardNav } from "@/components/guest/wizard-nav";
 import { DishSinglePicker } from "@/components/guest/dish-single-picker";
-import { useWizardAutosave } from "@/hooks/use-wizard-autosave";
 import { RequiredMark } from "@/components/ui/required-mark";
 import {
   isKidsMenuConfigValid,
@@ -276,15 +275,6 @@ export function StepMenuSelection({
       itinerary: serializedDays,
     });
   }
-
-  const persistRef = useRef(persistItinerary);
-  persistRef.current = persistItinerary;
-
-  const debouncedPersist = useCallback(async () => {
-    await persistRef.current();
-  }, []);
-
-  useWizardAutosave(debouncedPersist, [days], days.length > 0);
 
   function handleContinue() {
     startTransition(async () => {

@@ -22,12 +22,13 @@ export async function fetchTripStepStatus(
       step3: "none",
       step4: "none",
       step5: "none",
+      step6: "none",
     };
   }
 
   const { data: participants } = await supabase
     .from("trip_participants")
-    .select("id, guest_preferences(id, no_dietary_restrictions, allergies, dietary_restrictions)")
+    .select("id, guest_preferences(id, no_dietary_restrictions, allergies, dietary_restrictions, general_food_notes)")
     .eq("trip_id", tripId);
 
   const { data: selection } = await supabase

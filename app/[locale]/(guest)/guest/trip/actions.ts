@@ -9,9 +9,10 @@ import {
   globalMealScheduleSchema,
   finalizeTripSchema,
 } from "@/lib/validations/guest-wizard";
-import { calculateMealCostWithCrew } from "@/lib/pricing/calculate-trip-total";
+import { calculateFoodAllowanceUsd } from "@/lib/pricing/food-allowance";
 import { clampWizardStep, normalizeBarOrder } from "@/lib/trip/wizard";
 import { coerceToDateOnlyString } from "@/lib/trip/date-validation";
+import { BLOCKING_TRIP_STATUSES, dateRangesOverlap, TRIP_DATES_UNAVAILABLE_MESSAGE } from "@/lib/trip/trip-date-collision";
 import { genericStoredName } from "@/lib/guest/participant-names";
 import {
   hasCharcuterieSelections,
@@ -41,12 +42,37 @@ export async function createTrip(locale: string) {
   return data.id as string;
 }
 
-export async function updateTripDetails(input: unknown) {
+export type UpdateTripDetailsResult = { ok: true };
+
+export async function updateTripDetails(input: unknown): Promise<UpdateTripDetailsResult> {
   const parsed = tripDetailsSchema.parse(input);
   const supabase = await createClient();
 
   const startDate: string | null = coerceToDateOnlyString(parsed.startDate);
   const endDate: string | null = coerceToDateOnlyString(parsed.endDate);
+
+  if (startDate && endDate) {
+    const { data: blockingTrips, error: conflictError } = await supabase
+      .from("trips")
+      .select("id, start_date, end_date")
+      .neq("id", parsed.tripId)
+      .in("status", BLOCKING_TRIP_STATUSES)
+      .not("start_date", "is", null)
+      .not("end_date", "is", null);
+
+    if (conflictError) throw conflictError;
+
+    const hasCollision = (blockingTrips ?? []).some(
+      (trip) =>
+        trip.start_date &&
+        trip.end_date &&
+        dateRangesOverlap(startDate, endDate, trip.start_date, trip.end_date)
+    );
+
+    if (hasCollision) {
+      throw new Error(TRIP_DATES_UNAVAILABLE_MESSAGE);
+    }
+  }
 
   const { error } = await supabase
     .from("trips")
@@ -277,42 +303,42 @@ export async function saveBarStep(input: {
   return { ok: true };
 }
 
-/** Persists full bar order on `trips.bar_order` and marks trip submitted */
-export async function finalizeTripBooking(input: unknown) {
-  const parsed = finalizeTripSchema.parse(input);
+/** Marks trip as submitted after guest reviews the order overview (step 6). */
+export async function confirmTripOrder(tripId: string) {
   const supabase = await createClient();
   const { data: trip } = await supabase
     .from("trips")
-    .select("adult_count, child_count, bar_order")
-    .eq("id", parsed.tripId)
+    .select("adult_count, child_count, start_date, end_date")
+    .eq("id", tripId)
     .single();
 
-  const mergedBarOrder = {
-    ...normalizeBarOrder(trip?.bar_order),
-    ...normalizeBarOrder(parsed.barOrder),
-    bar_saved: true,
-  };
-
-  const dishLines = Object.keys(mergedBarOrder).length;
-  const estimatedTotalCents = calculateMealCostWithCrew({
-    adults: trip?.adult_count ?? 0,
-    children: trip?.child_count ?? 0,
-    perPlateCostCents: Math.max(0, dishLines) * 100,
-  });
+  const foodAllowanceUsd = calculateFoodAllowanceUsd(
+    trip?.adult_count ?? 0,
+    trip?.child_count ?? 0,
+    trip?.start_date,
+    trip?.end_date
+  );
 
   const { error } = await supabase
     .from("trips")
     .update({
-      bar_order: mergedBarOrder,
       status: "submitted",
-      wizard_step: clampWizardStep(5),
-      estimated_total_cents: estimatedTotalCents,
+      wizard_step: clampWizardStep(6),
+      estimated_total_cents: Math.round(foodAllowanceUsd * 100),
     })
-    .eq("id", parsed.tripId);
+    .eq("id", tripId);
 
   if (error) throw error;
   revalidatePath(`/`, "layout");
   return { ok: true };
+}
+
+/** @deprecated Use confirmTripOrder after the overview step */
+export async function finalizeTripBooking(input: unknown) {
+  const parsed = finalizeTripSchema.parse(input);
+  const supabase = await createClient();
+  await saveBarStep({ tripId: parsed.tripId, barOrder: parsed.barOrder });
+  return confirmTripOrder(parsed.tripId);
 }
 
 export async function advanceWizardStep(tripId: string, step: number) {
@@ -327,10 +353,22 @@ export async function advanceWizardStep(tripId: string, step: number) {
 
 export async function saveDraftAndExit(tripId: string) {
   const supabase = await createClient();
-  await supabase
+  const { data: trip } = await supabase
     .from("trips")
-    .update({ status: "draft" })
-    .eq("id", tripId);
+    .select("status")
+    .eq("id", tripId)
+    .single();
+
+  const preserveStatus =
+    trip?.status === "submitted" ||
+    trip?.status === "active" ||
+    trip?.status === "completed" ||
+    trip?.status === "settled";
+
+  if (!preserveStatus) {
+    await supabase.from("trips").update({ status: "draft" }).eq("id", tripId);
+  }
+
   revalidatePath(`/`, "layout");
   return { ok: true };
 }

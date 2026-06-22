@@ -16,7 +16,7 @@ export const tripDetailsSchema = z.object({
   childCount: z.number().int().min(0).max(20),
   startDate: dateOnlyField,
   endDate: dateOnlyField,
-  wizardStep: z.number().int().min(1).max(5).optional(),
+  wizardStep: z.number().int().min(1).max(6).optional(),
   adultNames: z.array(z.string()).optional(),
   childNames: z.array(z.string()).optional(),
 })

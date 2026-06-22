@@ -5,8 +5,11 @@ import { resolveUserRole } from "@/lib/auth/get-user-role";
 import { isChefRole } from "@/lib/auth/roles";
 import { collectDishIdsFromItinerary } from "@/lib/chef/collect-menu-dish-ids";
 import { parseMenuOrder, type MenuDayPlan } from "@/lib/guest/menu-itinerary";
+import { areTripDatesValid, normalizeDateOnlyInput } from "@/lib/trip/date-validation";
 import { normalizeBarOrder } from "@/lib/trip/wizard";
 import type { GuestPreferences, Trip } from "@/lib/types/database";
+
+const CHEF_VISIBLE_STATUSES: Trip["status"][] = ["submitted", "active", "completed", "settled"];
 
 export interface ChefTripListItem {
   id: string;
@@ -17,6 +20,7 @@ export interface ChefTripListItem {
   child_count: number;
   crew_count: number;
   notes: string | null;
+  principal_guest_name: string;
 }
 
 export interface ChefTripParticipant {
@@ -42,6 +46,7 @@ export interface ChefTripDetailsPayload {
     | "bar_order"
     | "global_meal_schedule"
   >;
+  principal_guest_name: string;
   participants: ChefTripParticipant[];
   itinerary: MenuDayPlan[];
   dishNames: Record<string, string>;
@@ -62,16 +67,49 @@ async function assertChefAccess() {
   return supabase;
 }
 
+function resolvePrincipalGuestName(
+  profile: { full_name: string | null } | { full_name: string | null }[] | null
+): string {
+  const row = Array.isArray(profile) ? profile[0] : profile;
+  const name = row?.full_name?.trim();
+  return name || "—";
+}
+
 export async function getUpcomingTrips(): Promise<ChefTripListItem[]> {
   const supabase = await assertChefAccess();
 
   const { data, error } = await supabase
     .from("trips")
-    .select("id, status, start_date, end_date, adult_count, child_count, crew_count, notes")
-    .order("start_date", { ascending: true, nullsFirst: false });
+    .select(
+      "id, status, start_date, end_date, adult_count, child_count, crew_count, notes, profiles:created_by ( full_name )"
+    )
+    .in("status", CHEF_VISIBLE_STATUSES)
+    .not("start_date", "is", null)
+    .not("end_date", "is", null)
+    .order("start_date", { ascending: true });
 
   if (error) throw error;
-  return (data ?? []) as ChefTripListItem[];
+
+  return (data ?? [])
+    .filter((trip) =>
+      areTripDatesValid(
+        normalizeDateOnlyInput(trip.start_date),
+        normalizeDateOnlyInput(trip.end_date)
+      )
+    )
+    .map((trip) => ({
+      id: trip.id as string,
+      status: trip.status as Trip["status"],
+      start_date: trip.start_date as string | null,
+      end_date: trip.end_date as string | null,
+      adult_count: trip.adult_count as number,
+      child_count: trip.child_count as number,
+      crew_count: trip.crew_count as number,
+      notes: trip.notes as string | null,
+      principal_guest_name: resolvePrincipalGuestName(
+        trip.profiles as { full_name: string | null } | { full_name: string | null }[] | null
+      ),
+    }));
 }
 
 export async function getTripDetails(tripId: string): Promise<ChefTripDetailsPayload | null> {
@@ -80,7 +118,7 @@ export async function getTripDetails(tripId: string): Promise<ChefTripDetailsPay
   const { data: trip, error } = await supabase
     .from("trips")
     .select(
-      "id, status, start_date, end_date, adult_count, child_count, crew_count, notes, menu_order, bar_order, global_meal_schedule"
+      "id, status, start_date, end_date, adult_count, child_count, crew_count, notes, menu_order, bar_order, global_meal_schedule, profiles:created_by ( full_name )"
     )
     .eq("id", tripId)
     .maybeSingle();
@@ -139,6 +177,9 @@ export async function getTripDetails(tripId: string): Promise<ChefTripDetailsPay
 
   return {
     trip: trip as ChefTripDetailsPayload["trip"],
+    principal_guest_name: resolvePrincipalGuestName(
+      trip.profiles as { full_name: string | null } | { full_name: string | null }[] | null
+    ),
     participants,
     itinerary,
     dishNames,

@@ -15,7 +15,7 @@ import { WizardNav } from "@/components/guest/wizard-nav";
 import { RequiredMark } from "@/components/ui/required-mark";
 import { isUnsetGuestName } from "@/lib/guest/participant-names";
 import { areTripDatesInvalidOrder, areTripDatesValid, formatDateOnlyForPayload, normalizeDateOnlyInput } from "@/lib/trip/date-validation";
-import { registerWizardDraftSave } from "@/lib/wizard/draft-registry";
+import { TRIP_DATES_UNAVAILABLE_MESSAGE } from "@/lib/trip/trip-date-collision";
 import { MAX_TRIP_GUESTS } from "@/lib/constants/trip";
 import type { Trip, TripParticipant } from "@/lib/types/database";
 
@@ -69,7 +69,6 @@ function todayDateString(): string {
 
 export function StepTripDetails({ trip, participants, locale }: StepTripDetailsProps) {
   const t = useTranslations("guest.wizard.details");
-  const tc = useTranslations("common");
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const initialCounts = clampGuestCounts(trip.adult_count, trip.child_count);
@@ -77,8 +76,8 @@ export function StepTripDetails({ trip, participants, locale }: StepTripDetailsP
   const [children, setChildren] = useState(initialCounts.children);
   const [startDate, setStartDate] = useState(() => normalizeDateOnlyInput(trip.start_date) ?? "");
   const [endDate, setEndDate] = useState(() => normalizeDateOnlyInput(trip.end_date) ?? "");
-  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [capacityWarning, setCapacityWarning] = useState(false);
+  const [datesError, setDatesError] = useState<string | null>(null);
   const capacityWarningTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [adultNames, setAdultNames] = useState<string[]>(() =>
@@ -152,60 +151,40 @@ export function StepTripDetails({ trip, participants, locale }: StepTripDetailsP
     setChildren(nextChildren);
   }
 
-  function tripDatePayload() {
-    return {
-      startDate: formatDateOnlyForPayload(startDate),
-      endDate: formatDateOnlyForPayload(endDate),
-    };
-  }
-
-  const persist = useCallback(async () => {
-    if (!adultsValid || datesInvalidOrder) return;
-    setSaveStatus("saving");
-    try {
-      await updateTripDetails({
-        tripId: trip.id,
-        adultCount: adults,
-        childCount: children,
-        ...tripDatePayload(),
-        wizardStep: 1,
-        adultNames: adultNames.map((n) => n.trim()),
-        childNames: childNames.map((n) => n.trim()),
-      });
-      setSaveStatus("saved");
-      setTimeout(() => setSaveStatus("idle"), 2000);
-    } catch {
-      setSaveStatus("idle");
-    }
-  }, [trip.id, adults, children, startDate, endDate, adultNames, childNames, adultsValid, datesInvalidOrder]);
-
-  useEffect(() => {
-    if (!adultsValid || datesInvalidOrder) return;
-    const timer = setTimeout(() => {
-      startTransition(() => {
-        void persist();
-      });
-    }, 800);
-    return () => clearTimeout(timer);
-  }, [adults, children, startDate, endDate, adultNames, childNames, persist, adultsValid, datesInvalidOrder]);
-
-  useEffect(() => {
-    if (!adultsValid || datesInvalidOrder) return;
-    return registerWizardDraftSave(persist);
-  }, [persist, adultsValid, datesInvalidOrder]);
+  const saveTripDetailsStable = useCallback(
+    async (wizardStep: number) => {
+      try {
+        await updateTripDetails({
+          tripId: trip.id,
+          adultCount: adults,
+          childCount: children,
+          startDate: formatDateOnlyForPayload(startDate),
+          endDate: formatDateOnlyForPayload(endDate),
+          wizardStep,
+          adultNames: adultNames.map((n) => n.trim()),
+          childNames: childNames.map((n) => n.trim()),
+        });
+        setDatesError(null);
+        return true;
+      } catch (error) {
+        const message =
+          error instanceof Error && error.message === TRIP_DATES_UNAVAILABLE_MESSAGE
+            ? t("datesUnavailable")
+            : error instanceof Error
+              ? error.message
+              : t("datesUnavailable");
+        setDatesError(message);
+        return false;
+      }
+    },
+    [trip.id, adults, children, startDate, endDate, adultNames, childNames, t]
+  );
 
   function handleContinue() {
     if (!canContinue) return;
     startTransition(async () => {
-      await updateTripDetails({
-        tripId: trip.id,
-        adultCount: adults,
-        childCount: children,
-        ...tripDatePayload(),
-        wizardStep: 2,
-        adultNames: adultNames.map((n) => n.trim()),
-        childNames: childNames.map((n) => n.trim()),
-      });
+      const saved = await saveTripDetailsStable(2);
+      if (!saved) return;
       router.push(`/${locale}/guest/trip/${trip.id}/menu`);
     });
   }
@@ -213,22 +192,12 @@ export function StepTripDetails({ trip, participants, locale }: StepTripDetailsP
   function handleSaveExit() {
     if (!adultsValid || datesInvalidOrder) return;
     startTransition(async () => {
-      await updateTripDetails({
-        tripId: trip.id,
-        adultCount: adults,
-        childCount: children,
-        ...tripDatePayload(),
-        wizardStep: 1,
-        adultNames: adultNames.map((n) => n.trim()),
-        childNames: childNames.map((n) => n.trim()),
-      });
+      const saved = await saveTripDetailsStable(1);
+      if (!saved) return;
       await saveDraftAndExit(trip.id);
       router.push(`/${locale}/guest/dashboard`);
     });
   }
-
-  const statusText =
-    saveStatus === "saving" ? tc("saving") : saveStatus === "saved" ? tc("saved") : undefined;
 
   return (
     <Card className="glass-card mx-auto max-w-2xl border-0 shadow-lg">
@@ -355,7 +324,10 @@ export function StepTripDetails({ trip, participants, locale }: StepTripDetailsP
               type="date"
               min={minDate}
               value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
+              onChange={(e) => {
+                setStartDate(e.target.value);
+                setDatesError(null);
+              }}
               className="mt-2"
             />
           </div>
@@ -368,12 +340,20 @@ export function StepTripDetails({ trip, participants, locale }: StepTripDetailsP
               type="date"
               min={startDate && startDate >= minDate ? startDate : minDate}
               value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
+              onChange={(e) => {
+                setEndDate(e.target.value);
+                setDatesError(null);
+              }}
               className="mt-2"
             />
           </div>
         </div>
-        {!datesValid && (
+        {datesError ? (
+          <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-center text-sm font-medium text-red-800">
+            {datesError}
+          </p>
+        ) : null}
+        {!datesValid && !datesError && (
           <p className="text-center text-sm text-amber-800">
             {datesInvalidOrder ? t("datesInvalidOrder") : t("datesRequired")}
           </p>
@@ -385,7 +365,6 @@ export function StepTripDetails({ trip, participants, locale }: StepTripDetailsP
           continueDisabled={pending || !canContinue}
           continueLoading={pending}
           saveExitLoading={pending}
-          statusText={statusText}
         />
       </CardContent>
     </Card>

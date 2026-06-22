@@ -21,7 +21,6 @@ import {
 } from "@/app/[locale]/(guest)/guest/trip/actions";
 import { WizardNav } from "@/components/guest/wizard-nav";
 import { RequiredMark } from "@/components/ui/required-mark";
-import { useWizardAutosave } from "@/hooks/use-wizard-autosave";
 import { resolveParticipantDisplayName } from "@/lib/guest/participant-names";
 import {
   ALLERGY_OPTIONS,
@@ -48,6 +47,7 @@ function isParticipantComplete(data: ParticipantPreferenceForm): boolean {
   if (data.noRestrictions) return true;
   if (data.allergies.length > 0) return true;
   if (data.dietStyle) return true;
+  if (data.additionalComments.trim()) return true;
   return false;
 }
 
@@ -83,7 +83,7 @@ export function StepPreferences({
     }));
   }
 
-  function toggleNoRestrictions(participantId: string) {
+  function toggleNoAllergies(participantId: string) {
     updateParticipant(participantId, (p) => {
       const next = !p.noRestrictions;
       return {
@@ -115,13 +115,13 @@ export function StepPreferences({
         allergiesOther: (!data.noRestrictions && data.allergies.includes("other")) ? data.allergiesOther : "",
         dietaryRestrictions: data.dietStyle ? [data.dietStyle] : [],
         proteinPreferences: [],
-        generalFoodNotes: data.additionalComments ? [data.additionalComments] : [],
+        generalFoodNotes: data.additionalComments.trim()
+          ? [data.additionalComments.trim()]
+          : [],
       };
     });
     await saveAllGuestPreferences(payloads);
   }, [participants, byParticipant]);
-
-  useWizardAutosave(savePrefsPayloads, [byParticipant]);
 
   function handleContinue() {
     startTransition(async () => {
@@ -207,9 +207,9 @@ export function StepPreferences({
                       <label className="mt-2 flex cursor-pointer items-center gap-2 rounded-md bg-green-50 px-2 py-1.5 text-xs font-medium text-green-700">
                         <Checkbox
                           checked={data.noRestrictions}
-                          onCheckedChange={() => toggleNoRestrictions(p.id)}
+                          onCheckedChange={() => toggleNoAllergies(p.id)}
                         />
-                        <span>{t("noRestrictions")}</span>
+                        <span>{t("noAllergies")}</span>
                       </label>
 
                       <div className={`mt-2 grid grid-cols-2 gap-2 ${data.noRestrictions ? "pointer-events-none opacity-40" : ""}`}>
@@ -245,7 +245,7 @@ export function StepPreferences({
                     <div>
                       <Label>{t("dietStyle")}</Label>
                       <Select
-                        value={data.dietStyle}
+                        value={data.dietStyle || undefined}
                         onValueChange={(v) =>
                           updateParticipant(p.id, (prev) => ({ ...prev, dietStyle: v }))
                         }

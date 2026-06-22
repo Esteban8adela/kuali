@@ -22,6 +22,8 @@ export interface StepStatus {
   step4Hint?: string;
   step5: StepState;
   step5Hint?: string;
+  step6: StepState;
+  step6Hint?: string;
 }
 
 
@@ -98,6 +100,7 @@ export function computeTripStepStatus(
     step3: "none",
     step4: "none",
     step5: "none",
+    step6: "none",
   };
 
   const expectedParticipants = trip.adult_count + trip.child_count;
@@ -184,6 +187,14 @@ export function computeTripStepStatus(
   } else if (trip.wizard_step >= 5) {
     stepStatus.step5 = "partial";
     stepStatus.step5Hint = locale === "es" ? "En proceso" : "In progress";
+  }
+
+  if (isSubmitted) {
+    stepStatus.step6 = "complete";
+  } else if (trip.wizard_step >= 6 || stepStatus.step5 === "complete") {
+    stepStatus.step6 = "partial";
+    stepStatus.step6Hint =
+      locale === "es" ? "Revise y confirme su orden" : "Review and confirm your order";
   }
 
   return stepStatus;

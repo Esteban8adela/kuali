@@ -1,5 +1,5 @@
 export const WIZARD_MIN_STEP = 1;
-export const WIZARD_MAX_STEP = 5;
+export const WIZARD_MAX_STEP = 6;
 
 export function clampWizardStep(step: number): number {
   const n = Math.round(Number(step));

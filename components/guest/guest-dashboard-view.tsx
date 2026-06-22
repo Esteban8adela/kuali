@@ -29,6 +29,7 @@ const STEPS = [
   { key: "preferences", icon: Ship, statusKey: "step3" as const, hintKey: "step3Hint" as const },
   { key: "snacks", icon: Cookie, statusKey: "step4" as const, hintKey: "step4Hint" as const },
   { key: "bar", icon: Wine, statusKey: "step5" as const, hintKey: "step5Hint" as const },
+  { key: "overview", icon: CheckCircle2, statusKey: "step6" as const, hintKey: "step6Hint" as const },
 ] as const;
 
 function StepIcon({ state }: { state: StepState }) {
@@ -52,7 +53,8 @@ export function GuestDashboardView({ locale, trip, menuName, stepStatus }: Guest
     stepStatus.step2 === "complete" &&
     stepStatus.step3 === "complete" &&
     stepStatus.step4 === "complete" &&
-    stepStatus.step5 === "complete";
+    stepStatus.step5 === "complete" &&
+    stepStatus.step6 === "complete";
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 p-6">
@@ -157,6 +159,7 @@ function getStepHref(locale: string, tripId: string, step: number): string {
     case 3: return `${base}/preferences`;
     case 4: return `${base}/snacks`;
     case 5: return `${base}/bar`;
+    case 6: return `${base}/overview`;
     default: return `${base}/details`;
   }
 }
@@ -166,5 +169,6 @@ function getNextStepHref(locale: string, tripId: string, status: StepStatus): st
   if (status.step2 !== "complete") return getStepHref(locale, tripId, 2);
   if (status.step3 !== "complete") return getStepHref(locale, tripId, 3);
   if (status.step4 !== "complete") return getStepHref(locale, tripId, 4);
-  return getStepHref(locale, tripId, 5);
+  if (status.step5 !== "complete") return getStepHref(locale, tripId, 5);
+  return getStepHref(locale, tripId, 6);
 }

@@ -55,3 +55,25 @@ body {
   background: var(--danger-bg);
   border: 1px solid rgba(220, 38, 38, 0.3);
 }
+
+@media print {
+  @page {
+    size: letter;
+    margin: 0.6in;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .shopping-list-print {
+    background: white !important;
+  }
+}

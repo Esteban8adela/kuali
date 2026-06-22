@@ -11,7 +11,8 @@
     "login": "Iniciar sesión",
     "logout": "Cerrar sesión",
     "language": "Idioma",
-    "guestUser": "Huésped"
+    "guestUser": "Huésped",
+    "editProfile": "Editar perfil"
   },
   "landing": {
     "hero": "Su travesía, curada a la perfección",
@@ -44,6 +45,14 @@
       "weakPassword": "La contraseña debe tener al menos 6 caracteres.",
       "alreadyExists": "Ya existe una cuenta con este correo.",
       "generic": "Algo salió mal. Inténtelo de nuevo."
+    },
+    "profile": {
+      "title": "Editar perfil",
+      "subtitle": "Actualiza tu nombre visible en Kualisto.",
+      "fullName": "Nombre completo",
+      "fullNamePlaceholder": "Tu nombre",
+      "nameRequired": "Por favor ingresa tu nombre.",
+      "updateFailed": "No se pudo actualizar tu perfil. Inténtalo de nuevo."
     }
   },
   "guest": {
@@ -66,7 +75,8 @@
         "menu": "Selección de menú",
         "preferences": "Preferencias alimenticias",
         "snacks": "Snacks",
-        "bar": "Bar y bebidas"
+        "bar": "Bar y bebidas",
+        "overview": "Resumen de orden"
       }
     },
     "wizard": {
@@ -75,7 +85,8 @@
         "menu": "Selección de menú",
         "preferences": "Preferencias",
         "bar": "Bar y bebidas",
-        "snacks": "Snacks"
+        "snacks": "Snacks",
+        "overview": "Resumen de orden"
       },
       "details": {
         "title": "Detalles del viaje",
@@ -100,7 +111,8 @@
         "childNamePlaceholder": "Niño {number}",
         "datesRequired": "Seleccione fecha de inicio y fin para continuar.",
         "datesInvalidOrder": "Seleccione fechas válidas (la fecha de inicio debe ser anterior a la de fin).",
-        "adultsRequired": "Se requiere al menos un adulto a bordo."
+        "adultsRequired": "Se requiere al menos un adulto a bordo.",
+        "datesUnavailable": "Las fechas seleccionadas ya están ocupadas por otra reserva activa."
       },
       "menu": {
         "title": "Menú y categorías",
@@ -166,6 +178,7 @@
         "adultGuest": "Adulto",
         "childGuest": "Niño",
         "noRestrictions": "Sin restricciones alimenticias",
+        "noAllergies": "Sin alergias",
         "allergies": "Alergias y preferencias",
         "allergiesOtherPlaceholder": "Especifique otras alergias…",
         "proteins": "Preferencias de proteínas",
@@ -201,7 +214,7 @@
         "dietStylePlaceholder": "Selecciona estilo",
         "additionalComments": "Comentarios adicionales",
         "additionalCommentsPlaceholder": "No muy picante, evitar cebolla...",
-        "validationHint": "Por favor, selecciona una restricción o 'Sin restricciones alimenticias' para todos los huéspedes.",
+        "validationHint": "Indica alergias, marca 'Sin alergias', o completa estilo de alimentación/comentarios para cada huésped.",
         "dietStyles": {
           "vegan": "Vegano",
           "vegetarian": "Vegetariano",
@@ -210,6 +223,11 @@
           "keto": "Keto",
           "other": "Otro"
         }
+      },
+      "foodAllowance": {
+        "label": "Presupuesto de alimentos estimado: {amount}",
+        "disclaimer": "Cálculo basado en tarifa diaria por pasajero. No incluye botellas premium del bar.",
+        "infoLabel": "Información sobre el presupuesto de alimentos"
       },
       "bar": {
         "title": "Bar y bebidas",
@@ -265,7 +283,9 @@
         "chefRecommendation": "Recomendación del Chef",
         "houseByGlass": "Vino de la casa por copeo",
         "byob": "Llevaré mis propias botellas",
-        "chefChoice": "A consideración del Chef",
+        "quantity": "Cantidad",
+        "decreaseQuantity": "Disminuir cantidad",
+        "increaseQuantity": "Aumentar cantidad",
         "addWithoutBrand": "Agregar sin marca",
         "chefDefaultHelp": "Si no se especifica cantidad o marca, quedará a consideración del Chef.",
         "addBrand": "Agregar marca…",
@@ -335,6 +355,32 @@
           "fruit": "Fruta",
           "other": "Otro"
         }
+      },
+      "overview": {
+        "title": "Resumen de orden",
+        "subtitle": "Revise todos los detalles antes de confirmar su reserva.",
+        "tripSection": "Viaje y pasajeros",
+        "dates": "Fechas del charter",
+        "passengers": "Pasajeros a bordo",
+        "passengersValue": "{guests} huéspedes ({adults} adultos · {children} niños) + {crew} tripulación",
+        "menuSection": "Itinerario del menú",
+        "noMenu": "No hay menú configurado.",
+        "snacksSection": "Snacks y complementos",
+        "snacksLabel": "Snacks a comprar",
+        "alwaysOnboardLabel": "Siempre a bordo",
+        "charcuterieLabel": "Charcutería",
+        "noneSelected": "Ninguno seleccionado",
+        "barSection": "Bar y bebidas",
+        "byob": "Llevarán sus propias botellas (BYOB)",
+        "specificRequest": "Solicitud específica",
+        "noBarSelections": "Sin botellas adicionales seleccionadas.",
+        "foodBudgetTitle": "Presupuesto alimenticio estimado",
+        "foodBudgetDisclaimer": "Cálculo basado en tarifa diaria por pasajero. No incluye botellas premium del bar.",
+        "finalCostNote": "Nota: Este es un costo base estimado de alimentos. El costo final de bebidas, botellas y snacks del bar será calculado por el Chef próximamente.",
+        "confirmOrder": "Confirmar orden",
+        "saveAndReturn": "Guardar cambios y volver al inicio",
+        "alreadySubmitted": "Orden confirmada",
+        "confirmError": "No se pudo confirmar la orden. Inténtelo de nuevo."
       }
     }
   },
@@ -354,7 +400,13 @@
       "title": "Próximos viajes",
       "subtitle": "Revise órdenes de servicio, menús y requerimientos de huéspedes antes de cada charter.",
       "emptyTrips": "Aún no hay viajes registrados.",
+      "emptyCategory": "No hay viajes en esta categoría.",
       "tripId": "Viaje",
+      "tripOfGuest": "Viaje de {name}",
+      "tripRef": "Ref. #{id}",
+      "tabPresent": "Presente",
+      "tabFuture": "Futuros",
+      "tabPast": "Pasados",
       "dates": "Fechas",
       "datesTbd": "Fechas por confirmar",
       "passengers": "Pasajeros",
@@ -365,13 +417,23 @@
       "serviceOrder": "Orden de servicio",
       "backToDashboard": "Volver al dashboard",
       "generateShoppingList": "Generar lista de compras y costeos",
-      "tripRef": "Viaje #{id}",
+      "tripOfGuest": "Viaje de {name}",
+      "tripRef": "Ref. #{id}",
       "tripSummary": "Resumen del viaje",
       "dates": "Fechas del charter",
       "datesTbd": "Fechas por confirmar",
       "pax": "Pasajeros a bordo",
       "paxValue": "{total} huéspedes ({adults} adultos · {children} niños) · {crew} tripulación",
       "allergiesAndDiets": "Alergias y dietas especiales",
+      "dietaryProfilesTitle": "Perfiles Alimenticios de los Huéspedes",
+      "requiresAttentionGroup": "Requieren atención",
+      "noRestrictionsGroup": "Sin restricciones",
+      "noDietaryRestrictionsLegend": "Sin restricciones alimenticias",
+      "allergiesLabel": "Alergias",
+      "dietStyleLabel": "Estilo de alimentación",
+      "commentsLabel": "Comentarios",
+      "noAllergies": "Ninguna reportada",
+      "dietNotSpecified": "No especificado",
       "noPreferenceData": "Aún no hay preferencias de huéspedes registradas.",
       "noRestrictions": "Sin restricciones alimentarias",
       "adultGuest": "Adulto",
@@ -386,6 +448,33 @@
       "byob": "El huésped llevará sus propias botellas (BYOB)",
       "specificRequest": "Solicitud específica",
       "noBarSelections": "Sin botellas adicionales más allá del stock base."
+    },
+    "shoppingList": {
+      "title": "Hoja de ruta y compras",
+      "backToServiceOrder": "Volver a la orden de servicio",
+      "printButton": "🖨️ Imprimir / Exportar PDF",
+      "dates": "Fechas del charter",
+      "datesTbd": "Fechas por confirmar",
+      "principalGuest": "Huésped principal",
+      "passengers": "Pasajeros",
+      "passengersValue": "{total} huéspedes ({adults} adultos · {children} niños) + {crew} tripulación",
+      "allergyAlerts": "Alertas — alergias y restricciones",
+      "allergies": "Alergias",
+      "diet": "Dieta",
+      "menuSummary": "Itinerario de menú resumido",
+      "noMenu": "Sin menú configurado",
+      "dayColumn": "Día",
+      "shoppingSection": "Lista de compras (en construcción)",
+      "pantrySection": "Despensa y perecederos",
+      "snacksSection": "Snacks",
+      "barSection": "Barra / bebidas",
+      "noneSelected": "Sin selecciones",
+      "itemColumn": "Artículo",
+      "qtyColumn": "Cant.",
+      "unitPriceColumn": "Precio unitario",
+      "costingSection": "Costeo estimado",
+      "foodAllowanceNote": "Food Allowance base según tarifa diaria por pasajero.",
+      "costingDisclaimer": "Los precios de botellas y snacks se completarán cuando el catálogo de admin esté poblado."
     }
   },
   "admin": {
@@ -404,6 +493,7 @@
     "guests": "Huéspedes",
     "trips": "Viajes",
     "catalogNav": "Catálogo y recetas",
+    "snacksNav": "Catálogo de snacks",
     "catalog": {
       "ingredientsTab": "Ingredientes",
       "dishesTab": "Platillos"
@@ -502,6 +592,38 @@
         "removeLine": "Eliminar línea",
         "totalDishCost": "Costo total del platillo",
         "totalCostPerPerson": "Costo total por persona"
+      }
+    },
+    "snacks": {
+      "title": "Catálogo de snacks",
+      "subtitle": "Administre snacks independientes del menú de cocina (nombre, categoría y precio base).",
+      "addButton": "Agregar snack",
+      "addTitle": "Nuevo snack",
+      "editTitle": "Editar snack",
+      "formSubtitle": "Defina nombre, categoría y precio base en USD.",
+      "empty": "Aún no hay snacks registrados.",
+      "saveError": "No se pudo guardar el snack. Inténtelo de nuevo.",
+      "deleteConfirm": "¿Eliminar este snack? Esta acción no se puede deshacer.",
+      "edit": "Editar",
+      "delete": "Eliminar",
+      "pricePreview": "Vista previa: {price}",
+      "columns": {
+        "name": "Nombre",
+        "category": "Categoría",
+        "basePrice": "Precio base",
+        "actions": "Acciones"
+      },
+      "fields": {
+        "name": "Nombre",
+        "category": "Categoría",
+        "basePrice": "Precio base (USD)"
+      },
+      "categories": {
+        "chips": "Papas / chips",
+        "candies": "Dulces",
+        "healthy": "Saludable",
+        "instant": "Instantáneos",
+        "other": "Otro"
       }
     }
   }

@@ -11,7 +11,8 @@
     "login": "Sign in",
     "logout": "Sign out",
     "language": "Language",
-    "guestUser": "Guest"
+    "guestUser": "Guest",
+    "editProfile": "Edit profile"
   },
   "landing": {
     "hero": "Your voyage, curated to perfection",
@@ -44,6 +45,14 @@
       "weakPassword": "Password must be at least 6 characters.",
       "alreadyExists": "An account with this email already exists.",
       "generic": "Something went wrong. Please try again."
+    },
+    "profile": {
+      "title": "Edit profile",
+      "subtitle": "Update your display name across Kualisto.",
+      "fullName": "Full name",
+      "fullNamePlaceholder": "Your name",
+      "nameRequired": "Please enter your name.",
+      "updateFailed": "Could not update your profile. Please try again."
     }
   },
   "guest": {
@@ -66,7 +75,8 @@
         "menu": "Menu selection",
         "preferences": "Dietary preferences",
         "snacks": "Snacks",
-        "bar": "Bar & beverages"
+        "bar": "Bar & beverages",
+        "overview": "Order summary"
       }
     },
     "wizard": {
@@ -75,7 +85,8 @@
         "menu": "Menu selection",
         "preferences": "Preferences",
         "bar": "Bar & beverages",
-        "snacks": "Snacks"
+        "snacks": "Snacks",
+        "overview": "Order summary"
       },
       "details": {
         "title": "Trip details",
@@ -100,7 +111,8 @@
         "childNamePlaceholder": "Child {number}",
         "datesRequired": "Please select start and end dates to continue.",
         "datesInvalidOrder": "Please select valid dates (start date must be before end date).",
-        "adultsRequired": "At least one adult is required on board."
+        "adultsRequired": "At least one adult is required on board.",
+        "datesUnavailable": "The selected dates are already booked by another active reservation."
       },
       "menu": {
         "title": "Menu & pricing",
@@ -166,6 +178,7 @@
         "adultGuest": "Adult",
         "childGuest": "Child",
         "noRestrictions": "No dietary restrictions",
+        "noAllergies": "No allergies",
         "allergies": "Allergies and preferences",
         "allergiesOtherPlaceholder": "Specify other allergies…",
         "proteins": "Protein preferences",
@@ -201,7 +214,7 @@
         "dietStylePlaceholder": "Select style",
         "additionalComments": "Additional comments",
         "additionalCommentsPlaceholder": "No very spicy, avoid onion...",
-        "validationHint": "Please select a restriction or 'No dietary restrictions' for all guests.",
+        "validationHint": "Indicate allergies, check 'No allergies', or complete diet style/comments for each guest.",
         "dietStyles": {
           "vegan": "Vegan",
           "vegetarian": "Vegetarian",
@@ -210,6 +223,11 @@
           "keto": "Keto",
           "other": "Other"
         }
+      },
+      "foodAllowance": {
+        "label": "Estimated food allowance: {amount}",
+        "disclaimer": "Calculated from daily per-passenger rates. Does not include premium bar bottles.",
+        "infoLabel": "Food allowance information"
       },
       "bar": {
         "title": "Bar & beverages",
@@ -265,7 +283,9 @@
         "chefRecommendation": "Chef's beverage recommendation",
         "houseByGlass": "House wine by the glass",
         "byob": "I will bring my own bottles",
-        "chefChoice": "Chef's choice",
+        "quantity": "Quantity",
+        "decreaseQuantity": "Decrease quantity",
+        "increaseQuantity": "Increase quantity",
         "addWithoutBrand": "Add without brand",
         "chefDefaultHelp": "If quantity or brand is not specified, it will be left to the Chef's discretion.",
         "addBrand": "Add brand…",
@@ -335,6 +355,32 @@
           "fruit": "Fruit",
           "other": "Other"
         }
+      },
+      "overview": {
+        "title": "Order summary",
+        "subtitle": "Review all details before confirming your reservation.",
+        "tripSection": "Trip & passengers",
+        "dates": "Charter dates",
+        "passengers": "Passengers on board",
+        "passengersValue": "{guests} guests ({adults} adults · {children} children) + {crew} crew",
+        "menuSection": "Menu itinerary",
+        "noMenu": "No menu configured.",
+        "snacksSection": "Snacks & complements",
+        "snacksLabel": "Snacks to buy",
+        "alwaysOnboardLabel": "Always onboard",
+        "charcuterieLabel": "Charcuterie",
+        "noneSelected": "None selected",
+        "barSection": "Bar & beverages",
+        "byob": "Guest will bring their own bottles (BYOB)",
+        "specificRequest": "Specific request",
+        "noBarSelections": "No additional bottles selected.",
+        "foodBudgetTitle": "Estimated food allowance",
+        "foodBudgetDisclaimer": "Calculated from daily per-passenger rates. Does not include premium bar bottles.",
+        "finalCostNote": "Note: This is an estimated base food cost. Final beverage, bottle, and bar snack costs will be calculated by the Chef shortly.",
+        "confirmOrder": "Confirm order",
+        "saveAndReturn": "Save changes and return home",
+        "alreadySubmitted": "Order confirmed",
+        "confirmError": "Could not confirm the order. Please try again."
       }
     }
   },
@@ -354,7 +400,13 @@
       "title": "Upcoming trips",
       "subtitle": "Review service orders, menus, and guest requirements before each charter.",
       "emptyTrips": "No trips registered yet.",
+      "emptyCategory": "No trips in this category.",
       "tripId": "Trip",
+      "tripOfGuest": "Trip for {name}",
+      "tripRef": "Ref. #{id}",
+      "tabPresent": "Present",
+      "tabFuture": "Upcoming",
+      "tabPast": "Past",
       "dates": "Dates",
       "datesTbd": "Dates TBD",
       "passengers": "Passengers",
@@ -365,13 +417,23 @@
       "serviceOrder": "Service order",
       "backToDashboard": "Back to dashboard",
       "generateShoppingList": "Generate shopping list & costing",
-      "tripRef": "Trip #{id}",
+      "tripOfGuest": "Trip for {name}",
+      "tripRef": "Ref. #{id}",
       "tripSummary": "Trip summary",
       "dates": "Charter dates",
       "datesTbd": "Dates to be confirmed",
       "pax": "Passengers on board",
       "paxValue": "{total} guests ({adults} adults · {children} children) · {crew} crew",
       "allergiesAndDiets": "Allergies & special diets",
+      "dietaryProfilesTitle": "Guest Dietary Profiles",
+      "requiresAttentionGroup": "Requires attention",
+      "noRestrictionsGroup": "No restrictions",
+      "noDietaryRestrictionsLegend": "No dietary restrictions",
+      "allergiesLabel": "Allergies",
+      "dietStyleLabel": "Diet style",
+      "commentsLabel": "Comments",
+      "noAllergies": "None reported",
+      "dietNotSpecified": "Not specified",
       "noPreferenceData": "No guest preference data recorded yet.",
       "noRestrictions": "No dietary restrictions",
       "adultGuest": "Adult",
@@ -386,6 +448,33 @@
       "byob": "Guest will bring their own bottles (BYOB)",
       "specificRequest": "Specific request",
       "noBarSelections": "No additional bottles requested beyond base stock."
+    },
+    "shoppingList": {
+      "title": "Route sheet & shopping list",
+      "backToServiceOrder": "Back to service order",
+      "printButton": "🖨️ Print / Export PDF",
+      "dates": "Charter dates",
+      "datesTbd": "Dates to be confirmed",
+      "principalGuest": "Principal guest",
+      "passengers": "Passengers",
+      "passengersValue": "{total} guests ({adults} adults · {children} children) + {crew} crew",
+      "allergyAlerts": "Alerts — allergies & restrictions",
+      "allergies": "Allergies",
+      "diet": "Diet",
+      "menuSummary": "Menu itinerary summary",
+      "noMenu": "No menu configured",
+      "dayColumn": "Day",
+      "shoppingSection": "Shopping list (in progress)",
+      "pantrySection": "Pantry & perishables",
+      "snacksSection": "Snacks",
+      "barSection": "Bar / beverages",
+      "noneSelected": "None selected",
+      "itemColumn": "Item",
+      "qtyColumn": "Qty",
+      "unitPriceColumn": "Unit price",
+      "costingSection": "Estimated costing",
+      "foodAllowanceNote": "Base food allowance from daily per-passenger rates.",
+      "costingDisclaimer": "Bottle and snack prices will populate once the admin catalog is filled in."
     }
   },
   "admin": {
@@ -404,6 +493,7 @@
     "guests": "Guests",
     "trips": "Trips",
     "catalogNav": "Catalog & recipes",
+    "snacksNav": "Snacks catalog",
     "catalog": {
       "ingredientsTab": "Ingredients",
       "dishesTab": "Dishes"
@@ -502,6 +592,38 @@
         "removeLine": "Remove line",
         "totalDishCost": "Total dish cost",
         "totalCostPerPerson": "Total cost per person"
+      }
+    },
+    "snacks": {
+      "title": "Snacks catalog",
+      "subtitle": "Manage snacks separately from kitchen dishes (name, category, and base price).",
+      "addButton": "Add snack",
+      "addTitle": "New snack",
+      "editTitle": "Edit snack",
+      "formSubtitle": "Set name, category, and base price in USD.",
+      "empty": "No snacks registered yet.",
+      "saveError": "Could not save the snack. Please try again.",
+      "deleteConfirm": "Delete this snack? This cannot be undone.",
+      "edit": "Edit",
+      "delete": "Delete",
+      "pricePreview": "Preview: {price}",
+      "columns": {
+        "name": "Name",
+        "category": "Category",
+        "basePrice": "Base price",
+        "actions": "Actions"
+      },
+      "fields": {
+        "name": "Name",
+        "category": "Category",
+        "basePrice": "Base price (USD)"
+      },
+      "categories": {
+        "chips": "Chips / crisps",
+        "candies": "Candies",
+        "healthy": "Healthy",
+        "instant": "Instant",
+        "other": "Other"
       }
     }
   }
