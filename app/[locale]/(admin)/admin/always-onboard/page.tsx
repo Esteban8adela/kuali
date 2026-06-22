@@ -1,5 +1,6 @@
 import { setRequestLocale } from "next-intl/server";
 import { NamedCatalogManager } from "@/components/admin/named-catalog-manager";
+import { localizedPantryItemName } from "@/lib/catalog/utils";
 import {
   createAlwaysOnboardItem,
   deleteAlwaysOnboardItem,
@@ -18,9 +19,12 @@ export default async function AdminAlwaysOnboardPage({
 
   return (
     <NamedCatalogManager
+      bilingual
       items={items.map((i) => ({
         id: i.id,
-        name: i.name,
+        name: localizedPantryItemName(i, locale),
+        name_en: i.name_en ?? i.name,
+        name_es: i.name_es ?? i.name,
         base_price_cents: i.base_price_cents,
       }))}
       locale={locale}

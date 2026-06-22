@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { localizedDishName, localizedSnackName } from "@/lib/catalog/utils";
+import { localizedDishName, localizedPantryItemName, localizedSnackName } from "@/lib/catalog/utils";
 
 export interface PricingCatalog {
   dishPricesCents: Record<string, number>;
@@ -25,8 +25,8 @@ export async function fetchPricingCatalog(locale = "en"): Promise<PricingCatalog
   const [dishes, snacks, charcuterie, alwaysOnboard, beverages] = await Promise.all([
     supabase.from("dishes").select("id, name, name_en, name_es, base_price_cents"),
     supabase.from("snacks").select("id, name, name_en, name_es, base_price_cents"),
-    supabase.from("charcuterie_items").select("id, name, base_price_cents"),
-    supabase.from("always_onboard_items").select("id, name, base_price_cents"),
+    supabase.from("charcuterie_items").select("id, name, name_en, name_es, base_price_cents"),
+    supabase.from("always_onboard_items").select("id, name, name_en, name_es, base_price_cents"),
     supabase
       .from("catalog_items")
       .select("id, name_en, name_es, presentation, base_price_cents"),
@@ -49,11 +49,11 @@ export async function fetchPricingCatalog(locale = "en"): Promise<PricingCatalog
   }
   for (const row of charcuterie.data ?? []) {
     charcuteriePricesCents[row.id] = row.base_price_cents ?? 0;
-    namesById[row.id] = row.name;
+    namesById[row.id] = localizedPantryItemName(row, locale);
   }
   for (const row of alwaysOnboard.data ?? []) {
     alwaysOnboardPricesCents[row.id] = row.base_price_cents ?? 0;
-    namesById[row.id] = row.name;
+    namesById[row.id] = localizedPantryItemName(row, locale);
   }
   for (const row of beverages.data ?? []) {
     beveragePricesCents[row.id] = row.base_price_cents ?? 0;

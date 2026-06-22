@@ -165,7 +165,8 @@ export function DishFormDialog({
   const ingredientCostCents = Math.round(costPerPerson * 100);
   const effectivePriceCents = manualPriceUsdCents ?? ingredientCostCents;
 
-  const priceLabel = t("fields.basePriceUnit");
+  const priceLabel =
+    locale === "es" ? t("fields.basePriceUnitMxn") : t("fields.basePriceUnitUsd");
 
   function resetState(nextDish?: DishWithRecipe | null) {
     setError(null);

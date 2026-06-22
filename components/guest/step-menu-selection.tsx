@@ -386,6 +386,7 @@ export function StepMenuSelection({
                                     type="number"
                                     min={0}
                                     max={childCount}
+                                    step="1"
                                     value={meal.kidsMenuCount}
                                     onChange={(e) => {
                                       const raw = parseInt(e.target.value, 10);

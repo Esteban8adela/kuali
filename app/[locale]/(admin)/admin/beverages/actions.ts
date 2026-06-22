@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { resolveUserRole } from "@/lib/auth/get-user-role";
 import { isAdminRole } from "@/lib/auth/roles";
-import { beverageSchema } from "@/lib/validations/beverage";
+import { beverageNamesForDb, beverageSchema } from "@/lib/validations/beverage";
 import type { CatalogItemRow } from "@/lib/types/database";
 
 const PATH = "/admin/beverages";
@@ -25,6 +25,19 @@ function revalidate() {
   revalidatePath(PATH, "layout");
 }
 
+function rowFromParsed(parsed: ReturnType<typeof beverageSchema.parse>) {
+  const names = beverageNamesForDb(parsed);
+  return {
+    ...names,
+    presentation: parsed.presentation?.trim() || null,
+    category: parsed.category,
+    subcategory: parsed.subcategory?.trim() || null,
+    base_price_cents: parsed.base_price_cents,
+    sort_order: parsed.sort_order ?? 0,
+    is_active: parsed.is_active ?? true,
+  };
+}
+
 export async function getBeverages(): Promise<CatalogItemRow[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -42,10 +55,7 @@ export async function createBeverage(input: unknown) {
   const supabase = await assertAdminWrite();
   const { data, error } = await supabase
     .from("catalog_items")
-    .insert({
-      ...parsed,
-      subcategory: parsed.subcategory?.trim() || null,
-    })
+    .insert(rowFromParsed(parsed))
     .select("*")
     .single();
   if (error) throw error;
@@ -58,10 +68,7 @@ export async function updateBeverage(id: string, input: unknown) {
   const supabase = await assertAdminWrite();
   const { data, error } = await supabase
     .from("catalog_items")
-    .update({
-      ...parsed,
-      subcategory: parsed.subcategory?.trim() || null,
-    })
+    .update(rowFromParsed(parsed))
     .eq("id", id)
     .select("*")
     .single();

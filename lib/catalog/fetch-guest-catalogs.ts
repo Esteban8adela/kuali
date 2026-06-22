@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { localizedPantryItemName } from "@/lib/catalog/utils";
 
 export interface GuestCatalogItem {
   id: string;
@@ -21,25 +22,29 @@ export interface GuestSnacksCatalog {
   beverages: GuestCatalogItem[];
 }
 
-export async function fetchGuestSnacksCatalog(): Promise<GuestSnacksCatalog> {
+export async function fetchGuestSnacksCatalog(locale: string): Promise<GuestSnacksCatalog> {
   const supabase = await createClient();
 
   const [snacksRes, charcuterieRes, alwaysRes] = await Promise.all([
     supabase
       .from("snacks")
-      .select("id, name, category, base_price_cents, allows_custom_note, sort_order")
+      .select(
+        "id, name, name_en, name_es, category, base_price_cents, allows_custom_note, sort_order"
+      )
       .eq("is_active", true)
       .order("sort_order")
       .order("name"),
     supabase
       .from("charcuterie_items")
-      .select("id, name, category, base_price_cents, allows_custom_note, sort_order")
+      .select(
+        "id, name, name_en, name_es, category, base_price_cents, allows_custom_note, sort_order"
+      )
       .eq("is_active", true)
       .order("sort_order")
       .order("name"),
     supabase
       .from("always_onboard_items")
-      .select("id, name, base_price_cents, allows_custom_note, sort_order")
+      .select("id, name, name_en, name_es, base_price_cents, allows_custom_note, sort_order")
       .eq("is_active", true)
       .order("sort_order")
       .order("name"),
@@ -47,7 +52,14 @@ export async function fetchGuestSnacksCatalog(): Promise<GuestSnacksCatalog> {
 
   const mapRow = (row: Record<string, unknown>): GuestCatalogItem => ({
     id: row.id as string,
-    name: row.name as string,
+    name: localizedPantryItemName(
+      {
+        name: row.name as string,
+        name_en: row.name_en as string | null,
+        name_es: row.name_es as string | null,
+      },
+      locale
+    ),
     category: row.category as string | undefined,
     base_price_cents: (row.base_price_cents as number) ?? 0,
     allows_custom_note: Boolean(row.allows_custom_note),

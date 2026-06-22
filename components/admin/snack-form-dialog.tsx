@@ -141,7 +141,7 @@ export function SnackFormDialog({
               id="snack-price"
               type="number"
               min="0"
-              step="0.01"
+              step="1"
               className="mt-1.5"
               value={form.base_price}
               onChange={(e) => setForm((f) => ({ ...f, base_price: e.target.value }))}

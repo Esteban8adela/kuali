@@ -26,7 +26,7 @@ export default async function TripSnacksPage({
   const barOrder = normalizeBarOrder(trip.bar_order);
   const initial = (barOrder.snacks ?? {}) as Record<string, unknown>;
   const stepStatus = await fetchTripStepStatus(tripId, locale);
-  const catalog = await fetchGuestSnacksCatalog();
+  const catalog = await fetchGuestSnacksCatalog(locale);
 
   return (
     <>

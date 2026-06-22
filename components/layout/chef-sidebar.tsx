@@ -9,26 +9,27 @@ interface ChefSidebarProps {
   locale: string;
 }
 
-function isActive(pathname: string, href: string): boolean {
-  return pathname === href || pathname.startsWith(`${href}/`);
-}
-
 export function ChefSidebar({ locale }: ChefSidebarProps) {
   const t = useTranslations("chef");
   const pathname = usePathname();
   const base = `/${locale}/chef`;
 
   const links = [
-    { href: `${base}/dashboard`, label: t("nav.dashboard"), match: `${base}/dashboard` },
-    { href: `${base}/history`, label: t("nav.history"), match: `${base}/history` },
-    { href: `${base}/catalog`, label: t("nav.catalogs"), match: `${base}/catalog` },
+    {
+      href: `${base}/dashboard`,
+      label: t("nav.dashboard"),
+      isActive: (path: string) =>
+        path.includes("/chef/dashboard") || path.includes("/chef/trip"),
+    },
+    { href: `${base}/history`, label: t("nav.history"), isActive: (path: string) => path.includes("/chef/history") },
+    { href: `${base}/catalog`, label: t("nav.catalogs"), isActive: (path: string) => path.includes("/chef/catalog") },
   ] as const;
 
   return (
     <aside className="fixed top-20 z-20 hidden h-[calc(100dvh-5rem)] w-56 shrink-0 flex-col overflow-y-auto border-r border-[#C4A052]/15 bg-[#1B3A4B] p-6 text-white md:flex">
       <nav className="flex flex-col gap-1 text-sm">
-        {links.map(({ href, label, match }) => {
-          const active = isActive(pathname, match);
+        {links.map(({ href, label, isActive }) => {
+          const active = isActive(pathname);
           return (
             <Link
               key={href}

@@ -49,20 +49,20 @@ function CatalogCheckboxList({
           <span className="min-w-0 flex-1 break-words">{item.name}</span>
         </label>
       ))}
-      <div className="space-y-1.5 sm:col-span-2">
+      <div className="flex w-full min-w-0 flex-col gap-2 sm:col-span-2">
         <label className="flex items-center gap-2 text-sm">
           <Checkbox checked={showOther} onCheckedChange={(v) => onShowOther(v === true)} />
-          <span>{otherLabel}</span>
+          <span className="min-w-0 break-words">{otherLabel}</span>
         </label>
-        {showOther && (
+        {showOther ? (
           <Input
             type="text"
             value={otherText}
             onChange={(e) => onOtherText(e.target.value)}
             placeholder="Especifica qué necesitas..."
-            className="ml-6 h-9 text-sm"
+            className="h-9 w-full text-sm"
           />
-        )}
+        ) : null}
       </div>
       {!items.length && !showOther ? (
         <p className="text-sm text-neutral-500 sm:col-span-2">—</p>
@@ -188,7 +188,7 @@ export function StepSnacks({ tripId, locale, catalog, initial }: StepSnacksProps
               <p className="mt-0.5 text-xs text-gray-500">{t("charcuterieHelp")}</p>
             </div>
             <div className="grid min-w-0 grid-cols-1 gap-8 md:grid-cols-2">
-              <div className="space-y-2">
+              <div className="min-w-0 space-y-2">
                 <Label className="text-sm font-medium">{t("charcuterieMeats")}</Label>
                 <CatalogCheckboxList
                   items={catalog.charcuterie.meats}
@@ -204,7 +204,7 @@ export function StepSnacks({ tripId, locale, catalog, initial }: StepSnacksProps
                   otherLabel={t("otherOption")}
                 />
               </div>
-              <div className="space-y-2">
+              <div className="min-w-0 space-y-2">
                 <Label className="text-sm font-medium">{t("charcuterieCheeses")}</Label>
                 <CatalogCheckboxList
                   items={catalog.charcuterie.cheeses}

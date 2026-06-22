@@ -20,6 +20,8 @@ export function AdminSidebar({ locale }: AdminSidebarProps) {
 
   const mainLinks = [
     { href: `${base}/dashboard`, label: t("dashboard"), match: `${base}/dashboard` },
+    { href: `${base}/trips`, label: t("tripsNav"), match: `${base}/trips` },
+    { href: `${base}/users`, label: t("usersNav"), match: `${base}/users` },
     { href: `${base}/dashboard/guests`, label: t("guests"), match: `${base}/dashboard/guests` },
   ] as const;
 

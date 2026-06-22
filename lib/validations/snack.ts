@@ -8,7 +8,7 @@ export const snackSchema = z.object({
   description_en: z.string().trim().optional().nullable(),
   description_es: z.string().trim().optional().nullable(),
   category: z.string().trim().optional().default(SNACK_DEFAULT_CATEGORY),
-  base_price_cents: z.coerce.number().int().min(0),
+  base_price_cents: z.coerce.number().min(0),
   sort_order: z.coerce.number().int().min(0).optional().default(0),
   is_active: z.boolean().optional().default(true),
 });

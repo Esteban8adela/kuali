@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { advanceWizardStep, saveBarStep, saveDraftAndExit } from "@/app/[locale]/(guest)/guest/trip/actions";
 import { WizardNav } from "@/components/guest/wizard-nav";
-import { CatalogMultiPicker } from "@/components/guest/catalog-multi-picker";
+import { CatalogMultiPicker, SpiritCategoryPicker } from "@/components/guest/catalog-multi-picker";
 import { SPIRIT_SUBCATEGORIES } from "@/lib/constants/beverages";
 import { filterCatalog } from "@/lib/catalog/utils";
 import type { BarLineSelection, BarOrderPayload, CatalogItem } from "@/lib/catalog/types";
@@ -155,14 +155,43 @@ function normalizeBarLineSelections(lines: BarLineSelection[] | undefined): BarL
   }));
 }
 
-function parseInitialBar(raw?: Record<string, unknown>): BarOrderPayload {
+function splitSpiritLines(lines: BarLineSelection[]): {
+  catalog: BarLineSelection[];
+  custom: string[];
+} {
+  const catalog: BarLineSelection[] = [];
+  const custom: string[] = [];
+  for (const line of lines) {
+    if (line.catalogItemId) catalog.push(line);
+    else if (line.label?.trim()) custom.push(line.label.trim());
+  }
+  return { catalog, custom };
+}
+
+function emptyCustomSpirits(): Record<string, string[]> {
+  return Object.fromEntries(SPIRIT_SUBCATEGORIES.map((s) => [s, []]));
+}
+
+function parseCustomSpirits(raw?: Record<string, unknown>): Record<string, string[]> {
+  const base = emptyCustomSpirits();
+  const spiritsRaw = (raw?.spirits as Record<string, BarLineSelection[]>) ?? {};
+  for (const sub of SPIRIT_SUBCATEGORIES) {
+    const { custom } = splitSpiritLines(spiritsRaw[sub] ?? []);
+    base[sub] = custom;
+  }
+  return base;
+}
+
+function parseInitialBar(raw?: Record<string, unknown>): BarOrderPayload & {
+  customSpirits: Record<string, string[]>;
+} {
   const r = raw ?? {};
   const spiritsRaw = (r.spirits as Record<string, BarLineSelection[]>) ?? emptySpirits();
   const spirits = Object.fromEntries(
-    Object.entries({ ...emptySpirits(), ...spiritsRaw }).map(([key, lines]) => [
-      key,
-      normalizeBarLineSelections(lines),
-    ])
+    Object.entries({ ...emptySpirits(), ...spiritsRaw }).map(([key, lines]) => {
+      const { catalog } = splitSpiritLines(lines ?? []);
+      return [key, normalizeBarLineSelections(catalog)];
+    })
   ) as Record<string, BarLineSelection[]>;
 
   return {
@@ -177,6 +206,7 @@ function parseInitialBar(raw?: Record<string, unknown>): BarOrderPayload {
     wines: normalizeBarLineSelections(r.wines as BarLineSelection[] | undefined),
     beers: normalizeBarLineSelections(r.beers as BarLineSelection[] | undefined),
     mixers: normalizeBarLineSelections(r.mixers as BarLineSelection[] | undefined),
+    customSpirits: parseCustomSpirits(r),
   };
 }
 
@@ -197,15 +227,27 @@ export function StepBarBeverages({
     (initialBar?.specific_bottle_request as string) ?? ""
   );
   const [spirits, setSpirits] = useState(init.spirits);
+  const [customSpirits, setCustomSpirits] = useState(init.customSpirits);
   const [wines, setWines] = useState(init.wines);
   const [beers, setBeers] = useState(init.beers);
   const [mixers, setMixers] = useState(init.mixers);
 
   function buildPayload(): Record<string, unknown> {
+    const spiritsPayload = Object.fromEntries(
+      SPIRIT_SUBCATEGORIES.map((sub) => {
+        const catalogLines = spirits[sub] ?? [];
+        const customLines = (customSpirits[sub] ?? [])
+          .map((label) => label.trim())
+          .filter(Boolean)
+          .map((label) => ({ catalogItemId: null, label, quantity: 1 }));
+        return [sub, [...catalogLines, ...customLines]];
+      })
+    );
+
     return {
       byob,
       specific_bottle_request: specificRequest,
-      spirits,
+      spirits: spiritsPayload,
       wines,
       beers,
       mixers,
@@ -266,17 +308,18 @@ export function StepBarBeverages({
           <section className="space-y-6 rounded-xl border border-[#1B3A4B]/15 bg-[#1B3A4B]/5 p-4">
             <h3 className="font-display text-xl text-[#1B3A4B]">{t("spirits")}</h3>
             {SPIRIT_SUBCATEGORIES.map((sub) => (
-              <CatalogMultiPicker
+              <SpiritCategoryPicker
                 key={sub}
                 title={t(`spiritOptions.${sub}`)}
-                items={filterCatalog(catalog, "spirit", sub)}
-                selections={spirits[sub] ?? []}
-                onChange={(next) => setSpirits((s) => ({ ...s, [sub]: next }))}
+                catalogItems={filterCatalog(catalog, "spirit", sub)}
+                catalogSelections={spirits[sub] ?? []}
+                customBrands={customSpirits[sub] ?? []}
+                onCatalogChange={(next) => setSpirits((s) => ({ ...s, [sub]: next }))}
+                onCustomBrandsChange={(next) =>
+                  setCustomSpirits((s) => ({ ...s, [sub]: next }))
+                }
                 locale={locale}
                 addLabel={t("addBrand")}
-                showOtherOption
-                otherLabel={t("addOther")}
-                otherPlaceholder={t("otherPlaceholder")}
               />
             ))}
           </section>
@@ -289,9 +332,6 @@ export function StepBarBeverages({
               onChange={setWines}
               locale={locale}
               addLabel={t("addWine")}
-              showOtherOption
-              otherLabel={t("addOther")}
-              otherPlaceholder={t("otherPlaceholder")}
             />
           </section>
 
@@ -303,9 +343,6 @@ export function StepBarBeverages({
               onChange={setBeers}
               locale={locale}
               addLabel={t("addBeer")}
-              showOtherOption
-              otherLabel={t("addOther")}
-              otherPlaceholder={t("otherPlaceholder")}
             />
           </section>
 
@@ -317,9 +354,6 @@ export function StepBarBeverages({
               onChange={setMixers}
               locale={locale}
               addLabel={t("addMixer")}
-              showOtherOption
-              otherLabel={t("addOther")}
-              otherPlaceholder={t("otherPlaceholder")}
             />
           </section>
 

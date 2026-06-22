@@ -127,6 +127,8 @@ export interface Snack {
 export interface CharcuterieItem {
   id: string;
   name: string;
+  name_en: string | null;
+  name_es: string | null;
   category: "meats" | "cheeses" | "complements";
   base_price_cents: number;
   allows_custom_note: boolean;
@@ -139,6 +141,8 @@ export interface CharcuterieItem {
 export interface AlwaysOnboardItem {
   id: string;
   name: string;
+  name_en: string | null;
+  name_es: string | null;
   base_price_cents: number;
   allows_custom_note: boolean;
   is_active: boolean;

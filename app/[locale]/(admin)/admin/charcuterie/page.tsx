@@ -1,6 +1,7 @@
 import { setRequestLocale } from "next-intl/server";
 import { NamedCatalogManager } from "@/components/admin/named-catalog-manager";
 import { CHARCUTERIE_CATEGORIES } from "@/lib/validations/charcuterie-item";
+import { localizedPantryItemName } from "@/lib/catalog/utils";
 import {
   createCharcuterieItem,
   deleteCharcuterieItem,
@@ -19,9 +20,12 @@ export default async function AdminCharcuteriePage({
 
   return (
     <NamedCatalogManager
+      bilingual
       items={items.map((i) => ({
         id: i.id,
-        name: i.name,
+        name: localizedPantryItemName(i, locale),
+        name_en: i.name_en ?? i.name,
+        name_es: i.name_es ?? i.name,
         category: i.category,
         base_price_cents: i.base_price_cents,
       }))}

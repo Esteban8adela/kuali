@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useId } from "react";
 import { useTranslations } from "next-intl";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -15,7 +15,6 @@ import {
 import { Minus, Plus, X } from "lucide-react";
 import type { BarLineSelection, CatalogItem } from "@/lib/catalog/types";
 import { catalogLabel } from "@/lib/catalog/utils";
-import { GUEST_OTHER_OPTION } from "@/lib/guest/catalog-other";
 
 interface CatalogMultiPickerProps {
   title: string;
@@ -24,9 +23,6 @@ interface CatalogMultiPickerProps {
   onChange: (next: BarLineSelection[]) => void;
   locale: string;
   addLabel: string;
-  showOtherOption?: boolean;
-  otherLabel?: string;
-  otherPlaceholder?: string;
 }
 
 function normalizeQuantity(value: number | null | undefined): number {
@@ -41,40 +37,26 @@ export function CatalogMultiPicker({
   onChange,
   locale,
   addLabel,
-  showOtherOption = false,
-  otherLabel,
-  otherPlaceholder,
 }: CatalogMultiPickerProps) {
   const selectId = useId();
   const t = useTranslations("guest.wizard.bar");
-  const [otherDraft, setOtherDraft] = useState("");
-  const hasOther = selections.some((s) => !s.catalogItemId);
+
+  const catalogSelections = selections.filter((s) => s.catalogItemId);
   const available = items.filter(
-    (item) => !selections.some((s) => s.catalogItemId === item.id)
+    (item) => !catalogSelections.some((s) => s.catalogItemId === item.id)
   );
 
   function addItem(catalogItemId: string) {
-    if (catalogItemId === GUEST_OTHER_OPTION) return;
     const item = items.find((i) => i.id === catalogItemId);
     if (!item) return;
     onChange([
-      ...selections,
+      ...catalogSelections,
       {
         catalogItemId: item.id,
         label: catalogLabel(item, locale),
         quantity: 1,
       },
     ]);
-  }
-
-  function addOtherLine() {
-    const label = otherDraft.trim();
-    if (!label || hasOther) return;
-    onChange([
-      ...selections,
-      { catalogItemId: null, label, quantity: 1 },
-    ]);
-    setOtherDraft("");
   }
 
   function updateQty(index: number, nextQty: number) {
@@ -97,7 +79,7 @@ export function CatalogMultiPicker({
         const qty = normalizeQuantity(sel.quantity);
         return (
           <div
-            key={`${sel.catalogItemId ?? "blank"}-${index}`}
+            key={`${sel.catalogItemId ?? "custom"}-${index}`}
             className="flex flex-wrap items-center gap-2 rounded-lg border border-[#C4A052]/25 bg-white p-3"
           >
             <span className="min-w-[120px] flex-1 text-sm font-medium text-[#1B3A4B]">
@@ -120,7 +102,7 @@ export function CatalogMultiPicker({
                 type="number"
                 min={1}
                 className="h-9 w-16 text-center"
-                step={1}
+                step="1"
                 value={qty}
                 onChange={(e) => updateQty(index, parseInt(e.target.value, 10) || 1)}
               />
@@ -142,35 +124,90 @@ export function CatalogMultiPicker({
         );
       })}
 
-      <div className="flex flex-wrap items-center gap-2">
-        {(available.length > 0 || showOtherOption) && (
-          <Select onValueChange={addItem}>
-            <SelectTrigger className="max-w-xs" id={selectId}>
-              <SelectValue placeholder={addLabel} />
-            </SelectTrigger>
-            <SelectContent>
-              {available.map((item) => (
-                <SelectItem key={item.id} value={item.id}>
-                  {catalogLabel(item, locale)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
-        {showOtherOption && !hasOther ? (
-          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+      {available.length > 0 ? (
+        <Select onValueChange={addItem}>
+          <SelectTrigger className="max-w-xs" id={selectId}>
+            <SelectValue placeholder={addLabel} />
+          </SelectTrigger>
+          <SelectContent>
+            {available.map((item) => (
+              <SelectItem key={item.id} value={item.id}>
+                {catalogLabel(item, locale)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      ) : null}
+    </div>
+  );
+}
+
+interface SpiritCustomBrandsProps {
+  title: string;
+  catalogItems: CatalogItem[];
+  catalogSelections: BarLineSelection[];
+  customBrands: string[];
+  onCatalogChange: (next: BarLineSelection[]) => void;
+  onCustomBrandsChange: (next: string[]) => void;
+  locale: string;
+  addLabel: string;
+}
+
+export function SpiritCategoryPicker({
+  title,
+  catalogItems,
+  catalogSelections,
+  customBrands,
+  onCatalogChange,
+  onCustomBrandsChange,
+  locale,
+  addLabel,
+}: SpiritCustomBrandsProps) {
+  const t = useTranslations("guest.wizard.bar");
+
+  return (
+    <div className="space-y-3">
+      <CatalogMultiPicker
+        title={title}
+        items={catalogItems}
+        selections={catalogSelections}
+        onChange={onCatalogChange}
+        locale={locale}
+        addLabel={addLabel}
+      />
+
+      <div className="mt-2 w-full space-y-2">
+        {customBrands.map((brand, index) => (
+          <div key={`custom-${index}`} className="flex w-full items-center gap-2">
             <Input
               type="text"
-              value={otherDraft}
-              onChange={(e) => setOtherDraft(e.target.value)}
-              placeholder={otherPlaceholder ?? "Especifica qué necesitas..."}
-              className="max-w-xs"
+              value={brand}
+              placeholder={t("customBrandPlaceholder")}
+              onChange={(e) => {
+                const next = [...customBrands];
+                next[index] = e.target.value;
+                onCustomBrandsChange(next);
+              }}
+              className="w-full"
             />
-            <Button type="button" variant="outline" size="sm" onClick={addOtherLine} disabled={!otherDraft.trim()}>
-              {otherLabel ?? t("addOther")}
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => onCustomBrandsChange(customBrands.filter((_, i) => i !== index))}
+              aria-label={t("removeCustomBrand")}
+            >
+              <X className="h-4 w-4" />
             </Button>
           </div>
-        ) : null}
+        ))}
+        <button
+          type="button"
+          className="mt-2 w-full text-left text-sm font-medium text-[#C4A052] hover:text-[#1B3A4B] hover:underline"
+          onClick={() => onCustomBrandsChange([...customBrands, ""])}
+        >
+          {t("addCustomBrand")}
+        </button>
       </div>
     </div>
   );

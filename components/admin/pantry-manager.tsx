@@ -20,7 +20,7 @@ import {
   updateAlwaysOnboardItem,
 } from "@/app/[locale]/(admin)/admin/always-onboard/actions";
 import type { CharcuterieItem, AlwaysOnboardItem, Snack } from "@/lib/types/database";
-import { localizedSnackName } from "@/lib/catalog/utils";
+import { localizedPantryItemName } from "@/lib/catalog/utils";
 import { useTranslations } from "next-intl";
 
 interface PantryManagerProps {
@@ -58,7 +58,7 @@ export function PantryManager({ snacks, alwaysOnboard, charcuterie, locale }: Pa
               bilingual
               items={snacks.map((i) => ({
                 id: i.id,
-                name: localizedSnackName(i, locale),
+                name: localizedPantryItemName(i, locale),
                 name_en: i.name_en ?? i.name,
                 name_es: i.name_es ?? i.name,
                 description_en: i.description_en,
@@ -82,9 +82,12 @@ export function PantryManager({ snacks, alwaysOnboard, charcuterie, locale }: Pa
           <CardContent>
             <NamedCatalogManager
               embedded
+              bilingual
               items={alwaysOnboard.map((i) => ({
                 id: i.id,
-                name: i.name,
+                name: localizedPantryItemName(i, locale),
+                name_en: i.name_en ?? i.name,
+                name_es: i.name_es ?? i.name,
                 base_price_cents: i.base_price_cents,
               }))}
               locale={locale}
@@ -112,10 +115,13 @@ export function PantryManager({ snacks, alwaysOnboard, charcuterie, locale }: Pa
                 <TabsContent key={cat} value={cat}>
                   <NamedCatalogManager
                     embedded
+                    bilingual
                     defaultCategory={cat}
                     items={charcuterieByCategory[cat].map((i) => ({
                       id: i.id,
-                      name: i.name,
+                      name: localizedPantryItemName(i, locale),
+                      name_en: i.name_en ?? i.name,
+                      name_es: i.name_es ?? i.name,
                       category: i.category,
                       base_price_cents: i.base_price_cents,
                     }))}

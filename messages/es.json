@@ -294,6 +294,9 @@
         "addWine": "Agregar vino…",
         "addBeer": "Agregar cerveza…",
         "addMixer": "Agregar mixer…",
+        "addCustomBrand": "+ Agregar otra marca (fuera del menú)",
+        "customBrandPlaceholder": "Ej. Tequila Maestro Dobel…",
+        "removeCustomBrand": "Eliminar marca",
         "spiritOptions": {
           "tequila": "Tequila",
           "rum": "Ron",
@@ -398,9 +401,9 @@
   "chef": {
     "greeting": "Hola, Chef",
     "nav": {
-      "dashboard": "Dashboard (Próximos viajes)",
+      "dashboard": "Dashboard",
       "history": "Historial",
-      "catalogs": "Catálogos (solo lectura)"
+      "catalogs": "Catálogos"
     },
     "history": {
       "title": "Historial de viajes",
@@ -506,9 +509,10 @@
       "snacksSection": "Snacks",
       "barSection": "Barra / bebidas",
       "noneSelected": "Sin selecciones",
-      "itemColumn": "Artículo",
+      "itemColumn": "Concepto",
       "qtyColumn": "Cant.",
-      "unitPriceColumn": "Precio unitario",
+      "unitPriceColumn": "Precio unit.",
+      "subtotalColumn": "Subtotal",
       "costingSection": "Costeo estimado",
       "foodAllowanceNote": "Food Allowance base según tarifa diaria por pasajero.",
       "costingDisclaimer": "Los precios de botellas y snacks se completarán cuando el catálogo de admin esté poblado."
@@ -527,6 +531,8 @@
       "emptyFuture": "No hay reservas futuras."
     },
     "guests": "Huéspedes",
+    "tripsNav": "Reservas",
+    "usersNav": "Usuarios",
     "catalogSectionTitle": "Catálogos e inventario",
     "catalogNav": "Ingredientes",
     "dishesNav": "Platillos",
@@ -590,7 +596,9 @@
         "imageUrl": "URL de imagen",
         "manualPriceMxn": "Precio manual (MXN)",
         "manualPriceUsd": "Precio manual (USD)",
-        "basePriceUnit": "Precio Base (USD / unidad)"
+        "basePriceUnit": "Precio Base (USD / unidad)",
+        "basePriceUnitMxn": "Precio Base (MXN / unidad)",
+        "basePriceUnitUsd": "Precio Base (USD / unidad)"
       },
       "categories": {
         "kids_breakfast": "Desayuno infantil",
@@ -691,6 +699,8 @@
         "imageUrl": "URL de imagen",
         "basePrice": "Precio base (USD)",
         "basePriceUnit": "Precio Base (USD / unidad)",
+        "basePriceUnitMxn": "Precio Base (MXN / unidad)",
+        "basePriceUnitUsd": "Precio Base (USD / unidad)",
         "manualPriceMxn": "Precio manual (MXN)",
         "manualPriceUsd": "Precio manual (USD)"
       },
@@ -751,6 +761,8 @@
         "category": "Categoría",
         "basePrice": "Precio base (USD)",
         "basePriceUnit": "Precio Base (USD / unidad)",
+        "basePriceUnitMxn": "Precio Base (MXN / unidad)",
+        "basePriceUnitUsd": "Precio Base (USD / unidad)",
         "manualPriceMxn": "Precio manual (MXN)",
         "manualPriceUsd": "Precio manual (USD)"
       },
@@ -781,16 +793,17 @@
         "actions": "Acciones"
       },
       "fields": {
+        "name": "Nombre",
         "nameEn": "Nombre (EN)",
         "nameEs": "Nombre (ES)",
-        "descriptionEn": "Descripción (EN)",
-        "descriptionEs": "Descripción (ES)",
         "presentation": "Presentación / Tamaño",
         "category": "Categoría",
         "subcategory": "Subcategoría",
         "spiritType": "Tipo de licor",
         "basePrice": "Precio base (USD)",
         "basePriceUnit": "Precio Base (USD / unidad)",
+        "basePriceUnitMxn": "Precio Base (MXN / unidad)",
+        "basePriceUnitUsd": "Precio Base (USD / unidad)",
         "manualPriceMxn": "Precio manual (MXN)",
         "manualPriceUsd": "Precio manual (USD)"
       },
@@ -840,9 +853,13 @@
       },
       "fields": {
         "name": "Nombre",
+        "nameEn": "Nombre (EN)",
+        "nameEs": "Nombre (ES)",
         "category": "Categoría",
         "basePrice": "Precio base (USD)",
         "basePriceUnit": "Precio Base (USD / unidad)",
+        "basePriceUnitMxn": "Precio Base (MXN / unidad)",
+        "basePriceUnitUsd": "Precio Base (USD / unidad)",
         "manualPriceMxn": "Precio manual (MXN)",
         "manualPriceUsd": "Precio manual (USD)"
       },
@@ -870,10 +887,48 @@
       },
       "fields": {
         "name": "Nombre",
+        "nameEn": "Nombre (EN)",
+        "nameEs": "Nombre (ES)",
         "basePrice": "Precio base (USD)",
         "basePriceUnit": "Precio Base (USD / unidad)",
+        "basePriceUnitMxn": "Precio Base (MXN / unidad)",
+        "basePriceUnitUsd": "Precio Base (USD / unidad)",
         "manualPriceMxn": "Precio Manual (MXN)",
         "manualPriceUsd": "Precio Manual (USD)"
+      }
+    },
+    "tripsPage": {
+      "title": "Reservas",
+      "subtitle": "Todas las reservas: borradores, enviadas y confirmadas.",
+      "searchPlaceholder": "Buscar por nombre o Ref#…",
+      "empty": "No hay reservas que coincidan.",
+      "deleteConfirm": "¿Eliminar esta reserva? Esta acción no se puede deshacer.",
+      "viewEdit": "Ver detalle / Editar",
+      "delete": "Eliminar",
+      "columns": {
+        "ref": "Ref#",
+        "guest": "Huésped",
+        "dates": "Fechas",
+        "pax": "Pax",
+        "status": "Estado",
+        "actions": "Acciones"
+      }
+    },
+    "usersPage": {
+      "title": "Usuarios",
+      "subtitle": "Perfiles registrados y asignación de roles.",
+      "searchPlaceholder": "Buscar por nombre o email…",
+      "empty": "No hay usuarios que coincidan.",
+      "columns": {
+        "name": "Nombre",
+        "email": "Email",
+        "role": "Rol"
+      },
+      "roles": {
+        "renta": "Huésped",
+        "socio": "Socio",
+        "chef": "Chef",
+        "admin": "Admin"
       }
     }
   }

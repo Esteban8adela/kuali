@@ -25,6 +25,18 @@ function revalidate() {
   revalidatePath(PATH, "layout");
 }
 
+function itemRow(parsed: ReturnType<typeof alwaysOnboardItemSchema.parse>) {
+  return {
+    name: parsed.name_es,
+    name_en: parsed.name_en,
+    name_es: parsed.name_es,
+    base_price_cents: parsed.base_price_cents,
+    sort_order: parsed.sort_order ?? 0,
+    is_active: parsed.is_active ?? true,
+    allows_custom_note: parsed.allows_custom_note ?? false,
+  };
+}
+
 export async function getAlwaysOnboardItems(): Promise<AlwaysOnboardItem[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -41,7 +53,7 @@ export async function createAlwaysOnboardItem(input: unknown) {
   const supabase = await assertAdminWrite();
   const { data, error } = await supabase
     .from("always_onboard_items")
-    .insert(parsed)
+    .insert(itemRow(parsed))
     .select("*")
     .single();
   if (error) throw error;
@@ -54,7 +66,7 @@ export async function updateAlwaysOnboardItem(id: string, input: unknown) {
   const supabase = await assertAdminWrite();
   const { data, error } = await supabase
     .from("always_onboard_items")
-    .update(parsed)
+    .update(itemRow(parsed))
     .eq("id", id)
     .select("*")
     .single();

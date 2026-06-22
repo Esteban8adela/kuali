@@ -294,6 +294,9 @@
         "addWine": "Add wine…",
         "addBeer": "Add beer…",
         "addMixer": "Add mixer…",
+        "addCustomBrand": "+ Add another brand (off-menu)",
+        "customBrandPlaceholder": "e.g. Tequila Maestro Dobel…",
+        "removeCustomBrand": "Remove brand",
         "spiritOptions": {
           "tequila": "Tequila",
           "rum": "Rum",
@@ -398,9 +401,9 @@
   "chef": {
     "greeting": "Hello, Chef",
     "nav": {
-      "dashboard": "Dashboard (Upcoming trips)",
+      "dashboard": "Dashboard",
       "history": "History",
-      "catalogs": "Catalogs (read-only)"
+      "catalogs": "Catalogs"
     },
     "history": {
       "title": "Trip history",
@@ -509,6 +512,7 @@
       "itemColumn": "Item",
       "qtyColumn": "Qty",
       "unitPriceColumn": "Unit price",
+      "subtotalColumn": "Subtotal",
       "costingSection": "Estimated costing",
       "foodAllowanceNote": "Base food allowance from daily per-passenger rates.",
       "costingDisclaimer": "Bottle and snack prices will populate once the admin catalog is filled in."
@@ -527,15 +531,95 @@
       "emptyFuture": "No upcoming reservations."
     },
     "guests": "Guests",
+    "tripsNav": "Trips",
+    "usersNav": "Users",
     "catalogSectionTitle": "Catalogs & inventory",
     "catalogNav": "Catalog & recipes",
+    "dishesNav": "Dishes",
+    "kidsMenuNav": "Kids menu",
+    "pantryNav": "Snacks & pantry",
     "snacksNav": "Snacks catalog",
     "beveragesNav": "Beverages & spirits",
     "charcuterieNav": "Charcuterie",
     "alwaysOnboardNav": "Always onboard",
     "catalog": {
       "ingredientsTab": "Ingredients",
-      "dishesTab": "Dishes"
+      "dishesTab": "Dishes",
+      "kidsMenuTab": "Kids menu",
+      "pantryTab": "Snacks & pantry",
+      "beveragesTab": "Beverages"
+    },
+    "pantry": {
+      "title": "Snacks & pantry",
+      "subtitle": "Manage snacks, always onboard, and charcuterie in one place.",
+      "snacksCard": "Snacks & Pantry",
+      "snacksCardDesc": "Guest requested snacks.",
+      "alwaysOnboardCard": "Always Onboard",
+      "alwaysOnboardCardDesc": "Base checklist of provisions.",
+      "charcuterieCard": "Charcuterie & Boards",
+      "charcuterieCardDesc": "Meats, cheeses, and complements.",
+      "charcuterieMeats": "Meats",
+      "charcuterieCheeses": "Cheeses",
+      "charcuterieComplements": "Complements"
+    },
+    "kidsDishes": {
+      "title": "Kids menu",
+      "subtitle": "Dishes by meal time for children.",
+      "addButton": "Add kids dish",
+      "addTitle": "New kids dish",
+      "editTitle": "Edit kids dish",
+      "formSubtitle": "Set kids category, recipe, and optional manual price.",
+      "empty": "No kids dishes yet.",
+      "saveError": "Could not save the dish.",
+      "deleteConfirm": "Delete this dish?",
+      "edit": "Edit",
+      "delete": "Delete",
+      "recipeLineCount": "{count, plural, =0 {No ingredients} one {# ingredient} other {# ingredients}}",
+      "ingredientCostLabel": "Ingredient cost (per person)",
+      "finalPriceLabel": "Final price",
+      "columns": {
+        "name": "Name",
+        "category": "Category",
+        "description": "Description",
+        "recipeLines": "Recipe",
+        "actions": "Actions"
+      },
+      "fields": {
+        "name": "Name",
+        "nameEn": "Name (EN)",
+        "nameEs": "Name (ES)",
+        "description": "Description",
+        "descriptionEn": "Description (EN)",
+        "descriptionEs": "Description (ES)",
+        "category": "Category",
+        "recipeYield": "Recipe yield (servings)",
+        "imageUrl": "Image URL",
+        "manualPriceMxn": "Manual price (MXN)",
+        "manualPriceUsd": "Manual price (USD)",
+        "basePriceUnit": "Base Price (USD / unit)",
+        "basePriceUnitMxn": "Base Price (MXN / unit)",
+        "basePriceUnitUsd": "Base Price (USD / unit)"
+      },
+      "categories": {
+        "kids_breakfast": "Kids — breakfast",
+        "kids_lunch_main": "Kids — lunch main",
+        "kids_lunch_dessert": "Kids — lunch dessert",
+        "kids_dinner": "Kids — dinner"
+      },
+      "recipe": {
+        "title": "Recipe builder",
+        "subtitle": "Enter total batch quantities; per-person amounts are calculated automatically.",
+        "addLine": "Add ingredient",
+        "empty": "No recipe lines yet.",
+        "noIngredients": "Create ingredients first.",
+        "ingredient": "Ingredient",
+        "selectIngredient": "Select ingredient",
+        "totalQuantity": "Total quantity",
+        "equivPerPerson": "Eq. {amount} {unit} per person",
+        "removeLine": "Remove line",
+        "totalDishCost": "Total dish cost",
+        "totalCostPerPerson": "Cost per person"
+      }
     },
     "ingredientsNav": "Ingredients",
     "ingredients": {
@@ -615,9 +699,13 @@
         "imageUrl": "Image URL",
         "basePrice": "Base price (USD)",
         "basePriceUnit": "Base Price (USD / unit)",
+        "basePriceUnitMxn": "Base Price (MXN / unit)",
+        "basePriceUnitUsd": "Base Price (USD / unit)",
         "manualPriceMxn": "Manual price (MXN)",
         "manualPriceUsd": "Manual price (USD)"
       },
+      "ingredientCostLabel": "Ingredient cost (per person)",
+      "finalPriceLabel": "Final price",
       "pricePreview": "Preview: {price}",
       "categories": {
         "breakfast": "Breakfast",
@@ -673,6 +761,8 @@
         "category": "Category",
         "basePrice": "Base price (USD)",
         "basePriceUnit": "Base Price (USD / unit)",
+        "basePriceUnitMxn": "Base Price (MXN / unit)",
+        "basePriceUnitUsd": "Base Price (USD / unit)",
         "manualPriceMxn": "Manual price (MXN)",
         "manualPriceUsd": "Manual price (USD)"
       },
@@ -703,18 +793,39 @@
         "actions": "Actions"
       },
       "fields": {
+        "name": "Name",
         "nameEn": "Name (EN)",
         "nameEs": "Name (ES)",
-        "descriptionEn": "Description (EN)",
-        "descriptionEs": "Description (ES)",
         "presentation": "Presentation / Size",
         "category": "Category",
         "subcategory": "Subcategory",
         "spiritType": "Spirit type",
         "basePrice": "Base price (USD)",
         "basePriceUnit": "Base Price (USD / unit)",
+        "basePriceUnitMxn": "Base Price (MXN / unit)",
+        "basePriceUnitUsd": "Base Price (USD / unit)",
         "manualPriceMxn": "Manual price (MXN)",
         "manualPriceUsd": "Manual price (USD)"
+      },
+      "sections": {
+        "spirits": "Spirits",
+        "spiritsDesc": "Rum, tequila, vodka, gin, whiskey, and more.",
+        "mixers": "Mixers",
+        "mixersDesc": "Juices, sodas, and cocktail complements.",
+        "beers": "Beers",
+        "beersDesc": "Beers and radlers.",
+        "wines": "Wines",
+        "winesDesc": "Red, white, and rosé wines."
+      },
+      "spiritTypes": {
+        "gin": "Gin",
+        "mezcal": "Mezcal",
+        "rum": "Rum",
+        "tequila": "Tequila",
+        "vodka": "Vodka",
+        "whiskey": "Whiskey",
+        "cognac": "Cognac",
+        "brandy": "Brandy"
       },
       "categories": {
         "spirit": "Spirit",
@@ -742,9 +853,13 @@
       },
       "fields": {
         "name": "Name",
+        "nameEn": "Name (EN)",
+        "nameEs": "Name (ES)",
         "category": "Category",
         "basePrice": "Base price (USD)",
-        "basePriceUnit": "Base Price (USD / unit)"
+        "basePriceUnit": "Base Price (USD / unit)",
+        "basePriceUnitMxn": "Base Price (MXN / unit)",
+        "basePriceUnitUsd": "Base Price (USD / unit)"
       },
       "categories": {
         "meats": "Meats",
@@ -770,10 +885,48 @@
       },
       "fields": {
         "name": "Name",
+        "nameEn": "Name (EN)",
+        "nameEs": "Name (ES)",
         "basePrice": "Base price (USD)",
         "basePriceUnit": "Base Price (USD / unit)",
+        "basePriceUnitMxn": "Base Price (MXN / unit)",
+        "basePriceUnitUsd": "Base Price (USD / unit)",
         "manualPriceMxn": "Manual Price (MXN)",
         "manualPriceUsd": "Manual Price (USD)"
+      }
+    },
+    "tripsPage": {
+      "title": "Trips",
+      "subtitle": "All trips: drafts, submitted, and confirmed.",
+      "searchPlaceholder": "Search by name or Ref#…",
+      "empty": "No matching trips.",
+      "deleteConfirm": "Delete this trip? This cannot be undone.",
+      "viewEdit": "View / Edit",
+      "delete": "Delete",
+      "columns": {
+        "ref": "Ref#",
+        "guest": "Guest",
+        "dates": "Dates",
+        "pax": "Pax",
+        "status": "Status",
+        "actions": "Actions"
+      }
+    },
+    "usersPage": {
+      "title": "Users",
+      "subtitle": "Registered profiles and role assignment.",
+      "searchPlaceholder": "Search by name or email…",
+      "empty": "No matching users.",
+      "columns": {
+        "name": "Name",
+        "email": "Email",
+        "role": "Role"
+      },
+      "roles": {
+        "renta": "Guest",
+        "socio": "Partner",
+        "chef": "Chef",
+        "admin": "Admin"
       }
     }
   }

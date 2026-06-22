@@ -36,16 +36,16 @@ export function centsToUsd(cents: number): number {
   return (Number.isFinite(cents) ? cents : 0) / 100;
 }
 
-/** Convert locale display amount to USD cents for DB storage. */
+/** Convert locale display amount to USD cents for DB storage (full precision, no rounding). */
 export function localeAmountToUsdCents(amount: number, locale: string): number {
   const safe = Number.isFinite(amount) ? Math.max(0, amount) : 0;
   if (locale === "es") {
-    return Math.round((safe / USD_TO_MXN_RATE) * 100);
+    return (safe / USD_TO_MXN_RATE) * 100;
   }
-  return Math.round(safe * 100);
+  return safe * 100;
 }
 
-/** Convert USD cents to amount shown in the admin price input for the locale. */
+/** Convert USD cents (possibly fractional) to amount shown in admin price inputs. */
 export function usdCentsToLocaleAmount(cents: number, locale: string): number {
   const usd = centsToUsd(cents);
   return locale === "es" ? usd * USD_TO_MXN_RATE : usd;

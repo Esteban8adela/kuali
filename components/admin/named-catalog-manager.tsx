@@ -78,22 +78,18 @@ export function NamedCatalogManager({
   const [name, setName] = useState("");
   const [nameEn, setNameEn] = useState("");
   const [nameEs, setNameEs] = useState("");
-  const [descriptionEn, setDescriptionEn] = useState("");
-  const [descriptionEs, setDescriptionEs] = useState("");
   const [category, setCategory] = useState(defaultCategory ?? categories?.[0] ?? "");
   const [priceDisplay, setPriceDisplay] = useState("0");
   const [priceUsdCents, setPriceUsdCents] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   const priceLabel =
-    locale === "es" ? t("fields.basePriceUnit") : t("fields.basePriceUnit");
+    locale === "es" ? t("fields.basePriceUnitMxn") : t("fields.basePriceUnitUsd");
 
   function resetForm() {
     setName("");
     setNameEn("");
     setNameEs("");
-    setDescriptionEn("");
-    setDescriptionEs("");
     setCategory(defaultCategory ?? categories?.[0] ?? "");
     setPriceDisplay("0");
     setPriceUsdCents(0);
@@ -111,8 +107,6 @@ export function NamedCatalogManager({
     setName(item.name);
     setNameEn(item.name_en ?? item.name);
     setNameEs(item.name_es ?? item.name);
-    setDescriptionEn(item.description_en ?? "");
-    setDescriptionEs(item.description_es ?? "");
     setCategory(item.category ?? defaultCategory ?? categories?.[0] ?? "");
     const display = manualPriceDisplayFromCents(item.base_price_cents, locale);
     setPriceDisplay(display || "0");
@@ -127,8 +121,12 @@ export function NamedCatalogManager({
       ? {
           name_en: nameEn.trim(),
           name_es: nameEs.trim(),
-          description_en: descriptionEn.trim() || null,
-          description_es: descriptionEs.trim() || null,
+          ...(editing
+            ? {
+                description_en: editing.description_en ?? null,
+                description_es: editing.description_es ?? null,
+              }
+            : {}),
           category: defaultCategory ?? category,
           base_price_cents: priceUsdCents,
         }
@@ -160,7 +158,10 @@ export function NamedCatalogManager({
 
   function displayName(item: CatalogRow): string {
     if (bilingual) {
-      return locale === "es" ? item.name_es ?? item.name : item.name_en ?? item.name;
+      if (locale === "es") {
+        return item.name_es?.trim() || item.name_en?.trim() || item.name;
+      }
+      return item.name_en?.trim() || item.name_es?.trim() || item.name;
     }
     return item.name;
   }
@@ -272,26 +273,6 @@ export function NamedCatalogManager({
                     value={nameEn}
                     onChange={(e) => setNameEn(e.target.value)}
                     required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="item-desc-es">{t("fields.descriptionEs")}</Label>
-                  <textarea
-                    id="item-desc-es"
-                    className="mt-1.5 flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
-                    value={descriptionEs}
-                    onChange={(e) => setDescriptionEs(e.target.value)}
-                    rows={2}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="item-desc-en">{t("fields.descriptionEn")}</Label>
-                  <textarea
-                    id="item-desc-en"
-                    className="mt-1.5 flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
-                    value={descriptionEn}
-                    onChange={(e) => setDescriptionEn(e.target.value)}
-                    rows={2}
                   />
                 </div>
               </>

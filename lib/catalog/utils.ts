@@ -55,6 +55,17 @@ export function localizedSnackName(
   },
   locale: string
 ): string {
-  if (locale === "es") return snack.name_es?.trim() || snack.name;
-  return snack.name_en?.trim() || snack.name;
+  if (locale === "es") return snack.name_es?.trim() || snack.name_en?.trim() || snack.name;
+  return snack.name_en?.trim() || snack.name_es?.trim() || snack.name;
+}
+
+export function localizedPantryItemName(
+  item: {
+    name: string;
+    name_en?: string | null;
+    name_es?: string | null;
+  },
+  locale: string
+): string {
+  return localizedSnackName(item, locale);
 }

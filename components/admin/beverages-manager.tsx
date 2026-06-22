@@ -41,6 +41,10 @@ interface BeveragesManagerProps {
   locale: string;
 }
 
+function isBilingualCategory(category: string): boolean {
+  return category === "wine" || category === "mixer";
+}
+
 export function BeveragesManager({ items, locale }: BeveragesManagerProps) {
   const t = useTranslations("admin.beverages");
   const tc = useTranslations("common");
@@ -50,10 +54,9 @@ export function BeveragesManager({ items, locale }: BeveragesManagerProps) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({
+    name: "",
     name_en: "",
     name_es: "",
-    description_en: "",
-    description_es: "",
     presentation: "",
     category: "spirit",
     subcategory: SPIRIT_SUBCATEGORIES[0] as string,
@@ -61,15 +64,16 @@ export function BeveragesManager({ items, locale }: BeveragesManagerProps) {
   const [priceDisplay, setPriceDisplay] = useState("0");
   const [priceUsdCents, setPriceUsdCents] = useState(0);
 
-  const priceLabel = t("fields.basePriceUnit");
+  const priceLabel =
+    locale === "es" ? t("fields.basePriceUnitMxn") : t("fields.basePriceUnitUsd");
+  const bilingual = isBilingualCategory(form.category);
 
   function openCreate(category = "spirit") {
     setEditing(null);
     setForm({
+      name: "",
       name_en: "",
       name_es: "",
-      description_en: "",
-      description_es: "",
       presentation: "",
       category,
       subcategory: category === "spirit" ? SPIRIT_SUBCATEGORIES[0] : "",
@@ -82,11 +86,11 @@ export function BeveragesManager({ items, locale }: BeveragesManagerProps) {
 
   function openEdit(item: CatalogItemRow) {
     setEditing(item);
+    const itemBilingual = isBilingualCategory(item.category);
     setForm({
+      name: itemBilingual ? "" : item.name_en,
       name_en: item.name_en,
       name_es: item.name_es,
-      description_en: item.description_en ?? "",
-      description_es: item.description_es ?? "",
       presentation: item.presentation ?? "",
       category: item.category,
       subcategory: item.subcategory ?? (item.category === "spirit" ? SPIRIT_SUBCATEGORIES[0] : ""),
@@ -100,16 +104,22 @@ export function BeveragesManager({ items, locale }: BeveragesManagerProps) {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const payload = {
-      name_en: form.name_en.trim(),
-      name_es: form.name_es.trim(),
-      description_en: form.description_en.trim() || null,
-      description_es: form.description_es.trim() || null,
-      presentation: form.presentation.trim() || null,
-      category: form.category,
-      subcategory: form.category === "spirit" ? form.subcategory : null,
-      base_price_cents: priceUsdCents,
-    };
+    const payload = bilingual
+      ? {
+          name_en: form.name_en.trim(),
+          name_es: form.name_es.trim(),
+          presentation: form.presentation.trim() || null,
+          category: form.category,
+          subcategory: form.category === "spirit" ? form.subcategory : null,
+          base_price_cents: priceUsdCents,
+        }
+      : {
+          name: form.name.trim(),
+          presentation: form.presentation.trim() || null,
+          category: form.category,
+          subcategory: form.category === "spirit" ? form.subcategory : null,
+          base_price_cents: priceUsdCents,
+        };
 
     startTransition(async () => {
       try {
@@ -229,46 +239,41 @@ export function BeveragesManager({ items, locale }: BeveragesManagerProps) {
             <DialogDescription>{t("formSubtitle")}</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Label htmlFor="bev-name-es">{t("fields.nameEs")}</Label>
-              <Input
-                id="bev-name-es"
-                className="mt-1.5"
-                value={form.name_es}
-                onChange={(e) => setForm((f) => ({ ...f, name_es: e.target.value }))}
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="bev-name-en">{t("fields.nameEn")}</Label>
-              <Input
-                id="bev-name-en"
-                className="mt-1.5"
-                value={form.name_en}
-                onChange={(e) => setForm((f) => ({ ...f, name_en: e.target.value }))}
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="bev-desc-es">{t("fields.descriptionEs")}</Label>
-              <textarea
-                id="bev-desc-es"
-                className="mt-1.5 flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
-                value={form.description_es}
-                onChange={(e) => setForm((f) => ({ ...f, description_es: e.target.value }))}
-                rows={2}
-              />
-            </div>
-            <div>
-              <Label htmlFor="bev-desc-en">{t("fields.descriptionEn")}</Label>
-              <textarea
-                id="bev-desc-en"
-                className="mt-1.5 flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
-                value={form.description_en}
-                onChange={(e) => setForm((f) => ({ ...f, description_en: e.target.value }))}
-                rows={2}
-              />
-            </div>
+            {bilingual ? (
+              <>
+                <div>
+                  <Label htmlFor="bev-name-es">{t("fields.nameEs")}</Label>
+                  <Input
+                    id="bev-name-es"
+                    className="mt-1.5"
+                    value={form.name_es}
+                    onChange={(e) => setForm((f) => ({ ...f, name_es: e.target.value }))}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="bev-name-en">{t("fields.nameEn")}</Label>
+                  <Input
+                    id="bev-name-en"
+                    className="mt-1.5"
+                    value={form.name_en}
+                    onChange={(e) => setForm((f) => ({ ...f, name_en: e.target.value }))}
+                    required
+                  />
+                </div>
+              </>
+            ) : (
+              <div>
+                <Label htmlFor="bev-name">{t("fields.name")}</Label>
+                <Input
+                  id="bev-name"
+                  className="mt-1.5"
+                  value={form.name}
+                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                  required
+                />
+              </div>
+            )}
             <div>
               <Label htmlFor="bev-presentation">{t("fields.presentation")}</Label>
               <Input

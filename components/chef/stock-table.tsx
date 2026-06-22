@@ -60,6 +60,7 @@ export function StockTable({ tripId, lines: initial }: StockTableProps) {
                   <Input
                     type="number"
                     min={0}
+                    step="1"
                     className="w-20"
                     defaultValue={line.consumed_qty ?? ""}
                     onBlur={(e) => updateConsumed(line.id, Number(e.target.value) || 0)}
