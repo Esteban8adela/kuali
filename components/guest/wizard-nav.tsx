@@ -40,10 +40,12 @@ export function WizardNav({
       </div>
       <div className="flex flex-col items-end gap-1">
         {continueHint && continueDisabled && (
-          <p className="max-w-xs text-right text-xs text-red-600/90">{continueHint}</p>
+          <p className="max-w-xs text-right text-sm text-red-700">{continueHint}</p>
         )}
         <div className="flex items-center gap-3">
-          {statusText && <span className="hidden text-xs text-neutral-400 sm:inline">{statusText}</span>}
+          {statusText && (
+            <span className="hidden text-sm text-neutral-800 sm:inline">{statusText}</span>
+          )}
           {onSaveExit && (
             <Button
               type="button"

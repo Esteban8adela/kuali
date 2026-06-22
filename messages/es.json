@@ -10,7 +10,8 @@
     "saved": "Guardado",
     "login": "Iniciar sesión",
     "logout": "Cerrar sesión",
-    "language": "Idioma"
+    "language": "Idioma",
+    "guestUser": "Huésped"
   },
   "landing": {
     "hero": "Su travesía, curada a la perfección",
@@ -26,6 +27,8 @@
     "lastName": "Apellido(s)",
     "email": "Correo electrónico",
     "password": "Contraseña",
+    "showPassword": "Mostrar contraseña",
+    "hidePassword": "Ocultar contraseña",
     "signIn": "Iniciar sesión",
     "signUp": "Crear cuenta",
     "signingIn": "Un momento…",
@@ -79,8 +82,12 @@
         "subtitle": "Cuéntenos sobre su grupo para crear la experiencia perfecta.",
         "adults": "Adultos",
         "children": "Niños",
-        "crew": "Comidas de tripulación incluidas",
-        "crewNote": "La tripulación se ajusta automáticamente para grupos grandes.",
+        "portionsToPrepare": "Porciones a preparar: {guests} huéspedes + {crew} tripulantes (incluidos)",
+        "crewCateringIncluded": "Catering de tripulación incluido",
+        "crewInfoLabel": "Información sobre catering de tripulación",
+        "crewInfoTooltip": "Su reserva incluye automáticamente la preparación de comidas para {crew} miembros de tripulación a bordo. No requiere cálculo adicional.",
+        "crewNote": "Las comidas de tripulación se incluyen automáticamente según el tamaño de su grupo.",
+        "maxCapacity": "La capacidad máxima es de {max} huéspedes.",
         "startDate": "Fecha de inicio",
         "endDate": "Fecha de fin",
         "totalGuests": "{count} huéspedes a bordo",
@@ -110,14 +117,14 @@
           "lunch": "13:00 – 16:00",
           "dinner": "19:00 – 22:00"
         },
-        "heaviness": "Pesadez / Abundancia",
+        "heaviness": "Estilo de porción",
         "heavinessPlaceholder": "Seleccionar…",
         "heavinessOptions": {
           "light": "Ligera",
           "moderate": "Moderada",
           "heavy": "Pesada"
         },
-        "kidsMenuLabel": "¿Cuántos menús infantiles desean para esta comida?",
+        "kidsMenuLabel": "Menús infantiles (Cant.)",
         "kidsMenuDish": "Platillo del menú infantil",
         "kidsMenuValidationHint": "Selecciona un platillo infantil para cada comida con menús de niños solicitados.",
         "menuIncompleteHint": "Cada día requiere desayuno, plato fuerte de comida y cena.",
@@ -130,6 +137,7 @@
         "dinnerDish": "Cena",
         "lunchAppetizers": "Entradas",
         "lunchMains": "Platos fuertes",
+        "lunchDessert": "Postre",
         "noDishesAvailable": "Aún no hay platillos disponibles en esta categoría.",
         "selectedCount": "{count} seleccionados",
         "dishPlaceholder": "Agregar platillo…",
@@ -208,8 +216,27 @@
         "subtitle": "Stock base incluido — solo se cobra lo consumido.",
         "stockBanner": "Consume libremente del stock a bordo. Se contabilizará y cobrará al final de tu viaje.",
         "baseStockTitle": "Stock base incluido a bordo",
-        "baseStockWaters": "Agua natural y mineral (Bonafont, Evian, Fiji, Topo Chico, Perrier, San Pellegrino).",
-        "baseStockSodas": "Refrescos regulares y de dieta (Coca Cola, Sprite, Fanta, Ginger Ale, Coca Light, Coca Zero, Sprite Zero).",
+        "baseStockSubcategories": {
+          "natural_water": "Agua natural",
+          "mineral_water": "Agua mineral",
+          "soda_regular": "Refrescos regulares",
+          "soda_diet": "Refrescos de dieta"
+        },
+        "baseStockBrands": {
+          "bonafont": "Bonafont",
+          "evian": "Evian",
+          "fiji": "Fiji",
+          "topo_chico": "Topo Chico",
+          "perrier": "Perrier",
+          "san_pellegrino": "San Pellegrino",
+          "coca_cola": "Coca Cola",
+          "sprite": "Sprite",
+          "fanta": "Fanta",
+          "ginger_ale": "Ginger Ale",
+          "coca_light": "Coca Light",
+          "coca_zero": "Coca Zero",
+          "sprite_zero": "Sprite Zero"
+        },
         "specificRequestLabel": "¿Deseas alguna marca o bebida específica que no esté en nuestra lista?",
         "specificRequestPlaceholder": "Ej. Fanta, un tequila específico…",
         "residualStockTitle": "Stock residual de botellas llevadas anteriormente",
@@ -260,17 +287,53 @@
         "snacksToBuy": "Snacks a comprar",
         "alwaysOnboard": "Checklist siempre a bordo",
         "crudites": "¿Desean agregar tablas de quesos y carnes frías (crudites)?",
+        "charcuterie": "Tablas de quesos y carnes frías",
+        "charcuterieSectionTitle": "Charcutería y tablas",
+        "charcuterieMeats": "Carnes frías",
+        "charcuterieCheeses": "Quesos",
+        "charcuterieComplements": "Complementos",
+        "charcuterieHelp": "(Selección de charcutería premium)",
+        "charcuterieOtherPlaceholder": "Especifique su preferencia…",
+        "charcuterieItems": {
+          "meats": {
+            "serrano_ham": "Jamón Serrano",
+            "prosciutto": "Prosciutto",
+            "salami": "Salami",
+            "pepperoni": "Pepperoni",
+            "other": "Otro"
+          },
+          "cheeses": {
+            "brie": "Queso Brie",
+            "goat_cheese": "Queso de Cabra",
+            "manchego": "Manchego",
+            "parmesan": "Parmesano",
+            "other": "Otro"
+          },
+          "complements": {
+            "grapes": "Uvas",
+            "strawberries": "Fresas",
+            "olives": "Aceitunas",
+            "fig_jam": "Mermelada de higo",
+            "artisan_crackers": "Galletas artesanales",
+            "other": "Otro"
+          }
+        },
+        "cruditesHelp": "(Incluye zanahoria, pepino, jícama y apio con limón y chile)",
+        "otherPlaceholder": "Describe el snack que deseas…",
+        "alwaysOtherPlaceholder": "Describe qué debe estar siempre a bordo…",
         "items": {
           "chips": "Papas",
           "maruchan": "Maruchan",
           "mango_snacks": "Manguitos",
-          "candies": "Dulces"
+          "candies": "Dulces",
+          "other": "Otro"
         },
         "alwaysItems": {
           "pico_de_gallo": "Pico de gallo",
           "salsas": "Salsas",
           "cacahuates": "Cacahuates",
-          "fruit": "Fruta"
+          "fruit": "Fruta",
+          "other": "Otro"
         }
       }
     }
@@ -285,7 +348,45 @@
     "downloadPdf": "Descargar menú PDF",
     "initial": "Inicial",
     "consumed": "Consumido",
-    "chargeable": "A cobrar"
+    "chargeable": "A cobrar",
+    "portal": {
+      "greeting": "Portal del Chef",
+      "title": "Próximos viajes",
+      "subtitle": "Revise órdenes de servicio, menús y requerimientos de huéspedes antes de cada charter.",
+      "emptyTrips": "Aún no hay viajes registrados.",
+      "tripId": "Viaje",
+      "dates": "Fechas",
+      "datesTbd": "Fechas por confirmar",
+      "passengers": "Pasajeros",
+      "passengersValue": "{total} huéspedes ({adults} adultos · {children} niños) + {crew} tripulación",
+      "viewServiceOrder": "Ver orden de servicio"
+    },
+    "serviceOrder": {
+      "serviceOrder": "Orden de servicio",
+      "backToDashboard": "Volver al dashboard",
+      "generateShoppingList": "Generar lista de compras y costeos",
+      "tripRef": "Viaje #{id}",
+      "tripSummary": "Resumen del viaje",
+      "dates": "Fechas del charter",
+      "datesTbd": "Fechas por confirmar",
+      "pax": "Pasajeros a bordo",
+      "paxValue": "{total} huéspedes ({adults} adultos · {children} niños) · {crew} tripulación",
+      "allergiesAndDiets": "Alergias y dietas especiales",
+      "noPreferenceData": "Aún no hay preferencias de huéspedes registradas.",
+      "noRestrictions": "Sin restricciones alimentarias",
+      "adultGuest": "Adulto",
+      "childGuest": "Niño",
+      "menuItinerary": "Itinerario del menú",
+      "noMenu": "No hay itinerario de menú guardado para este viaje.",
+      "dishPending": "Platillo pendiente / no encontrado",
+      "kidsMenus": "{count} menú(s) infantil(es)",
+      "complements": "Snacks y complementos",
+      "noneSelected": "Ninguno seleccionado",
+      "barBottles": "Selección de botellas del bar",
+      "byob": "El huésped llevará sus propias botellas (BYOB)",
+      "specificRequest": "Solicitud específica",
+      "noBarSelections": "Sin botellas adicionales más allá del stock base."
+    }
   },
   "admin": {
     "greeting": "Hola, Admin",
@@ -383,6 +484,7 @@
         "breakfast": "Desayuno",
         "lunch_appetizer": "Entrada comida",
         "lunch_main": "Plato fuerte comida",
+        "lunch_dessert": "Postre comida",
         "dinner": "Cena",
         "kids": "Niños",
         "snack": "Snack"

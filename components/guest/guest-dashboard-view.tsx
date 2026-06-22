@@ -57,7 +57,7 @@ export function GuestDashboardView({ locale, trip, menuName, stepStatus }: Guest
   return (
     <div className="mx-auto max-w-2xl space-y-6 p-6">
       <h1 className="font-display text-3xl text-[#1B3A4B]">{t("title")}</h1>
-      <p className="text-neutral-500">{t("subtitle")}</p>
+      <p className="text-lg text-neutral-800">{t("subtitle")}</p>
 
       {!trip && (
         <Card className="border-2 border-dashed border-[#C4A052]/40">

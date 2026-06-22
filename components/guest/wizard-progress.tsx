@@ -34,7 +34,7 @@ export function WizardProgress({
   const progress = (completedCount / STEPS.length) * 100;
 
   return (
-    <div className="sticky top-0 z-20 border-b border-[#C4A052]/15 bg-[#FAFAF8]/95 px-4 py-4 backdrop-blur-md md:px-8">
+    <div className="sticky top-20 z-20 border-b border-[#C4A052]/15 bg-[#FAFAF8]/95 px-4 py-4 backdrop-blur-md md:px-8">
       <Progress value={progress} className="mb-4 h-0.5" />
       <ol className="flex justify-between gap-2">
         {STEPS.map((step, i) => {

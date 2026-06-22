@@ -16,43 +16,119 @@ import { filterCatalog } from "@/lib/catalog/utils";
 import { useWizardAutosave } from "@/hooks/use-wizard-autosave";
 import type { BarLineSelection, BarOrderPayload, CatalogItem } from "@/lib/catalog/types";
 
-function formatResidualValue(value: unknown): string {
-  if (value === null || value === undefined) return "";
-  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
-    return String(value);
-  }
-  if (Array.isArray(value)) {
-    return value.map(formatResidualValue).filter(Boolean).join(", ");
-  }
-  if (typeof value === "object") {
-    return Object.entries(value as Record<string, unknown>)
-      .map(([k, v]) => `${k}: ${formatResidualValue(v)}`)
-      .join("; ");
-  }
-  return String(value);
+function formatResidualLabel(key: string): string {
+  return key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-function residualStockEntries(stock: unknown): Array<{ label: string; value: string }> {
-  if (!stock || typeof stock !== "object" || Array.isArray(stock)) return [];
-  return Object.entries(stock as Record<string, unknown>)
-    .map(([key, value]) => ({ label: key, value: formatResidualValue(value) }))
-    .filter((e) => e.value.trim().length > 0);
+function flattenResidualItems(
+  stock: unknown,
+  prefix = ""
+): Array<{ id: string; label: string; detail: string }> {
+  if (stock === null || stock === undefined) return [];
+
+  if (typeof stock === "string" || typeof stock === "number" || typeof stock === "boolean") {
+    const detail = String(stock).trim();
+    if (!detail) return [];
+    return [{ id: prefix || "value", label: prefix ? formatResidualLabel(prefix) : "Item", detail }];
+  }
+
+  if (Array.isArray(stock)) {
+    return stock.flatMap((item, index) =>
+      flattenResidualItems(item, prefix ? `${prefix}-${index + 1}` : `item-${index + 1}`)
+    );
+  }
+
+  if (typeof stock === "object") {
+    return Object.entries(stock as Record<string, unknown>).flatMap(([key, value]) => {
+      const nextPrefix = prefix ? `${prefix}.${key}` : key;
+      if (value !== null && typeof value === "object" && !Array.isArray(value)) {
+        return flattenResidualItems(value, nextPrefix);
+      }
+      return flattenResidualItems(value, nextPrefix);
+    });
+  }
+
+  return [];
+}
+
+function BaseStockIncludedSection() {
+  const t = useTranslations("guest.wizard.bar");
+
+  const categories = [
+    {
+      key: "waters",
+      subcategories: [
+        {
+          key: "natural_water",
+          brands: ["bonafont", "evian", "fiji"] as const,
+        },
+        {
+          key: "mineral_water",
+          brands: ["topo_chico", "perrier", "san_pellegrino"] as const,
+        },
+      ],
+    },
+    {
+      key: "sodas",
+      subcategories: [
+        {
+          key: "soda_regular",
+          brands: ["coca_cola", "sprite", "fanta", "ginger_ale"] as const,
+        },
+        {
+          key: "soda_diet",
+          brands: ["coca_light", "coca_zero", "sprite_zero"] as const,
+        },
+      ],
+    },
+  ] as const;
+
+  return (
+    <section className="space-y-4 rounded-xl border border-[#C4A052]/20 bg-white p-5">
+      <h3 className="font-display text-lg text-[#1B3A4B]">{t("baseStockTitle")}</h3>
+      <div className="space-y-6">
+        {categories.map((category) => (
+          <div key={category.key}>
+            <p className="font-semibold text-gray-800">{t(category.key)}</p>
+            {category.subcategories.map((subcategory) => (
+              <div key={subcategory.key} className="mt-2 pl-4">
+                <p className="font-medium text-gray-700">
+                  {t(`baseStockSubcategories.${subcategory.key}`)}
+                </p>
+                <ul className="mt-1 list-disc space-y-1 pl-8 text-sm text-gray-500">
+                  {subcategory.brands.map((brand) => (
+                    <li key={brand}>{t(`baseStockBrands.${brand}`)}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
 }
 
 function ResidualStockSection({ stock }: { stock: unknown }) {
   const t = useTranslations("guest.wizard.bar");
-  const entries = residualStockEntries(stock);
+  const items = flattenResidualItems(stock);
 
   return (
-    <section className="space-y-2 rounded-xl border border-[#1B3A4B]/20 bg-[#1B3A4B]/5 p-4">
+    <section className="space-y-3 rounded-xl border border-[#1B3A4B]/20 bg-white p-5 shadow-sm">
       <h3 className="font-display text-lg text-[#1B3A4B]">{t("residualStockTitle")}</h3>
-      {entries.length === 0 ? (
-        <p className="text-sm text-neutral-600">{t("residualStockEmpty")}</p>
+      {items.length === 0 ? (
+        <p className="text-base text-neutral-800">{t("residualStockEmpty")}</p>
       ) : (
-        <ul className="list-disc space-y-1 pl-5 text-sm text-neutral-700">
-          {entries.map(({ label, value }) => (
-            <li key={label}>
-              <span className="font-medium capitalize">{label.replace(/_/g, " ")}:</span> {value}
+        <ul className="list-disc space-y-2 pl-4 marker:text-[#C4A052]">
+          {items.map((item) => (
+            <li key={item.id} className="text-base leading-relaxed text-neutral-800">
+              {item.label !== item.detail ? (
+                <>
+                  <span className="font-medium text-neutral-900">{item.label}:</span> {item.detail}
+                </>
+              ) : (
+                item.detail
+              )}
             </li>
           ))}
         </ul>
@@ -158,19 +234,7 @@ export function StepBarBeverages({ tripId, catalog, initialBar, locale, userRole
             {t("stockBanner")}
           </div>
 
-          <section className="space-y-4 rounded-xl border border-[#C4A052]/20 bg-white p-4">
-            <h3 className="font-display text-lg text-[#1B3A4B]">{t("baseStockTitle")}</h3>
-            <div className="space-y-3 text-sm text-neutral-700">
-              <div>
-                <p className="font-medium text-[#1B3A4B]">{t("waters")}</p>
-                <p className="text-neutral-600">{t("baseStockWaters")}</p>
-              </div>
-              <div>
-                <p className="font-medium text-[#1B3A4B]">{t("sodas")}</p>
-                <p className="text-neutral-600">{t("baseStockSodas")}</p>
-              </div>
-            </div>
-          </section>
+          <BaseStockIncludedSection />
 
           <section className="space-y-3 rounded-xl border-2 border-[#C4A052]/40 bg-[#C4A052]/5 p-4">
             <Label className="text-base font-medium text-[#1B3A4B]">{t("specificRequestLabel")}</Label>

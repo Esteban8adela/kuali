@@ -7,6 +7,7 @@ export interface MenuMealBlock {
   selected_dish_id?: string | null;
   selected_appetizer_id?: string | null;
   selected_main_id?: string | null;
+  selected_dessert_id?: string | null;
   selected_kids_dish_id?: string | null;
   /** @deprecated multi-select */
   selected_dishes?: string[];

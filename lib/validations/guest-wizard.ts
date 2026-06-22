@@ -3,6 +3,7 @@ import {
   areTripDatesInvalidOrder,
   coerceToDateOnlyString,
 } from "@/lib/trip/date-validation";
+import { MAX_TRIP_GUESTS } from "@/lib/constants/trip";
 
 const dateOnlyField = z.preprocess(
   (val) => coerceToDateOnlyString(val),
@@ -21,6 +22,9 @@ export const tripDetailsSchema = z.object({
 })
   .refine((d) => d.adultCount + d.childCount >= 1, {
     message: "At least one guest required",
+  })
+  .refine((d) => d.adultCount + d.childCount <= MAX_TRIP_GUESTS, {
+    message: `Maximum ${MAX_TRIP_GUESTS} guests allowed`,
   })
   .refine(
     (d) => !areTripDatesInvalidOrder(d.startDate, d.endDate),
@@ -44,6 +48,7 @@ export const menuSelectionSchema = z.object({
           selected_dish_id: z.string().uuid().nullable().optional(),
           selected_appetizer_id: z.string().uuid().nullable().optional(),
           selected_main_id: z.string().uuid().nullable().optional(),
+          selected_dessert_id: z.string().uuid().nullable().optional(),
           selected_kids_dish_id: z.string().uuid().nullable().optional(),
           kidsMenu: z.boolean().optional(),
           selected_dishes: z.array(z.string().uuid()).optional(),

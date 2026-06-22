@@ -2,6 +2,7 @@ export const DISH_CATEGORIES = [
   "breakfast",
   "lunch_appetizer",
   "lunch_main",
+  "lunch_dessert",
   "dinner",
   "kids",
   "snack",

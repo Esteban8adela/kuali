@@ -1,8 +1,7 @@
 import { setRequestLocale } from "next-intl/server";
-import { createClient } from "@/lib/supabase/server";
-import { LiveOrdersPanel } from "@/components/chef/live-orders-panel";
-import { Button } from "@/components/ui/button";
 import { getTranslations } from "next-intl/server";
+import { getUpcomingTrips } from "@/app/[locale]/(chef)/chef/chef-actions";
+import { UpcomingTripsGrid } from "@/components/chef/upcoming-trips-grid";
 
 export default async function ChefDashboardPage({
   params,
@@ -11,32 +10,19 @@ export default async function ChefDashboardPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const t = await getTranslations("chef");
+  const t = await getTranslations("chef.portal");
 
-  const supabase = await createClient();
-  const { data: trips } = await supabase
-    .from("trips")
-    .select("id, status, adult_count, child_count")
-    .in("status", ["submitted", "active"])
-    .order("updated_at", { ascending: false })
-    .limit(1);
-
-  const activeTripId = trips?.[0]?.id ?? null;
+  const trips = await getUpcomingTrips();
 
   return (
-    <div>
-      <p className="mb-2 text-sm uppercase tracking-[0.2em] text-[#C4A052]">{t("greeting")}</p>
-      <div className="mb-8 flex items-center justify-between">
-        <h1 className="font-display text-3xl text-[#1B3A4B]">{t("dashboard")}</h1>
-        <Button variant="outline" disabled>
-          {t("downloadPdf")}
-        </Button>
-      </div>
-      {activeTripId ? (
-        <LiveOrdersPanel tripId={activeTripId} />
-      ) : (
-        <p className="text-neutral-500">No active trips. Waiting for guest submissions.</p>
-      )}
+    <div className="space-y-8">
+      <header>
+        <p className="mb-2 text-sm uppercase tracking-[0.2em] text-[#C4A052]">{t("greeting")}</p>
+        <h1 className="font-display text-3xl text-[#1B3A4B] md:text-4xl">{t("title")}</h1>
+        <p className="mt-2 max-w-2xl text-base text-neutral-600">{t("subtitle")}</p>
+      </header>
+
+      <UpcomingTripsGrid trips={trips} locale={locale} />
     </div>
   );
 }

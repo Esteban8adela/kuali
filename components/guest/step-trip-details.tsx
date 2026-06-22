@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { getCrewCount } from "@/lib/pricing/crew";
 import { updateTripDetails, saveDraftAndExit } from "@/app/[locale]/(guest)/guest/trip/actions";
 import { WizardNav } from "@/components/guest/wizard-nav";
@@ -15,7 +16,26 @@ import { RequiredMark } from "@/components/ui/required-mark";
 import { isUnsetGuestName } from "@/lib/guest/participant-names";
 import { areTripDatesInvalidOrder, areTripDatesValid, formatDateOnlyForPayload, normalizeDateOnlyInput } from "@/lib/trip/date-validation";
 import { registerWizardDraftSave } from "@/lib/wizard/draft-registry";
+import { MAX_TRIP_GUESTS } from "@/lib/constants/trip";
 import type { Trip, TripParticipant } from "@/lib/types/database";
+
+function clampGuestCounts(adultCount: number, childCount: number) {
+  let adults = Math.max(0, adultCount);
+  let children = Math.max(0, childCount);
+  if (adults + children > MAX_TRIP_GUESTS) {
+    if (adults > MAX_TRIP_GUESTS) {
+      adults = MAX_TRIP_GUESTS;
+      children = 0;
+    } else {
+      children = MAX_TRIP_GUESTS - adults;
+    }
+  }
+  if (adults < 1 && adults + children > 0) {
+    adults = 1;
+    children = Math.min(children, MAX_TRIP_GUESTS - 1);
+  }
+  return { adults, children };
+}
 
 interface StepTripDetailsProps {
   trip: Trip;
@@ -52,11 +72,14 @@ export function StepTripDetails({ trip, participants, locale }: StepTripDetailsP
   const tc = useTranslations("common");
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const [adults, setAdults] = useState(trip.adult_count);
-  const [children, setChildren] = useState(trip.child_count);
+  const initialCounts = clampGuestCounts(trip.adult_count, trip.child_count);
+  const [adults, setAdults] = useState(initialCounts.adults);
+  const [children, setChildren] = useState(initialCounts.children);
   const [startDate, setStartDate] = useState(() => normalizeDateOnlyInput(trip.start_date) ?? "");
   const [endDate, setEndDate] = useState(() => normalizeDateOnlyInput(trip.end_date) ?? "");
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const [capacityWarning, setCapacityWarning] = useState(false);
+  const capacityWarningTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [adultNames, setAdultNames] = useState<string[]>(() =>
     initEmptyNames(trip.adult_count, participants, "adult")
@@ -90,8 +113,44 @@ export function StepTripDetails({ trip, participants, locale }: StepTripDetailsP
     });
   }, [children]);
 
-  const canContinue = datesValid && adultsValid && totalGuests >= 1;
-  const canSaveExit = adultsValid && !datesInvalidOrder;
+  const canContinue = datesValid && adultsValid && totalGuests >= 1 && totalGuests <= MAX_TRIP_GUESTS;
+  const canSaveExit = adultsValid && !datesInvalidOrder && totalGuests <= MAX_TRIP_GUESTS;
+
+  function flashCapacityWarning() {
+    setCapacityWarning(true);
+    if (capacityWarningTimer.current) clearTimeout(capacityWarningTimer.current);
+    capacityWarningTimer.current = setTimeout(() => setCapacityWarning(false), 4000);
+  }
+
+  useEffect(() => {
+    return () => {
+      if (capacityWarningTimer.current) clearTimeout(capacityWarningTimer.current);
+    };
+  }, []);
+
+  function setAdultsCount(requested: number) {
+    const bounded = Math.min(Math.max(1, requested), MAX_TRIP_GUESTS);
+    let nextAdults = bounded;
+    if (nextAdults + children > MAX_TRIP_GUESTS) {
+      nextAdults = Math.max(1, MAX_TRIP_GUESTS - children);
+      flashCapacityWarning();
+    } else if (bounded !== requested) {
+      flashCapacityWarning();
+    }
+    setAdults(nextAdults);
+  }
+
+  function setChildrenCount(requested: number) {
+    const bounded = Math.min(Math.max(0, requested), MAX_TRIP_GUESTS);
+    let nextChildren = bounded;
+    if (adults + nextChildren > MAX_TRIP_GUESTS) {
+      nextChildren = Math.max(0, MAX_TRIP_GUESTS - adults);
+      flashCapacityWarning();
+    } else if (bounded !== requested) {
+      flashCapacityWarning();
+    }
+    setChildren(nextChildren);
+  }
 
   function tripDatePayload() {
     return {
@@ -186,7 +245,13 @@ export function StepTripDetails({ trip, participants, locale }: StepTripDetailsP
               </Label>
               <span className="font-display text-2xl text-[#1B3A4B]">{adults}</span>
             </div>
-            <Slider value={[adults]} onValueChange={([v]) => setAdults(v)} min={0} max={20} step={1} />
+            <Slider
+              value={[adults]}
+              onValueChange={([v]) => setAdultsCount(v)}
+              min={1}
+              max={MAX_TRIP_GUESTS}
+              step={1}
+            />
             {!adultsValid && (
               <p className="mt-2 text-sm text-amber-800">{t("adultsRequired")}</p>
             )}
@@ -197,8 +262,23 @@ export function StepTripDetails({ trip, participants, locale }: StepTripDetailsP
               <Label>{t("children")}</Label>
               <span className="font-display text-2xl text-[#1B3A4B]">{children}</span>
             </div>
-            <Slider value={[children]} onValueChange={([v]) => setChildren(v)} min={0} max={12} step={1} />
+            <Slider
+              value={[children]}
+              onValueChange={([v]) => setChildrenCount(v)}
+              min={0}
+              max={MAX_TRIP_GUESTS}
+              step={1}
+            />
           </div>
+
+          {capacityWarning && (
+            <p
+              className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-medium text-amber-950 transition-opacity"
+              role="status"
+            >
+              {t("maxCapacity", { max: MAX_TRIP_GUESTS })}
+            </p>
+          )}
         </div>
 
         {adults > 0 && (
@@ -209,7 +289,7 @@ export function StepTripDetails({ trip, participants, locale }: StepTripDetailsP
             <div className="grid gap-3 sm:grid-cols-2">
               {adultNames.map((_, i) => (
                 <div key={`adult-${i}`}>
-                  <Label className="text-xs text-neutral-500">
+                  <Label className="text-sm text-neutral-800">
                     {t("adultLabel", { number: i + 1 })}
                   </Label>
                   <Input
@@ -236,7 +316,7 @@ export function StepTripDetails({ trip, participants, locale }: StepTripDetailsP
             <div className="grid gap-3 sm:grid-cols-2">
               {childNames.map((_, i) => (
                 <div key={`child-${i}`}>
-                  <Label className="text-xs text-neutral-500">
+                  <Label className="text-sm text-neutral-800">
                     {t("childLabel", { number: i + 1 })}
                   </Label>
                   <Input
@@ -255,10 +335,15 @@ export function StepTripDetails({ trip, participants, locale }: StepTripDetailsP
           </div>
         )}
 
-        <Badge variant="gold" className="w-full justify-center py-2 text-sm">
-          {t("crew")}: {crewCount} · {t("totalGuests", { count: totalGuests })}
-        </Badge>
-        <p className="text-center text-xs text-neutral-500">{t("crewNote")}</p>
+        <div className="flex items-center justify-center gap-2 text-center">
+          <Badge variant="gold" className="px-4 py-2.5 text-base font-medium">
+            {t("crewCateringIncluded")}
+          </Badge>
+          <InfoTooltip
+            label={t("crewInfoLabel")}
+            content={t("crewInfoTooltip", { crew: crewCount })}
+          />
+        </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>

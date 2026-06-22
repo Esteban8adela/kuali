@@ -1,33 +1,25 @@
-"use client";
+import { createClient } from "@/lib/supabase/server";
+import { AuthNavbarClient } from "./auth-navbar-client";
 
-import Link from "next/link";
-import { useLocale, useTranslations } from "next-intl";
-import { LocaleSwitcher } from "./locale-switcher";
-import { logoutAction } from "@/app/[locale]/(auth)/logout/actions";
+export async function AuthNavbar() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-export function AuthNavbar() {
-  const locale = useLocale();
-  const tc = useTranslations("common");
+  let displayName: string | null = user?.email ?? null;
 
-  return (
-    <header className="flex items-center justify-between border-b border-[#C4A052]/10 bg-white/80 px-4 py-3 backdrop-blur md:px-8">
-      <Link
-        href={`/${locale}`}
-        className="font-display text-xl tracking-[0.15em] text-[#1B3A4B]"
-      >
-        {tc("brand")}
-      </Link>
-      <div className="flex items-center gap-3">
-        <LocaleSwitcher />
-        <form action={logoutAction}>
-          <button
-            type="submit"
-            className="rounded-lg border border-[#1B3A4B]/20 px-3 py-1.5 text-xs font-medium text-[#1B3A4B] transition hover:bg-[#1B3A4B]/5"
-          >
-            {tc("logout")}
-          </button>
-        </form>
-      </div>
-    </header>
-  );
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("id", user.id)
+      .single();
+
+    if (profile?.full_name?.trim()) {
+      displayName = profile.full_name.trim();
+    }
+  }
+
+  return <AuthNavbarClient email={user?.email ?? null} displayName={displayName} />;
 }

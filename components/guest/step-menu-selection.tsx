@@ -39,6 +39,7 @@ interface MealBlock {
   selected_dish_id: string | null;
   selected_appetizer_id: string | null;
   selected_main_id: string | null;
+  selected_dessert_id: string | null;
 }
 
 interface DayPlan {
@@ -76,15 +77,29 @@ function newMeal(key: MealKey): MealBlock {
     selected_dish_id: null,
     selected_appetizer_id: null,
     selected_main_id: null,
+    selected_dessert_id: null,
   };
 }
 
-function buildDays(startDate?: string | null, endDate?: string | null): DayPlan[] {
-  const dates = buildItineraryDates(startDate, endDate, MAX_ITINERARY_DAYS);
-  return dates.map((date) => ({
-    date,
-    meals: [newMeal("breakfast"), newMeal("lunch"), newMeal("dinner")],
-  }));
+/** Align saved menu_order length and dates with the current trip date range. */
+function reconcileMenuDays(
+  existing: DayPlan[],
+  startDate?: string | null,
+  endDate?: string | null
+): DayPlan[] {
+  const expectedDates = buildItineraryDates(startDate, endDate, MAX_ITINERARY_DAYS);
+  if (!expectedDates.length) return [];
+
+  return expectedDates.map((date, index) => {
+    const saved = existing[index];
+    if (saved) {
+      return { ...saved, date };
+    }
+    return {
+      date,
+      meals: [newMeal("breakfast"), newMeal("lunch"), newMeal("dinner")],
+    };
+  });
 }
 
 function normalizeMeal(raw: Record<string, unknown>): MealBlock {
@@ -115,6 +130,11 @@ function normalizeMeal(raw: Record<string, unknown>): MealBlock {
         ? raw.selected_main_id
         : firstUuid(raw.selected_mains as string[] | undefined) ?? legacyIds[0] ?? null;
 
+    const dessertId =
+      typeof raw.selected_dessert_id === "string" && UUID_RE.test(raw.selected_dessert_id)
+        ? raw.selected_dessert_id
+        : null;
+
     return {
       key: "lunch",
       heaviness: typeof raw.heaviness === "string" ? raw.heaviness : "",
@@ -123,6 +143,7 @@ function normalizeMeal(raw: Record<string, unknown>): MealBlock {
       selected_dish_id: null,
       selected_appetizer_id: appetizerId,
       selected_main_id: mainId,
+      selected_dessert_id: dessertId,
     };
   }
 
@@ -139,6 +160,7 @@ function normalizeMeal(raw: Record<string, unknown>): MealBlock {
     selected_dish_id: dishId,
     selected_appetizer_id: null,
     selected_main_id: null,
+    selected_dessert_id: null,
   };
 }
 
@@ -155,6 +177,7 @@ function serializeMeal(meal: MealBlock): MenuMealBlock {
       ...base,
       selected_appetizer_id: meal.selected_appetizer_id,
       selected_main_id: meal.selected_main_id,
+      selected_dessert_id: meal.selected_dessert_id,
     };
   }
 
@@ -198,14 +221,13 @@ export function StepMenuSelection({
 
   const [days, setDays] = useState<DayPlan[]>(() => {
     const fromDb = parseInitialPlans(initialMenuOrder);
-    if (fromDb.length > 0) return fromDb;
-    return buildDays(tripStart, tripEnd);
+    return reconcileMenuDays(fromDb, tripStart, tripEnd);
   });
 
   useEffect(() => {
     if (rangeKeyRef.current === dateRangeKey) return;
     rangeKeyRef.current = dateRangeKey;
-    setDays(buildDays(tripStart, tripEnd));
+    setDays((prev) => reconcileMenuDays(prev, tripStart, tripEnd));
   }, [dateRangeKey, tripStart, tripEnd]);
 
   function updateMeal(dayIndex: number, mealKey: MealKey, updater: (m: MealBlock) => MealBlock) {
@@ -330,68 +352,94 @@ export function StepMenuSelection({
                         return (
                           <div
                             key={mealKey}
-                            className="space-y-3 rounded-lg border border-neutral-200 p-4"
+                            className="space-y-2 rounded-lg border border-neutral-200 p-3"
                           >
-                            <div>
-                              <h4 className="font-medium text-[#1B3A4B]">{t(mealKey)}</h4>
-                              <span className="text-xs text-neutral-500">
-                                {t(`windows.${mealKey}`)}
-                              </span>
-                            </div>
+                            <h4 className="text-sm font-medium capitalize text-gray-700">
+                              {t(mealKey)}
+                            </h4>
 
-                            <div>
-                              <Label>
-                                {t("heaviness")} <RequiredMark />
-                              </Label>
-                              <Select
-                                value={meal.heaviness}
-                                onValueChange={(v) =>
-                                  updateMeal(dayIndex, mealKey, (m) => ({ ...m, heaviness: v }))
-                                }
-                              >
-                                <SelectTrigger className="mt-1">
-                                  <SelectValue placeholder={t("heavinessPlaceholder")} />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {HEAVINESS.map((h) => (
-                                    <SelectItem key={h} value={h}>
-                                      {t(`heavinessOptions.${h}`)}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
+                            {childCount > 0 ? (
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="flex flex-col justify-end">
+                                  <Label className="mb-1.5 block min-h-10 text-sm font-medium leading-snug text-gray-700">
+                                    {t("heaviness")} <RequiredMark />
+                                  </Label>
+                                  <Select
+                                    value={meal.heaviness}
+                                    onValueChange={(v) =>
+                                      updateMeal(dayIndex, mealKey, (m) => ({ ...m, heaviness: v }))
+                                    }
+                                  >
+                                    <SelectTrigger className="h-9">
+                                      <SelectValue placeholder={t("heavinessPlaceholder")} />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {HEAVINESS.map((h) => (
+                                        <SelectItem key={h} value={h}>
+                                          {t(`heavinessOptions.${h}`)}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
 
-                            {childCount > 0 && (
+                                <div className="flex flex-col justify-end">
+                                  <Label
+                                    htmlFor={`kids-${dayIndex}-${mealKey}`}
+                                    className="mb-1.5 block min-h-10 text-sm font-medium leading-snug text-gray-700"
+                                  >
+                                    {t("kidsMenuLabel")}
+                                  </Label>
+                                  <Input
+                                    id={`kids-${dayIndex}-${mealKey}`}
+                                    type="number"
+                                    min={0}
+                                    max={childCount}
+                                    value={meal.kidsMenuCount}
+                                    onChange={(e) => {
+                                      const raw = parseInt(e.target.value, 10);
+                                      const next = Number.isNaN(raw)
+                                        ? 0
+                                        : Math.min(childCount, Math.max(0, raw));
+                                      updateMeal(dayIndex, mealKey, (m) => ({
+                                        ...m,
+                                        kidsMenuCount: next,
+                                        selected_kids_dish_id:
+                                          next > 0 ? m.selected_kids_dish_id : null,
+                                      }));
+                                    }}
+                                    className="h-9"
+                                  />
+                                </div>
+                              </div>
+                            ) : (
                               <div>
-                                <Label htmlFor={`kids-${dayIndex}-${mealKey}`}>
-                                  {t("kidsMenuLabel")}
+                                <Label className="mb-1.5 block text-sm font-medium text-gray-700">
+                                  {t("heaviness")} <RequiredMark />
                                 </Label>
-                                <Input
-                                  id={`kids-${dayIndex}-${mealKey}`}
-                                  type="number"
-                                  min={0}
-                                  max={childCount}
-                                  value={meal.kidsMenuCount}
-                                  onChange={(e) => {
-                                    const raw = parseInt(e.target.value, 10);
-                                    const next = Number.isNaN(raw)
-                                      ? 0
-                                      : Math.min(childCount, Math.max(0, raw));
-                                    updateMeal(dayIndex, mealKey, (m) => ({
-                                      ...m,
-                                      kidsMenuCount: next,
-                                      selected_kids_dish_id:
-                                        next > 0 ? m.selected_kids_dish_id : null,
-                                    }));
-                                  }}
-                                  className="mt-1"
-                                />
+                                <Select
+                                  value={meal.heaviness}
+                                  onValueChange={(v) =>
+                                    updateMeal(dayIndex, mealKey, (m) => ({ ...m, heaviness: v }))
+                                  }
+                                >
+                                  <SelectTrigger className="h-9">
+                                    <SelectValue placeholder={t("heavinessPlaceholder")} />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {HEAVINESS.map((h) => (
+                                      <SelectItem key={h} value={h}>
+                                        {t(`heavinessOptions.${h}`)}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
                               </div>
                             )}
 
                             {mealKey === "breakfast" && (
                               <DishSinglePicker
+                                compact
                                 label={t("breakfastDish")}
                                 dishes={dishesByCategory.breakfast}
                                 value={meal.selected_dish_id}
@@ -408,6 +456,7 @@ export function StepMenuSelection({
                             {mealKey === "lunch" && (
                               <>
                                 <DishSinglePicker
+                                  compact
                                   label={t("lunchAppetizers")}
                                   dishes={dishesByCategory.lunch_appetizer}
                                   value={meal.selected_appetizer_id}
@@ -420,6 +469,7 @@ export function StepMenuSelection({
                                   optional
                                 />
                                 <DishSinglePicker
+                                  compact
                                   label={t("lunchMains")}
                                   dishes={dishesByCategory.lunch_main}
                                   value={meal.selected_main_id}
@@ -431,11 +481,25 @@ export function StepMenuSelection({
                                   }
                                   required
                                 />
+                                <DishSinglePicker
+                                  compact
+                                  label={t("lunchDessert")}
+                                  dishes={dishesByCategory.lunch_dessert}
+                                  value={meal.selected_dessert_id}
+                                  onChange={(id) =>
+                                    updateMeal(dayIndex, "lunch", (m) => ({
+                                      ...m,
+                                      selected_dessert_id: id,
+                                    }))
+                                  }
+                                  optional
+                                />
                               </>
                             )}
 
                             {mealKey === "dinner" && (
                               <DishSinglePicker
+                                compact
                                 label={t("dinnerDish")}
                                 dishes={dishesByCategory.dinner}
                                 value={meal.selected_dish_id}
@@ -451,6 +515,7 @@ export function StepMenuSelection({
 
                             {childCount > 0 && meal.kidsMenuCount > 0 && (
                               <DishSinglePicker
+                                compact
                                 label={t("kidsMenuDish")}
                                 dishes={dishesByCategory.kids}
                                 value={meal.selected_kids_dish_id}

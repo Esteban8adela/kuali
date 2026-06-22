@@ -13,6 +13,10 @@ import { calculateMealCostWithCrew } from "@/lib/pricing/calculate-trip-total";
 import { clampWizardStep, normalizeBarOrder } from "@/lib/trip/wizard";
 import { coerceToDateOnlyString } from "@/lib/trip/date-validation";
 import { genericStoredName } from "@/lib/guest/participant-names";
+import {
+  hasCharcuterieSelections,
+  type CharcuterieSelections,
+} from "@/lib/guest/charcuterie-selections";
 
 export async function createTrip(locale: string) {
   const supabase = await createClient();
@@ -211,7 +215,9 @@ export async function saveSnacksStep(input: {
   tripId: string;
   snacks: string[];
   alwaysOnboard: string[];
-  crudites: boolean;
+  charcuterieSelections: CharcuterieSelections;
+  otherSnack?: string | null;
+  otherAlways?: string | null;
 }) {
   const supabase = await createClient();
   const { data: trip } = await supabase
@@ -225,7 +231,10 @@ export async function saveSnacksStep(input: {
     snacks: {
       snacks: input.snacks,
       alwaysOnboard: input.alwaysOnboard,
-      crudites: input.crudites,
+      charcuterie_selections: input.charcuterieSelections,
+      crudites: hasCharcuterieSelections(input.charcuterieSelections),
+      otherSnack: input.otherSnack ?? null,
+      otherAlways: input.otherAlways ?? null,
     },
   };
 

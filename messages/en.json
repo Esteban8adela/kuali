@@ -10,7 +10,8 @@
     "saved": "Saved",
     "login": "Sign in",
     "logout": "Sign out",
-    "language": "Language"
+    "language": "Language",
+    "guestUser": "Guest"
   },
   "landing": {
     "hero": "Your voyage, curated to perfection",
@@ -26,6 +27,8 @@
     "lastName": "Last name(s)",
     "email": "Email address",
     "password": "Password",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
     "signIn": "Sign in",
     "signUp": "Create account",
     "signingIn": "Please wait…",
@@ -79,8 +82,12 @@
         "subtitle": "Tell us about your party so we can craft the perfect experience.",
         "adults": "Adults",
         "children": "Children",
-        "crew": "Crew meals included",
-        "crewNote": "Crew count adjusts automatically for larger parties.",
+        "portionsToPrepare": "Portions to prepare: {guests} guests + {crew} crew members (included)",
+        "crewCateringIncluded": "Crew catering included",
+        "crewInfoLabel": "Crew catering information",
+        "crewInfoTooltip": "Your reservation automatically includes meal preparations for {crew} crew members on board. No extra calculation needed.",
+        "crewNote": "Crew meals are included automatically based on your party size.",
+        "maxCapacity": "Maximum capacity is {max} guests.",
         "startDate": "Start date",
         "endDate": "End date",
         "totalGuests": "{count} guests aboard",
@@ -110,14 +117,14 @@
           "lunch": "13:00 – 16:00",
           "dinner": "19:00 – 22:00"
         },
-        "heaviness": "Heaviness / Abundance",
+        "heaviness": "Portion style",
         "heavinessPlaceholder": "Select…",
         "heavinessOptions": {
           "light": "Light",
           "moderate": "Moderate",
           "heavy": "Heavy"
         },
-        "kidsMenuLabel": "How many kids menus for this meal?",
+        "kidsMenuLabel": "Kids menus (qty)",
         "kidsMenuDish": "Kids menu dish",
         "kidsMenuValidationHint": "Select a kids menu dish for every meal with kids menus requested.",
         "menuIncompleteHint": "Each day needs breakfast, lunch main course, and dinner selected.",
@@ -130,6 +137,7 @@
         "dinnerDish": "Dinner",
         "lunchAppetizers": "Starters",
         "lunchMains": "Main courses",
+        "lunchDessert": "Dessert",
         "noDishesAvailable": "No dishes available in this category yet.",
         "selectedCount": "{count} selected",
         "dishPlaceholder": "Add a dish…",
@@ -208,8 +216,27 @@
         "subtitle": "Stock base is included — you are only charged for what is consumed.",
         "stockBanner": "Help yourself freely from the onboard stock. Consumption will be tracked and billed at the end of your trip.",
         "baseStockTitle": "Included onboard stock",
-        "baseStockWaters": "Natural and mineral water (Bonafont, Evian, Fiji, Topo Chico, Perrier, San Pellegrino).",
-        "baseStockSodas": "Regular and diet soft drinks (Coca Cola, Sprite, Fanta, Ginger Ale, Coca Light, Coca Zero, Sprite Zero).",
+        "baseStockSubcategories": {
+          "natural_water": "Natural water",
+          "mineral_water": "Mineral water",
+          "soda_regular": "Regular soft drinks",
+          "soda_diet": "Diet soft drinks"
+        },
+        "baseStockBrands": {
+          "bonafont": "Bonafont",
+          "evian": "Evian",
+          "fiji": "Fiji",
+          "topo_chico": "Topo Chico",
+          "perrier": "Perrier",
+          "san_pellegrino": "San Pellegrino",
+          "coca_cola": "Coca Cola",
+          "sprite": "Sprite",
+          "fanta": "Fanta",
+          "ginger_ale": "Ginger Ale",
+          "coca_light": "Coca Light",
+          "coca_zero": "Coca Zero",
+          "sprite_zero": "Sprite Zero"
+        },
         "specificRequestLabel": "Would you like any specific brand or beverage not on our list?",
         "specificRequestPlaceholder": "e.g. Fanta, a specific tequila brand…",
         "residualStockTitle": "Residual stock from previous trips",
@@ -260,17 +287,53 @@
         "snacksToBuy": "Snacks to buy",
         "alwaysOnboard": "Always onboard checklist",
         "crudites": "Add cheese & cold cuts boards (crudites)?",
+        "charcuterie": "Cheese & charcuterie boards",
+        "charcuterieSectionTitle": "Charcuterie & boards",
+        "charcuterieMeats": "Cold cuts",
+        "charcuterieCheeses": "Cheeses",
+        "charcuterieComplements": "Complements",
+        "charcuterieHelp": "(Premium charcuterie selection)",
+        "charcuterieOtherPlaceholder": "Specify your preference…",
+        "charcuterieItems": {
+          "meats": {
+            "serrano_ham": "Serrano ham",
+            "prosciutto": "Prosciutto",
+            "salami": "Salami",
+            "pepperoni": "Pepperoni",
+            "other": "Other"
+          },
+          "cheeses": {
+            "brie": "Brie cheese",
+            "goat_cheese": "Goat cheese",
+            "manchego": "Manchego",
+            "parmesan": "Parmesan",
+            "other": "Other"
+          },
+          "complements": {
+            "grapes": "Grapes",
+            "strawberries": "Strawberries",
+            "olives": "Olives",
+            "fig_jam": "Fig jam",
+            "artisan_crackers": "Artisan crackers",
+            "other": "Other"
+          }
+        },
+        "cruditesHelp": "(Includes carrot, cucumber, jicama and celery with lime and chili)",
+        "otherPlaceholder": "Describe the snack you want…",
+        "alwaysOtherPlaceholder": "Describe what should always be onboard…",
         "items": {
           "chips": "Chips",
           "maruchan": "Instant noodles",
           "mango_snacks": "Mango snacks",
-          "candies": "Candies"
+          "candies": "Candies",
+          "other": "Other"
         },
         "alwaysItems": {
           "pico_de_gallo": "Pico de gallo",
           "salsas": "Salsas",
           "cacahuates": "Peanuts",
-          "fruit": "Fruit"
+          "fruit": "Fruit",
+          "other": "Other"
         }
       }
     }
@@ -285,7 +348,45 @@
     "downloadPdf": "Download menu PDF",
     "initial": "Initial",
     "consumed": "Consumed",
-    "chargeable": "To charge"
+    "chargeable": "To charge",
+    "portal": {
+      "greeting": "Chef portal",
+      "title": "Upcoming trips",
+      "subtitle": "Review service orders, menus, and guest requirements before each charter.",
+      "emptyTrips": "No trips registered yet.",
+      "tripId": "Trip",
+      "dates": "Dates",
+      "datesTbd": "Dates TBD",
+      "passengers": "Passengers",
+      "passengersValue": "{total} guests ({adults} adults · {children} children) + {crew} crew",
+      "viewServiceOrder": "View service order"
+    },
+    "serviceOrder": {
+      "serviceOrder": "Service order",
+      "backToDashboard": "Back to dashboard",
+      "generateShoppingList": "Generate shopping list & costing",
+      "tripRef": "Trip #{id}",
+      "tripSummary": "Trip summary",
+      "dates": "Charter dates",
+      "datesTbd": "Dates to be confirmed",
+      "pax": "Passengers on board",
+      "paxValue": "{total} guests ({adults} adults · {children} children) · {crew} crew",
+      "allergiesAndDiets": "Allergies & special diets",
+      "noPreferenceData": "No guest preference data recorded yet.",
+      "noRestrictions": "No dietary restrictions",
+      "adultGuest": "Adult",
+      "childGuest": "Child",
+      "menuItinerary": "Menu itinerary",
+      "noMenu": "No menu itinerary saved for this trip.",
+      "dishPending": "Dish pending / not found",
+      "kidsMenus": "{count} kids menu(s)",
+      "complements": "Snacks & complements",
+      "noneSelected": "None selected",
+      "barBottles": "Bar bottle selections",
+      "byob": "Guest will bring their own bottles (BYOB)",
+      "specificRequest": "Specific request",
+      "noBarSelections": "No additional bottles requested beyond base stock."
+    }
   },
   "admin": {
     "greeting": "Hello, Admin",
@@ -383,6 +484,7 @@
         "breakfast": "Breakfast",
         "lunch_appetizer": "Lunch appetizer",
         "lunch_main": "Lunch main",
+        "lunch_dessert": "Lunch dessert",
         "dinner": "Dinner",
         "kids": "Kids",
         "snack": "Snack"

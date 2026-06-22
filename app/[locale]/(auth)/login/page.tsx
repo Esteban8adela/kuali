@@ -5,6 +5,7 @@ import { useTranslations, useLocale } from "next-intl";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LocaleSwitcher } from "@/components/layout/locale-switcher";
@@ -77,7 +78,7 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="flex items-center justify-between px-6 py-5 md:px-12">
+      <header className="flex h-20 items-center justify-between px-6 md:px-12">
         <Link
           href={`/${locale}`}
           className="font-display text-2xl tracking-[0.2em] text-[#1B3A4B]"
@@ -146,14 +147,15 @@ export default function LoginPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="password">{t("password")}</Label>
-                <Input
+                <PasswordInput
                   id="password"
                   name="password"
-                  type="password"
                   autoComplete={mode === "login" ? "current-password" : "new-password"}
                   required
                   placeholder="••••••••"
                   disabled={isLoading}
+                  showLabel={t("showPassword")}
+                  hideLabel={t("hidePassword")}
                   onChange={() => error && setError(null)}
                 />
               </div>

@@ -23,6 +23,7 @@ interface DishSinglePickerProps {
   onChange: (dishId: string | null) => void;
   required?: boolean;
   optional?: boolean;
+  compact?: boolean;
 }
 
 function hasImageUrl(url: string | null | undefined): boolean {
@@ -36,6 +37,7 @@ export function DishSinglePicker({
   onChange,
   required,
   optional,
+  compact,
 }: DishSinglePickerProps) {
   const t = useTranslations("guest.wizard.menu");
   const selected = value ? dishes.find((d) => d.id === value) ?? null : null;
@@ -49,8 +51,8 @@ export function DishSinglePicker({
         : undefined;
 
   return (
-    <div className="space-y-2">
-      <Label className="text-sm font-medium text-[#1B3A4B]">
+    <div className={compact ? "space-y-1.5" : "space-y-2"}>
+      <Label className="text-sm font-medium text-gray-700">
         {label}
         {required && !optional ? <RequiredMark /> : null}
         {optional ? (
@@ -67,7 +69,7 @@ export function DishSinglePicker({
           value={selectValue}
           onValueChange={(v) => onChange(v === CLEAR_VALUE ? null : v)}
         >
-          <SelectTrigger>
+          <SelectTrigger className={compact ? "h-9" : undefined}>
             <SelectValue placeholder={t("selectDishPlaceholder")} />
           </SelectTrigger>
           <SelectContent>
