@@ -166,7 +166,7 @@ export function IngredientFormDialog({
                 id="ingredient-cost"
                 type="number"
                 min={0}
-                step={form.unit === "kg" || form.unit === "g" ? "0.1" : "any"}
+                step="any"
                 value={form.cost_per_unit}
                 onChange={(e) =>
                   setForm((f) => ({ ...f, cost_per_unit: e.target.value }))

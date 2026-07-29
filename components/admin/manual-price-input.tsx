@@ -40,7 +40,7 @@ export function ManualPriceInput({
         id={id}
         type="number"
         min={0}
-        step="1"
+        step="any"
         value={value}
         onChange={(e) => {
           const next = e.target.value;

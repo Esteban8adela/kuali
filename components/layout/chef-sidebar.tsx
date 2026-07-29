@@ -14,7 +14,7 @@ export function ChefSidebar({ locale }: ChefSidebarProps) {
   const ta = useTranslations("admin");
   const pathname = usePathname();
   const base = `/${locale}/chef`;
-  const adminCatalog = `/${locale}/admin/catalog`;
+  const catalog = `${base}/catalog`;
 
   const links = [
     {
@@ -29,29 +29,29 @@ export function ChefSidebar({ locale }: ChefSidebarProps) {
       isActive: (path: string) => path.includes("/chef/history"),
     },
     {
-      href: `${adminCatalog}/dishes`,
+      href: `${catalog}/dishes`,
       label: ta("dishesNav"),
-      isActive: (path: string) => path.includes("/admin/catalog/dishes"),
+      isActive: (path: string) => path.includes("/chef/catalog/dishes"),
     },
     {
-      href: `${adminCatalog}/kids-menu`,
+      href: `${catalog}/kids-menu`,
       label: ta("kidsMenuNav"),
-      isActive: (path: string) => path.includes("/admin/catalog/kids-menu"),
+      isActive: (path: string) => path.includes("/chef/catalog/kids-menu"),
     },
     {
-      href: `${adminCatalog}/pantry`,
+      href: `${catalog}/pantry`,
       label: ta("pantryNav"),
-      isActive: (path: string) => path.includes("/admin/catalog/pantry"),
+      isActive: (path: string) => path.includes("/chef/catalog/pantry"),
     },
     {
-      href: `${adminCatalog}/beverages`,
+      href: `${catalog}/beverages`,
       label: ta("beveragesNav"),
-      isActive: (path: string) => path.includes("/admin/catalog/beverages"),
+      isActive: (path: string) => path.includes("/chef/catalog/beverages"),
     },
     {
-      href: `${adminCatalog}/ingredients`,
+      href: `${catalog}/ingredients`,
       label: ta("ingredientsNav"),
-      isActive: (path: string) => path.includes("/admin/catalog/ingredients"),
+      isActive: (path: string) => path.includes("/chef/catalog/ingredients"),
     },
   ] as const;
 
