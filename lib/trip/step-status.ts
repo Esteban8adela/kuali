@@ -26,7 +26,6 @@ export interface StepStatus {
   step6Hint?: string;
 }
 
-
 const BAR_CONTENT_KEYS = [
   "spirits",
   "wines",
@@ -124,31 +123,7 @@ export function computeTripStepStatus(
     }
   }
 
-  if (menuSelection || trip.menu_order) {
-    const itinerary = resolveMenuItinerary(trip.menu_order, menuSelection?.custom_notes ?? null);
-    if (itinerary.length > 0 && isMenuStepComplete(itinerary)) {
-      stepStatus.step2 = "complete";
-    } else {
-      stepStatus.step2 = "partial";
-      if (
-        itinerary.length > 0 &&
-        isMenuItineraryComplete(itinerary) &&
-        !isKidsMenuConfigValid(itinerary)
-      ) {
-        stepStatus.step2Hint =
-          locale === "es" ? "Falta configurar menú infantil" : "Kids menu configuration missing";
-      } else if (itinerary.length > 0 && !isMenuItineraryComplete(itinerary)) {
-        stepStatus.step2Hint =
-          locale === "es"
-            ? "Falta desayuno, plato fuerte o cena en algún día"
-            : "Missing breakfast, lunch main, or dinner on some days";
-      } else {
-        stepStatus.step2Hint =
-          locale === "es" ? "Faltan configurar comidas" : "Meals still need to be configured";
-      }
-    }
-  }
-
+  // Step 2 = Preferences & allergies
   const prefsCompleteCount = participants.filter((p) => {
     const prefs = p.guest_preferences;
     const record = Array.isArray(prefs) ? prefs[0] : prefs;
@@ -159,15 +134,41 @@ export function computeTripStepStatus(
   const hasAnyPassengers = expectedParticipants > 0 || participantCount > 0;
 
   if (prefsTarget > 0 && prefsCompleteCount === prefsTarget && participantCount >= expectedParticipants) {
-    stepStatus.step3 = "complete";
+    stepStatus.step2 = "complete";
   } else if (hasAnyPassengers) {
-    stepStatus.step3 = "partial";
+    stepStatus.step2 = "partial";
     const missing = Math.max(0, prefsTarget - prefsCompleteCount);
     if (missing > 0) {
-      stepStatus.step3Hint =
+      stepStatus.step2Hint =
         locale === "es"
           ? `Faltan preferencias de ${missing} huésped(es)`
           : `${missing} guest(s) missing preferences`;
+    }
+  }
+
+  // Step 3 = Menu selection
+  if (menuSelection || trip.menu_order) {
+    const itinerary = resolveMenuItinerary(trip.menu_order, menuSelection?.custom_notes ?? null);
+    if (itinerary.length > 0 && isMenuStepComplete(itinerary)) {
+      stepStatus.step3 = "complete";
+    } else {
+      stepStatus.step3 = "partial";
+      if (
+        itinerary.length > 0 &&
+        isMenuItineraryComplete(itinerary) &&
+        !isKidsMenuConfigValid(itinerary)
+      ) {
+        stepStatus.step3Hint =
+          locale === "es" ? "Falta configurar menú infantil" : "Kids menu configuration missing";
+      } else if (itinerary.length > 0 && !isMenuItineraryComplete(itinerary)) {
+        stepStatus.step3Hint =
+          locale === "es"
+            ? "Falta desayuno, plato fuerte o cena en algún día"
+            : "Missing breakfast, lunch main, or dinner on some days";
+      } else {
+        stepStatus.step3Hint =
+          locale === "es" ? "Faltan configurar comidas" : "Meals still need to be configured";
+      }
     }
   }
 
@@ -178,7 +179,7 @@ export function computeTripStepStatus(
     stepStatus.step4 = "complete";
   } else if (trip.wizard_step >= 4) {
     stepStatus.step4 = "partial";
-    stepStatus.step4Hint = locale === "es" ? "En proceso" : "In progress";
+    stepStatus.step4Hint = locale === "es" ? "En progreso" : "In progress";
   }
 
   const isSubmitted = trip.status === "submitted" || trip.status === "active";
@@ -186,7 +187,7 @@ export function computeTripStepStatus(
     stepStatus.step5 = "complete";
   } else if (trip.wizard_step >= 5) {
     stepStatus.step5 = "partial";
-    stepStatus.step5Hint = locale === "es" ? "En proceso" : "In progress";
+    stepStatus.step5Hint = locale === "es" ? "En progreso" : "In progress";
   }
 
   if (isSubmitted) {

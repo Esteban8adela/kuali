@@ -25,8 +25,8 @@ interface GuestDashboardViewProps {
 
 const STEPS = [
   { key: "dates", icon: CalendarDays, statusKey: "step1" as const, hintKey: "step1Hint" as const },
-  { key: "menu", icon: UtensilsCrossed, statusKey: "step2" as const, hintKey: "step2Hint" as const },
-  { key: "preferences", icon: Ship, statusKey: "step3" as const, hintKey: "step3Hint" as const },
+  { key: "preferences", icon: Ship, statusKey: "step2" as const, hintKey: "step2Hint" as const },
+  { key: "menu", icon: UtensilsCrossed, statusKey: "step3" as const, hintKey: "step3Hint" as const },
   { key: "snacks", icon: Cookie, statusKey: "step4" as const, hintKey: "step4Hint" as const },
   { key: "bar", icon: Wine, statusKey: "step5" as const, hintKey: "step5Hint" as const },
   { key: "overview", icon: CheckCircle2, statusKey: "step6" as const, hintKey: "step6Hint" as const },
@@ -155,8 +155,8 @@ function getStepHref(locale: string, tripId: string, step: number): string {
   const base = `/${locale}/guest/trip/${tripId}`;
   switch (step) {
     case 1: return `${base}/details`;
-    case 2: return `${base}/menu`;
-    case 3: return `${base}/preferences`;
+    case 2: return `${base}/preferences`;
+    case 3: return `${base}/menu`;
     case 4: return `${base}/snacks`;
     case 5: return `${base}/bar`;
     case 6: return `${base}/overview`;

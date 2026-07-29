@@ -126,8 +126,8 @@ export function StepPreferences({
   function handleContinue() {
     startTransition(async () => {
       await savePrefsPayloads();
-      await advanceWizardStep(tripId, 4);
-      router.push(`/${locale}/guest/trip/${tripId}/snacks`);
+      await advanceWizardStep(tripId, 3);
+      router.push(`/${locale}/guest/trip/${tripId}/menu`);
     });
   }
 
@@ -285,7 +285,7 @@ export function StepPreferences({
       </Card>
 
       <WizardNav
-        backHref={`/${locale}/guest/trip/${tripId}/menu`}
+        backHref={`/${locale}/guest/trip/${tripId}/details`}
         onContinue={handleContinue}
         onSaveExit={handleSaveExit}
         continueDisabled={pending || !allParticipantsComplete}

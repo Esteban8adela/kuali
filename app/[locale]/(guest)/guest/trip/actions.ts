@@ -108,7 +108,7 @@ export async function saveMenuSelection(input: unknown) {
 
   const { error: tripError } = await supabase
     .from("trips")
-    .update({ menu_order: menuOrder, wizard_step: 2 })
+    .update({ menu_order: menuOrder, wizard_step: 3 })
     .eq("id", parsed.tripId);
 
   if (tripError) throw tripError;

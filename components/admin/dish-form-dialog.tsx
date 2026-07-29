@@ -27,6 +27,7 @@ import {
 import {
   createDish,
   updateDish,
+  uploadDishImage,
 } from "@/app/[locale]/(admin)/admin/catalog/admin-actions";
 import type { DishWithRecipe, Ingredient } from "@/lib/types/database";
 import { formatCurrency, centsToUsd } from "@/lib/utils";
@@ -133,6 +134,9 @@ export function DishFormDialog({
   const [manualPriceUsdCents, setManualPriceUsdCents] = useState<number | null>(
     dish?.manual_price_cents ?? null
   );
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(dish?.image_url ?? null);
+  const [uploading, setUploading] = useState(false);
 
   const isEdit = Boolean(dish);
 
@@ -176,6 +180,9 @@ export function DishFormDialog({
       manualPriceDisplayFromCents(nextDish?.manual_price_cents ?? null, locale)
     );
     setManualPriceUsdCents(nextDish?.manual_price_cents ?? null);
+    setImageFile(null);
+    setImagePreview(nextDish?.image_url ?? null);
+    setUploading(false);
   }
 
   function handleOpenChange(next: boolean) {
@@ -208,21 +215,31 @@ export function DishFormDialog({
         total_quantity: Number(row.total_quantity),
       }));
 
-    const payload = {
-      name_en: form.name_en.trim(),
-      name_es: form.name_es.trim(),
-      description_en: form.description_en.trim() || null,
-      description_es: form.description_es.trim() || null,
-      category: form.category,
-      image_url: form.image_url.trim() || null,
-      recipe_yield: Number(form.recipe_yield),
-      manual_price_cents: manualPriceUsdCents,
-      base_price_cents: effectivePriceCents,
-      recipe,
-    };
-
     startTransition(async () => {
       try {
+        let imageUrl = form.image_url.trim() || null;
+        if (imageFile) {
+          setUploading(true);
+          const fd = new FormData();
+          fd.append("file", imageFile);
+          const uploaded = await uploadDishImage(fd);
+          imageUrl = uploaded.publicUrl;
+          setUploading(false);
+        }
+
+        const payload = {
+          name_en: form.name_en.trim(),
+          name_es: form.name_es.trim(),
+          description_en: form.description_en.trim() || null,
+          description_es: form.description_es.trim() || null,
+          category: form.category,
+          image_url: imageUrl,
+          recipe_yield: Number(form.recipe_yield),
+          manual_price_cents: manualPriceUsdCents,
+          base_price_cents: effectivePriceCents,
+          recipe,
+        };
+
         if (isEdit && dish) {
           await updateDish(dish.id, payload);
         } else {
@@ -231,6 +248,7 @@ export function DishFormDialog({
         handleOpenChange(false);
         router.refresh();
       } catch {
+        setUploading(false);
         setError(t("saveError"));
       }
     });
@@ -351,14 +369,29 @@ export function DishFormDialog({
 
               <div className="space-y-2 sm:col-span-3">
                 <Label htmlFor="dish-image">{t("fields.imageUrl")}</Label>
+                {imagePreview ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={imagePreview}
+                    alt=""
+                    className="mb-2 h-28 w-40 rounded-md object-cover border border-neutral-200"
+                  />
+                ) : null}
                 <Input
                   id="dish-image"
-                  type="url"
-                  placeholder="https://"
-                  value={form.image_url}
-                  onChange={(e) => setForm((f) => ({ ...f, image_url: e.target.value }))}
-                  disabled={pending}
+                  type="file"
+                  accept="image/*"
+                  disabled={pending || uploading}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] ?? null;
+                    setImageFile(file);
+                    if (file) {
+                      const url = URL.createObjectURL(file);
+                      setImagePreview(url);
+                    }
+                  }}
                 />
+                <p className="text-xs text-neutral-500">{t("fields.imageUploadHint")}</p>
               </div>
             </div>
           </div>
@@ -499,9 +532,9 @@ export function DishFormDialog({
             >
               {tc("back")}
             </Button>
-            <Button type="submit" variant="gold" disabled={pending}>
-              {pending ? tc("saving") : tc("save")}
-            </Button>
+              <Button type="submit" variant="gold" disabled={pending || uploading}>
+                {uploading ? t("fields.imageUploading") : pending ? tc("saving") : tc("save")}
+              </Button>
           </div>
         </form>
       </DialogContent>

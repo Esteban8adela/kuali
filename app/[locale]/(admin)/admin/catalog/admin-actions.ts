@@ -7,6 +7,7 @@ import { isAdminRole } from "@/lib/auth/roles";
 import { ingredientSchema } from "@/lib/validations/ingredient";
 import { dishWithRecipeSchema, recipeLinesToPerPax } from "@/lib/validations/dish";
 import type { DishWithRecipe, Ingredient } from "@/lib/types/database";
+import { sortDishesByCourseType } from "@/lib/catalog/dish-sort";
 
 const CATALOG_PATH = "/admin/catalog";
 
@@ -171,11 +172,12 @@ export async function getDishes(): Promise<DishWithRecipe[]> {
       )
     `
     )
-    .order("category", { ascending: true })
     .order("name", { ascending: true });
 
   if (error) throw error;
-  return (data ?? []).map((row) => mapDishRow(row as Record<string, unknown>));
+  return sortDishesByCourseType(
+    (data ?? []).map((row) => mapDishRow(row as Record<string, unknown>))
+  );
 }
 
 export async function createDish(input: unknown) {
@@ -253,4 +255,36 @@ export async function deleteDish(id: string) {
   if (error) throw error;
   revalidateCatalog();
   return { ok: true };
+}
+
+const MENU_IMAGES_BUCKET = "menu-images";
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+
+export async function uploadDishImage(formData: FormData): Promise<{ publicUrl: string }> {
+  const supabase = await assertAdminWrite();
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) {
+    throw new Error("No image file provided");
+  }
+  if (file.size > MAX_IMAGE_BYTES) {
+    throw new Error("Image exceeds 5 MB limit");
+  }
+  if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
+    throw new Error("Unsupported image type");
+  }
+
+  const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+  const path = `dishes/${crypto.randomUUID()}.${ext}`;
+  const buffer = Buffer.from(await file.arrayBuffer());
+
+  const { error } = await supabase.storage.from(MENU_IMAGES_BUCKET).upload(path, buffer, {
+    contentType: file.type,
+    upsert: false,
+  });
+  if (error) throw error;
+
+  const { data } = supabase.storage.from(MENU_IMAGES_BUCKET).getPublicUrl(path);
+  if (!data?.publicUrl) throw new Error("Could not resolve public URL");
+  return { publicUrl: data.publicUrl };
 }

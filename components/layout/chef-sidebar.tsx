@@ -11,8 +11,10 @@ interface ChefSidebarProps {
 
 export function ChefSidebar({ locale }: ChefSidebarProps) {
   const t = useTranslations("chef");
+  const ta = useTranslations("admin");
   const pathname = usePathname();
   const base = `/${locale}/chef`;
+  const adminCatalog = `/${locale}/admin/catalog`;
 
   const links = [
     {
@@ -21,12 +23,40 @@ export function ChefSidebar({ locale }: ChefSidebarProps) {
       isActive: (path: string) =>
         path.includes("/chef/dashboard") || path.includes("/chef/trip"),
     },
-    { href: `${base}/history`, label: t("nav.history"), isActive: (path: string) => path.includes("/chef/history") },
-    { href: `${base}/catalog`, label: t("nav.catalogs"), isActive: (path: string) => path.includes("/chef/catalog") },
+    {
+      href: `${base}/history`,
+      label: t("nav.history"),
+      isActive: (path: string) => path.includes("/chef/history"),
+    },
+    {
+      href: `${adminCatalog}/dishes`,
+      label: ta("dishesNav"),
+      isActive: (path: string) => path.includes("/admin/catalog/dishes"),
+    },
+    {
+      href: `${adminCatalog}/kids-menu`,
+      label: ta("kidsMenuNav"),
+      isActive: (path: string) => path.includes("/admin/catalog/kids-menu"),
+    },
+    {
+      href: `${adminCatalog}/pantry`,
+      label: ta("pantryNav"),
+      isActive: (path: string) => path.includes("/admin/catalog/pantry"),
+    },
+    {
+      href: `${adminCatalog}/beverages`,
+      label: ta("beveragesNav"),
+      isActive: (path: string) => path.includes("/admin/catalog/beverages"),
+    },
+    {
+      href: `${adminCatalog}/ingredients`,
+      label: ta("ingredientsNav"),
+      isActive: (path: string) => path.includes("/admin/catalog/ingredients"),
+    },
   ] as const;
 
   return (
-    <aside className="fixed top-20 z-20 hidden h-[calc(100dvh-5rem)] w-56 shrink-0 flex-col overflow-y-auto border-r border-[#C4A052]/15 bg-[#1B3A4B] p-6 text-white md:flex">
+    <aside className="fixed top-20 z-20 hidden h-[calc(100dvh-5rem)] w-56 shrink-0 flex-col overflow-y-auto border-r border-[#C4A052]/15 bg-[#1B3A4B] p-6 text-white md:flex print:hidden">
       <nav className="flex flex-col gap-1 text-sm">
         {links.map(({ href, label, isActive }) => {
           const active = isActive(pathname);

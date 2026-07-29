@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,14 +28,16 @@ import { buildItineraryDates } from "@/lib/trip/itinerary-days";
 import { normalizeDateOnlyInput } from "@/lib/trip/date-validation";
 import type { DishesByCategory } from "@/lib/guest/fetch-dishes-catalog";
 import { kidsCategoryForMeal } from "@/lib/constants/dishes";
+import { isMealVisibleOnDay, type MealKey } from "@/lib/guest/meal-day-rules";
 
-type MealKey = "breakfast" | "lunch" | "dinner";
+type MealKeyLocal = MealKey;
 
 interface MealBlock {
-  key: MealKey;
+  key: MealKeyLocal;
   heaviness: string;
   kidsMenuCount: number;
   selected_kids_dish_id: string | null;
+  selected_kids_dessert_id: string | null;
   selected_dish_id: string | null;
   selected_appetizer_id: string | null;
   selected_main_id: string | null;
@@ -58,7 +60,7 @@ interface StepMenuSelectionProps {
 }
 
 const MAX_ITINERARY_DAYS = 30;
-const MEAL_KEYS: MealKey[] = ["breakfast", "lunch", "dinner"];
+const MEAL_KEYS: MealKeyLocal[] = ["breakfast", "lunch", "dinner"];
 const HEAVINESS = ["light", "moderate", "heavy"] as const;
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -68,12 +70,13 @@ function firstUuid(ids: string[] | undefined): string | null {
   return found ?? null;
 }
 
-function newMeal(key: MealKey): MealBlock {
+function newMeal(key: MealKeyLocal): MealBlock {
   return {
     key,
     heaviness: "",
     kidsMenuCount: 0,
     selected_kids_dish_id: null,
+    selected_kids_dessert_id: null,
     selected_dish_id: null,
     selected_appetizer_id: null,
     selected_main_id: null,
@@ -103,7 +106,7 @@ function reconcileMenuDays(
 }
 
 function normalizeMeal(raw: Record<string, unknown>): MealBlock {
-  const key = (raw.key as MealKey) ?? "breakfast";
+  const key = (raw.key as MealKeyLocal) ?? "breakfast";
   let kidsMenuCount = 0;
   if (typeof raw.kidsMenuCount === "number") {
     kidsMenuCount = raw.kidsMenuCount;
@@ -118,6 +121,11 @@ function normalizeMeal(raw: Record<string, unknown>): MealBlock {
   const selectedKids =
     typeof raw.selected_kids_dish_id === "string" && UUID_RE.test(raw.selected_kids_dish_id)
       ? raw.selected_kids_dish_id
+      : null;
+
+  const selectedKidsDessert =
+    typeof raw.selected_kids_dessert_id === "string" && UUID_RE.test(raw.selected_kids_dessert_id)
+      ? raw.selected_kids_dessert_id
       : null;
 
   if (key === "lunch") {
@@ -140,6 +148,7 @@ function normalizeMeal(raw: Record<string, unknown>): MealBlock {
       heaviness: typeof raw.heaviness === "string" ? raw.heaviness : "",
       kidsMenuCount,
       selected_kids_dish_id: selectedKids,
+      selected_kids_dessert_id: selectedKidsDessert,
       selected_dish_id: null,
       selected_appetizer_id: appetizerId,
       selected_main_id: mainId,
@@ -157,6 +166,7 @@ function normalizeMeal(raw: Record<string, unknown>): MealBlock {
     heaviness: typeof raw.heaviness === "string" ? raw.heaviness : "",
     kidsMenuCount,
     selected_kids_dish_id: selectedKids,
+    selected_kids_dessert_id: selectedKidsDessert,
     selected_dish_id: dishId,
     selected_appetizer_id: null,
     selected_main_id: null,
@@ -170,6 +180,7 @@ function serializeMeal(meal: MealBlock): MenuMealBlock {
     heaviness: meal.heaviness,
     kidsMenuCount: meal.kidsMenuCount,
     selected_kids_dish_id: meal.selected_kids_dish_id,
+    selected_kids_dessert_id: meal.selected_kids_dessert_id,
   };
 
   if (meal.key === "lunch") {
@@ -230,7 +241,7 @@ export function StepMenuSelection({
     setDays((prev) => reconcileMenuDays(prev, tripStart, tripEnd));
   }, [dateRangeKey, tripStart, tripEnd]);
 
-  function updateMeal(dayIndex: number, mealKey: MealKey, updater: (m: MealBlock) => MealBlock) {
+  function updateMeal(dayIndex: number, mealKey: MealKeyLocal, updater: (m: MealBlock) => MealBlock) {
     setDays((prev) =>
       prev.map((day, dIdx) =>
         dIdx !== dayIndex
@@ -245,9 +256,11 @@ export function StepMenuSelection({
 
   const serializedDays: MenuDayPlan[] = useMemo(
     () =>
-      days.map((day) => ({
+      days.map((day, dayIndex) => ({
         date: day.date,
-        meals: day.meals.map(serializeMeal),
+        meals: day.meals
+          .filter((meal) => isMealVisibleOnDay(meal.key, dayIndex, days.length))
+          .map(serializeMeal),
       })),
     [days]
   );
@@ -256,7 +269,10 @@ export function StepMenuSelection({
     () => isMenuItineraryComplete(serializedDays),
     [serializedDays]
   );
-  const kidsConfigValid = useMemo(() => isKidsMenuConfigValid(days), [days]);
+  const kidsConfigValid = useMemo(
+    () => isKidsMenuConfigValid(serializedDays),
+    [serializedDays]
+  );
   const stepComplete = menuComplete && kidsConfigValid;
   const canContinue = hasTripDates && days.length > 0 && stepComplete;
 
@@ -280,8 +296,8 @@ export function StepMenuSelection({
   function handleContinue() {
     startTransition(async () => {
       await persistItinerary();
-      await advanceWizardStep(tripId, 3);
-      router.push(`/${locale}/guest/trip/${tripId}/preferences`);
+      await advanceWizardStep(tripId, 4);
+      router.push(`/${locale}/guest/trip/${tripId}/snacks`);
     });
   }
 
@@ -307,7 +323,7 @@ export function StepMenuSelection({
             </p>
           </CardContent>
         </Card>
-        <WizardNav backHref={`/${locale}/guest/trip/${tripId}/details`} continueDisabled />
+        <WizardNav backHref={`/${locale}/guest/trip/${tripId}/preferences`} continueDisabled />
       </div>
     );
   }
@@ -337,8 +353,17 @@ export function StepMenuSelection({
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="pt-4">
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                      {MEAL_KEYS.map((mealKey) => {
+                    <div
+                      className={`grid grid-cols-1 gap-4 ${
+                        MEAL_KEYS.filter((k) => isMealVisibleOnDay(k, dayIndex, days.length)).length >
+                        1
+                          ? "md:grid-cols-2 lg:grid-cols-3"
+                          : "md:grid-cols-1 max-w-md"
+                      }`}
+                    >
+                      {MEAL_KEYS.filter((mealKey) =>
+                        isMealVisibleOnDay(mealKey, dayIndex, days.length)
+                      ).map((mealKey) => {
                         const meal = day.meals.find((m) => m.key === mealKey) ?? newMeal(mealKey);
                         return (
                           <div
@@ -348,6 +373,12 @@ export function StepMenuSelection({
                             <h4 className="text-sm font-medium capitalize text-gray-700">
                               {t(mealKey)}
                             </h4>
+
+                            {mealKey === "breakfast" ? (
+                              <p className="rounded-md border border-[#C4A052]/30 bg-[#C4A052]/10 px-3 py-2 text-xs leading-relaxed text-[#1B3A4B]">
+                                {t("breakfastIncluded")}
+                              </p>
+                            ) : null}
 
                             {childCount > 0 ? (
                               <div className="grid grid-cols-2 gap-4">
@@ -398,6 +429,8 @@ export function StepMenuSelection({
                                         kidsMenuCount: next,
                                         selected_kids_dish_id:
                                           next > 0 ? m.selected_kids_dish_id : null,
+                                        selected_kids_dessert_id:
+                                          next > 0 ? m.selected_kids_dessert_id : null,
                                       }));
                                     }}
                                     className="h-9"
@@ -506,19 +539,36 @@ export function StepMenuSelection({
                             )}
 
                             {childCount > 0 && meal.kidsMenuCount > 0 && (
-                              <DishSinglePicker
-                                compact
-                                label={t("kidsMenuDish")}
-                                dishes={dishesByCategory[kidsCategoryForMeal(mealKey)]}
-                                value={meal.selected_kids_dish_id}
-                                onChange={(id) =>
-                                  updateMeal(dayIndex, mealKey, (m) => ({
-                                    ...m,
-                                    selected_kids_dish_id: id,
-                                  }))
-                                }
-                                required
-                              />
+                              <>
+                                <DishSinglePicker
+                                  compact
+                                  label={t("kidsMenuMain")}
+                                  dishes={dishesByCategory[kidsCategoryForMeal(mealKey)]}
+                                  value={meal.selected_kids_dish_id}
+                                  onChange={(id) =>
+                                    updateMeal(dayIndex, mealKey, (m) => ({
+                                      ...m,
+                                      selected_kids_dish_id: id,
+                                    }))
+                                  }
+                                  required
+                                />
+                                {mealKey === "lunch" ? (
+                                  <DishSinglePicker
+                                    compact
+                                    label={t("kidsMenuDessert")}
+                                    dishes={dishesByCategory.kids_lunch_dessert}
+                                    value={meal.selected_kids_dessert_id}
+                                    onChange={(id) =>
+                                      updateMeal(dayIndex, mealKey, (m) => ({
+                                        ...m,
+                                        selected_kids_dessert_id: id,
+                                      }))
+                                    }
+                                    optional
+                                  />
+                                ) : null}
+                              </>
                             )}
                           </div>
                         );
@@ -533,7 +583,7 @@ export function StepMenuSelection({
       </Card>
 
       <WizardNav
-        backHref={`/${locale}/guest/trip/${tripId}/details`}
+        backHref={`/${locale}/guest/trip/${tripId}/preferences`}
         onContinue={handleContinue}
         onSaveExit={handleSaveExit}
         continueDisabled={pending || !canContinue}

@@ -48,6 +48,7 @@ function mealDishCosts(
 
   if (kids > 0) {
     cents = addDishCost(cents, meal.selected_kids_dish_id, kids, catalog);
+    cents = addDishCost(cents, meal.selected_kids_dessert_id, kids, catalog);
   }
 
   return cents;

@@ -68,6 +68,7 @@ function mealDishLines(
 
   if (kids > 0) {
     pushDishLine(lines, meal.selected_kids_dish_id, kids, `${mealLabel} kids`, catalog, dishNames);
+    pushDishLine(lines, meal.selected_kids_dessert_id, kids, `${mealLabel} kids dessert`, catalog, dishNames);
   }
 
   return lines;

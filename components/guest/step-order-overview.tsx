@@ -140,6 +140,10 @@ export function StepOrderOverview({ data, locale }: StepOrderOverviewProps) {
   const isSubmittedEdit = data.status === "submitted";
   const showSubmittedBadge = isSubmittedEdit || data.status === "active";
   const foodFormatted = formatCurrency(data.tripCostUsd, locale);
+  const guestPax = Math.max(1, data.adultCount + data.childCount);
+  const dayCount = Math.max(1, data.itinerary.length);
+  const perPersonStay = data.tripCostUsd / guestPax;
+  const perPersonPerDay = perPersonStay / dayCount;
 
   const snackLabels = resolveSnacksSelectionLabels(data.snacksData, {
     namesById: data.catalogNames,
@@ -289,7 +293,20 @@ export function StepOrderOverview({ data, locale }: StepOrderOverviewProps) {
 
           <section className="rounded-xl border-2 border-[#C4A052]/40 bg-[#C4A052]/5 p-6">
             <h3 className="font-display text-xl text-[#1B3A4B]">{t("foodBudgetTitle")}</h3>
-            <p className="mt-2 text-3xl font-semibold text-[#1B3A4B]">{foodFormatted}</p>
+            <dl className="mt-4 space-y-3 text-sm text-[#1B3A4B]">
+              <div className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between">
+                <dt className="text-neutral-600">{t("foodCostPerPersonPerDay")}</dt>
+                <dd className="font-semibold">{formatCurrency(perPersonPerDay, locale)}</dd>
+              </div>
+              <div className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between">
+                <dt className="text-neutral-600">{t("foodCostPerPersonStay")}</dt>
+                <dd className="font-semibold">{formatCurrency(perPersonStay, locale)}</dd>
+              </div>
+              <div className="flex flex-col gap-0.5 border-t border-[#C4A052]/30 pt-3 sm:flex-row sm:items-baseline sm:justify-between">
+                <dt className="font-medium">{t("foodGrandTotal")}</dt>
+                <dd className="text-2xl font-semibold">{foodFormatted}</dd>
+              </div>
+            </dl>
             <OrderPriceBreakdown lines={data.priceBreakdown} locale={locale} />
             <p className="mt-3 text-xs text-gray-500">{t("foodBudgetDisclaimer")}</p>
             <p className="mt-2 text-sm text-neutral-600">{t("finalCostNote")}</p>

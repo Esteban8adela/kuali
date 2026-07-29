@@ -7,23 +7,33 @@ import { cn } from "@/lib/utils";
 
 interface AdminSidebarProps {
   locale: string;
+  mode?: "full" | "catalog";
 }
 
 function isActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function AdminSidebar({ locale }: AdminSidebarProps) {
+export function AdminSidebar({ locale, mode = "full" }: AdminSidebarProps) {
   const t = useTranslations("admin");
   const pathname = usePathname();
   const base = `/${locale}/admin`;
 
-  const mainLinks = [
-    { href: `${base}/dashboard`, label: t("dashboard"), match: `${base}/dashboard` },
-    { href: `${base}/trips`, label: t("tripsNav"), match: `${base}/trips` },
-    { href: `${base}/users`, label: t("usersNav"), match: `${base}/users` },
-    { href: `${base}/dashboard/guests`, label: t("guests"), match: `${base}/dashboard/guests` },
-  ] as const;
+  const mainLinks =
+    mode === "full"
+      ? ([
+          { href: `${base}/dashboard`, label: t("dashboard"), match: `${base}/dashboard` },
+          { href: `${base}/trips`, label: t("tripsNav"), match: `${base}/trips` },
+          { href: `${base}/users`, label: t("usersNav"), match: `${base}/users` },
+          { href: `${base}/dashboard/guests`, label: t("guests"), match: `${base}/dashboard/guests` },
+        ] as const)
+      : ([
+          {
+            href: `/${locale}/chef/dashboard`,
+            label: t("dashboard"),
+            match: `/${locale}/chef/dashboard`,
+          },
+        ] as const);
 
   const catalogLinks = [
     { href: `${base}/catalog/ingredients`, label: t("ingredientsNav"), match: `${base}/catalog/ingredients` },

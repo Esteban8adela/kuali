@@ -185,7 +185,7 @@ export function StepTripDetails({ trip, participants, locale }: StepTripDetailsP
     startTransition(async () => {
       const saved = await saveTripDetailsStable(2);
       if (!saved) return;
-      router.push(`/${locale}/guest/trip/${trip.id}/menu`);
+      router.push(`/${locale}/guest/trip/${trip.id}/preferences`);
     });
   }
 

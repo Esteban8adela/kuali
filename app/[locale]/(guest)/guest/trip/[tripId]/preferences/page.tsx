@@ -31,7 +31,7 @@ export default async function TripPreferencesPage({
 
   return (
     <>
-      <WizardProgress currentStep={3} tripId={tripId} locale={locale} stepStatus={stepStatus} />
+      <WizardProgress currentStep={2} tripId={tripId} locale={locale} stepStatus={stepStatus} />
       <main className="px-4 py-8 md:px-8">
         <StepPreferences
           tripId={tripId}

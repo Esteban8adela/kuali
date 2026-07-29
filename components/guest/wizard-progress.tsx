@@ -6,8 +6,8 @@ import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 import type { StepStatus } from "@/lib/trip/step-status";
 
-const STEPS = ["details", "menu", "preferences", "snacks", "bar", "overview"] as const;
-const STEP_PATHS = ["details", "menu", "preferences", "snacks", "bar", "overview"] as const;
+const STEPS = ["details", "preferences", "menu", "snacks", "bar", "overview"] as const;
+const STEP_PATHS = ["details", "preferences", "menu", "snacks", "bar", "overview"] as const;
 
 interface WizardProgressProps {
   currentStep: number;

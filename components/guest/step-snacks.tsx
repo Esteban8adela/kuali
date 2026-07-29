@@ -241,7 +241,7 @@ export function StepSnacks({ tripId, locale, catalog, initial }: StepSnacksProps
         </CardContent>
       </Card>
       <WizardNav
-        backHref={`/${locale}/guest/trip/${tripId}/preferences`}
+        backHref={`/${locale}/guest/trip/${tripId}/menu`}
         onContinue={handleContinue}
         onSaveExit={handleSaveExit}
         continueDisabled={pending}

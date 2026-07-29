@@ -9,6 +9,8 @@ export interface MenuMealBlock {
   selected_main_id?: string | null;
   selected_dessert_id?: string | null;
   selected_kids_dish_id?: string | null;
+  /** Kids lunch dessert (optional companion to selected_kids_dish_id main). */
+  selected_kids_dessert_id?: string | null;
   /** @deprecated multi-select */
   selected_dishes?: string[];
   selected_appetizers?: string[];
@@ -93,7 +95,12 @@ export function isMenuMealComplete(meal: MenuMealBlock): boolean {
 
 export function isMenuItineraryComplete(itinerary: MenuDayPlan[]): boolean {
   if (!itinerary.length) return false;
-  return itinerary.every((day) => day.meals.every((meal) => isMenuMealComplete(meal)));
+  // Dynamic import avoided — caller may pass pre-filtered meals; validate all present meals.
+  return itinerary.every((day) => {
+    const meals = day.meals ?? [];
+    if (!meals.length) return false;
+    return meals.every((meal) => isMenuMealComplete(meal));
+  });
 }
 
 export interface MenuMealWithKids extends MenuMealBlock {
@@ -115,7 +122,9 @@ export function isKidsMenuConfigValid(
     day.meals.every((meal) => {
       const count = meal.kidsMenuCount ?? 0;
       if (count <= 0) return true;
-      return Boolean(resolveKidsDishId(meal));
+      if (!resolveKidsDishId(meal)) return false;
+      // Lunch kids: main required; dessert optional
+      return true;
     })
   );
 }

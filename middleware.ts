@@ -23,10 +23,19 @@ function isRoleSection(path: string): "guest" | "chef" | "admin" | null {
   return null;
 }
 
-function roleAllowedInSection(role: UserRole, section: "guest" | "chef" | "admin"): boolean {
+function roleAllowedInSection(
+  role: UserRole,
+  section: "guest" | "chef" | "admin",
+  path: string
+): boolean {
   if (section === "guest") return role === "renta" || role === "socio";
   if (section === "chef") return role === "chef" || role === "admin";
-  if (section === "admin") return role === "admin";
+  if (section === "admin") {
+    if (role === "admin") return true;
+    // Chef may manage catalogs (same CRUD UIs as admin)
+    if (role === "chef" && path.startsWith("/admin/catalog")) return true;
+    return false;
+  }
   return false;
 }
 
@@ -56,7 +65,7 @@ export async function middleware(request: NextRequest) {
     if (section) {
       try {
         const role = await resolveUserRole(supabase, user);
-        if (!roleAllowedInSection(role, section)) {
+        if (!roleAllowedInSection(role, section, path)) {
           const home = roleHomePath(role, locale);
           const url = request.nextUrl.clone();
           url.pathname = home;
