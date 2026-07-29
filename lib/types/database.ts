@@ -1,5 +1,5 @@
 export type UserRole = "renta" | "socio" | "admin" | "chef";
-export type TripStatus = "draft" | "submitted" | "active" | "completed" | "settled";
+export type TripStatus = "draft" | "submitted" | "active" | "completed" | "settled" | "cancelled";
 export type PaymentModel = "prepaid" | "postpaid";
 export type PriceTier = "tier_1" | "tier_2" | "tier_3";
 export type MenuSelectionType = "predefined" | "surprise" | "custom";

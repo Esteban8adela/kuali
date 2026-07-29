@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { RequiredMark } from "@/components/ui/required-mark";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency, centsToUsd } from "@/lib/utils";
 import type { GuestDishOption } from "@/lib/guest/fetch-dishes-catalog";
 
 const CLEAR_VALUE = "__none__";
@@ -21,6 +21,7 @@ interface DishSinglePickerProps {
   dishes: GuestDishOption[];
   value: string | null;
   onChange: (dishId: string | null) => void;
+  locale: string;
   required?: boolean;
   optional?: boolean;
   compact?: boolean;
@@ -35,6 +36,7 @@ export function DishSinglePicker({
   dishes,
   value,
   onChange,
+  locale,
   required,
   optional,
   compact,
@@ -76,7 +78,12 @@ export function DishSinglePicker({
             {optional && <SelectItem value={CLEAR_VALUE}>{t("noSelection")}</SelectItem>}
             {dishes.map((dish) => (
               <SelectItem key={dish.id} value={dish.id}>
-                {dish.name}
+                <span className="flex w-full items-center justify-between gap-3">
+                  <span>{dish.name}</span>
+                  <span className="shrink-0 text-xs tabular-nums text-neutral-500">
+                    {formatCurrency(centsToUsd(dish.base_price_cents), locale)}
+                  </span>
+                </span>
               </SelectItem>
             ))}
           </SelectContent>
@@ -103,7 +110,12 @@ export function DishSinglePicker({
             </div>
           )}
           <div className={cn("space-y-1", showImage && "p-3")}>
-            <p className="text-sm font-semibold leading-snug text-[#1B3A4B]">{selected.name}</p>
+            <div className="flex items-start justify-between gap-2">
+              <p className="text-sm font-semibold leading-snug text-[#1B3A4B]">{selected.name}</p>
+              <span className="shrink-0 rounded-md bg-[#C4A052]/15 px-2 py-0.5 text-xs font-semibold tabular-nums text-[#1B3A4B]">
+                {formatCurrency(centsToUsd(selected.base_price_cents), locale)}
+              </span>
+            </div>
             {selected.description ? (
               <p className="text-xs leading-relaxed text-neutral-500">{selected.description}</p>
             ) : null}

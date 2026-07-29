@@ -23,6 +23,7 @@ export function collectDishIdsFromItinerary(itinerary: MenuDayPlan[]): string[] 
       addId(ids, meal.selected_main_id);
       addId(ids, meal.selected_dessert_id);
       addId(ids, meal.selected_kids_dish_id);
+      addId(ids, meal.selected_kids_dessert_id);
       addIds(ids, meal.selected_dishes);
       addIds(ids, meal.selected_appetizers);
       addIds(ids, meal.selected_mains);

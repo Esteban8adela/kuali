@@ -78,6 +78,64 @@ interface ShoppingRow {
   unitPriceCents: number;
 }
 
+interface IngredientShoppingRow {
+  name: string;
+  totalQuantity: number;
+  unit: string;
+  estimatedCostUsd: number;
+}
+
+function formatIngredientQty(qty: number): string {
+  if (!Number.isFinite(qty)) return "—";
+  if (Math.abs(qty) >= 100) return qty.toFixed(1);
+  if (Math.abs(qty) >= 10) return qty.toFixed(2);
+  return qty.toFixed(3).replace(/\.?0+$/, "") || "0";
+}
+
+function IngredientShoppingTable({
+  title,
+  rows,
+  locale,
+  t,
+}: {
+  title: string;
+  rows: IngredientShoppingRow[];
+  locale: string;
+  t: ReturnType<typeof useTranslations>;
+}) {
+  return (
+    <div>
+      <h3 className="mb-2 text-xs font-semibold uppercase text-neutral-600">{title}</h3>
+      {rows.length === 0 ? (
+        <p className="text-sm text-neutral-500">{t("noneSelected")}</p>
+      ) : (
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-neutral-300 bg-neutral-50">
+              <th className="p-2 text-left font-medium">{t("ingredientColumn")}</th>
+              <th className="p-2 text-right font-medium">{t("totalQtyColumn")}</th>
+              <th className="p-2 text-left font-medium">{t("unitColumn")}</th>
+              <th className="p-2 text-right font-medium">{t("estimatedCostColumn")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.name} className="border-b border-neutral-200">
+                <td className="p-2 font-medium">{row.name}</td>
+                <td className="p-2 text-right tabular-nums">{formatIngredientQty(row.totalQuantity)}</td>
+                <td className="p-2 text-neutral-600">{row.unit}</td>
+                <td className="p-2 text-right tabular-nums font-medium">
+                  {formatCurrency(row.estimatedCostUsd, locale)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
+}
+
 function ShoppingTable({
   title,
   rows,
@@ -133,7 +191,7 @@ export function ShoppingListReport({ data, locale }: ShoppingListReportProps) {
   const tAllergies = useTranslations("guest.wizard.preferences.allergyOptions");
   const tDiet = useTranslations("guest.wizard.preferences.dietStyles");
 
-  const { trip, principal_guest_name, participants, itinerary, dishNames, barOrder, snacksData, tripCostUsd, pricingCatalog } =
+  const { trip, principal_guest_name, participants, itinerary, dishNames, barOrder, snacksData, tripCostUsd, pricingCatalog, aggregatedIngredients } =
     data;
 
   const pending = tMenu("noSelection");
@@ -183,6 +241,13 @@ export function ShoppingListReport({ data, locale }: ShoppingListReportProps) {
   const pantryRows: ShoppingRow[] = [];
   const snackRows: ShoppingRow[] = [];
   const barRows: ShoppingRow[] = [];
+
+  const ingredientRows: IngredientShoppingRow[] = (aggregatedIngredients ?? []).map((row) => ({
+    name: row.name,
+    totalQuantity: row.totalQuantity,
+    unit: row.unit,
+    estimatedCostUsd: row.estimatedCostUsd,
+  }));
 
   for (const id of parsedSnacks.snackItemIds) {
     snackRows.push({
@@ -396,12 +461,29 @@ export function ShoppingListReport({ data, locale }: ShoppingListReportProps) {
         </h2>
 
         {[
-          { title: t("pantrySection"), rows: pantryRows },
-          { title: t("snacksSection"), rows: snackRows },
-          { title: t("barSection"), rows: barRows },
-        ].map(({ title, rows }) => (
-          <ShoppingTable key={title} title={title} rows={rows} locale={locale} t={t} />
-        ))}
+          { title: t("pantrySection"), kind: "ingredients" as const },
+          { title: t("alwaysOnboardShopping"), kind: "pantry" as const, rows: pantryRows },
+          { title: t("snacksSection"), kind: "catalog" as const, rows: snackRows },
+          { title: t("barSection"), kind: "catalog" as const, rows: barRows },
+        ].map((section) =>
+          section.kind === "ingredients" ? (
+            <IngredientShoppingTable
+              key={section.title}
+              title={section.title}
+              rows={ingredientRows}
+              locale={locale}
+              t={t}
+            />
+          ) : (
+            <ShoppingTable
+              key={section.title}
+              title={section.title}
+              rows={section.rows}
+              locale={locale}
+              t={t}
+            />
+          )
+        )}
       </section>
 
       <section className="mt-8 border-t-2 border-[#C4A052] pt-4 print:break-inside-avoid">

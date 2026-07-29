@@ -66,6 +66,7 @@ export async function fetchOrderOverview(
     itinerary,
     adultCount: trip.adult_count ?? 0,
     childCount: trip.child_count ?? 0,
+    crewCount: getCrewCount(trip.adult_count ?? 0, trip.child_count ?? 0),
     barOrder,
     snacksData,
     catalog,

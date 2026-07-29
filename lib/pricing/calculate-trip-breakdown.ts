@@ -3,6 +3,7 @@ import { resolveBarLineLabel } from "@/lib/chef/resolve-catalog-labels";
 import type { MenuDayPlan, MenuMealBlock } from "@/lib/guest/menu-itinerary";
 import { parseSnacksPayload } from "@/lib/guest/snacks-selection";
 import type { PricingCatalog } from "@/lib/pricing/fetch-pricing-catalog";
+import { resolveMealPortions } from "@/lib/pricing/calculate-trip-cost";
 
 export interface PriceBreakdownLine {
   concept: string;
@@ -15,6 +16,7 @@ export interface TripBreakdownInput {
   itinerary: MenuDayPlan[];
   adultCount: number;
   childCount: number;
+  crewCount?: number;
   barOrder: Record<string, unknown>;
   snacksData: Record<string, unknown>;
   catalog: PricingCatalog;
@@ -47,28 +49,36 @@ function pushDishLine(
 
 function mealDishLines(
   meal: MenuMealBlock,
-  guestPax: number,
+  adultPortions: number,
+  childPortions: number,
   dayLabel: string,
   catalog: PricingCatalog,
   dishNames: Record<string, string>
 ): PriceBreakdownLine[] {
   const lines: PriceBreakdownLine[] = [];
-  const kids = meal.kidsMenuCount ?? 0;
+  const kidsOrdered = (meal.kidsMenuCount ?? 0) > 0;
   const mealLabel = `${dayLabel} · ${meal.key}`;
 
   if (meal.key === "breakfast") {
-    pushDishLine(lines, meal.selected_dish_id, guestPax, mealLabel, catalog, dishNames);
+    pushDishLine(lines, meal.selected_dish_id, adultPortions, mealLabel, catalog, dishNames);
   } else if (meal.key === "lunch") {
-    pushDishLine(lines, meal.selected_appetizer_id, guestPax, `${mealLabel} appetizer`, catalog, dishNames);
-    pushDishLine(lines, meal.selected_main_id, guestPax, `${mealLabel} main`, catalog, dishNames);
-    pushDishLine(lines, meal.selected_dessert_id, guestPax, `${mealLabel} dessert`, catalog, dishNames);
+    pushDishLine(lines, meal.selected_appetizer_id, adultPortions, `${mealLabel} appetizer`, catalog, dishNames);
+    pushDishLine(lines, meal.selected_main_id, adultPortions, `${mealLabel} main`, catalog, dishNames);
+    pushDishLine(lines, meal.selected_dessert_id, adultPortions, `${mealLabel} dessert`, catalog, dishNames);
   } else if (meal.key === "dinner") {
-    pushDishLine(lines, meal.selected_dish_id, guestPax, mealLabel, catalog, dishNames);
+    pushDishLine(lines, meal.selected_dish_id, adultPortions, mealLabel, catalog, dishNames);
   }
 
-  if (kids > 0) {
-    pushDishLine(lines, meal.selected_kids_dish_id, kids, `${mealLabel} kids`, catalog, dishNames);
-    pushDishLine(lines, meal.selected_kids_dessert_id, kids, `${mealLabel} kids dessert`, catalog, dishNames);
+  if (kidsOrdered && childPortions > 0) {
+    pushDishLine(lines, meal.selected_kids_dish_id, childPortions, `${mealLabel} kids`, catalog, dishNames);
+    pushDishLine(
+      lines,
+      meal.selected_kids_dessert_id,
+      childPortions,
+      `${mealLabel} kids dessert`,
+      catalog,
+      dishNames
+    );
   }
 
   return lines;
@@ -138,13 +148,15 @@ function barLines(
 }
 
 export function calculateTripBreakdown(input: TripBreakdownInput): PriceBreakdownLine[] {
-  const guestPax = Math.max(0, input.adultCount) + Math.max(0, input.childCount);
+  const { adultPortions, childPortions } = resolveMealPortions(input);
   const lines: PriceBreakdownLine[] = [];
 
   input.itinerary.forEach((day, index) => {
     const dayLabel = day.date || `Day ${index + 1}`;
     for (const meal of day.meals) {
-      lines.push(...mealDishLines(meal, guestPax, dayLabel, input.catalog, input.dishNames));
+      lines.push(
+        ...mealDishLines(meal, adultPortions, childPortions, dayLabel, input.catalog, input.dishNames)
+      );
     }
   });
 

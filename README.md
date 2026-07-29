@@ -16,7 +16,15 @@ npx supabase db push
 
 3. Create users in Supabase Auth and set `app_metadata.role` to `renta`, `socio`, `chef`, or `admin`.
 
-4. Run the app:
+4. Optional — transactional email (Resend) when a guest confirms an order:
+
+```bash
+RESEND_API_KEY=re_xxx
+RESEND_FROM_EMAIL="Kualisto <onboarding@resend.dev>"
+ADMIN_EMAIL=ops@yourdomain.com
+```
+
+5. Run the app:
 
 ```bash
 npm run dev

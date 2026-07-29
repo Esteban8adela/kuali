@@ -442,7 +442,8 @@
         "breakdownQty": "Qty",
         "breakdownUnit": "Unit price",
         "breakdownSubtotal": "Subtotal",
-        "breakdownTotal": "Estimated total"
+        "breakdownTotal": "Estimated total",
+        "crewPortionsNote": "Regular dish portions include meals for the crew."
       }
     }
   },
@@ -563,7 +564,12 @@
       "subtotalColumn": "Subtotal",
       "costingSection": "Estimated costing",
       "foodAllowanceNote": "Base food allowance from daily per-passenger rates.",
-      "costingDisclaimer": "Bottle and snack prices will populate once the admin catalog is filled in."
+      "costingDisclaimer": "Bottle and snack prices will populate once the admin catalog is filled in.",
+      "ingredientColumn": "Ingredient",
+      "totalQtyColumn": "Total qty",
+      "unitColumn": "Unit",
+      "estimatedCostColumn": "Estimated cost",
+      "alwaysOnboardShopping": "Always onboard checklist"
     }
   },
   "admin": {
@@ -953,17 +959,42 @@
     },
     "tripsPage": {
       "title": "Trips",
-      "subtitle": "All trips: drafts, submitted, and confirmed.",
+      "subtitle": "All trips: drafts, submitted, confirmed, and cancelled.",
       "searchPlaceholder": "Search by name or Ref#…",
       "empty": "No matching trips.",
-      "deleteConfirm": "Delete this trip? This cannot be undone.",
+      "deleteConfirm": "Permanently delete this trip? This cannot be undone.",
+      "cancelConfirm": "Cancel this trip? Status will be set to Cancelled.",
       "viewEdit": "View / Edit",
+      "viewOrder": "View Order",
+      "editTrip": "Edit Trip",
+      "cancelTrip": "Cancel",
       "delete": "Delete",
+      "crewShort": "crew",
+      "editTitle": "Edit trip",
+      "editSubtitle": "Update reservation Ref #{ref}",
+      "datesUnavailable": "Those dates conflict with another submitted or confirmed trip.",
+      "saveError": "Could not save trip changes.",
+      "fields": {
+        "startDate": "Start date",
+        "endDate": "End date",
+        "adults": "Adults",
+        "children": "Children",
+        "crew": "Crew",
+        "status": "Status"
+      },
+      "statuses": {
+        "draft": "Draft",
+        "submitted": "Submitted",
+        "active": "Confirmed",
+        "completed": "Completed",
+        "settled": "Settled",
+        "cancelled": "Cancelled"
+      },
       "columns": {
         "ref": "Ref#",
-        "guest": "Guest",
+        "guest": "Primary Guest",
         "dates": "Dates",
-        "pax": "Pax",
+        "pax": "Total Pax",
         "status": "Status",
         "actions": "Actions"
       }

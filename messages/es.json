@@ -442,7 +442,8 @@
         "breakdownQty": "Cantidad",
         "breakdownUnit": "Precio unitario",
         "breakdownSubtotal": "Subtotal",
-        "breakdownTotal": "Total estimado"
+        "breakdownTotal": "Total estimado",
+        "crewPortionsNote": "Las porciones de platillos regulares incluyen alimentos para la tripulación."
       }
     }
   },
@@ -563,7 +564,12 @@
       "subtotalColumn": "Subtotal",
       "costingSection": "Costeo estimado",
       "foodAllowanceNote": "Food Allowance base según tarifa diaria por pasajero.",
-      "costingDisclaimer": "Los precios de botellas y snacks se completarán cuando el catálogo de admin esté poblado."
+      "costingDisclaimer": "Los precios de botellas y snacks se completarán cuando el catálogo de admin esté poblado.",
+      "ingredientColumn": "Ingrediente",
+      "totalQtyColumn": "Cantidad total",
+      "unitColumn": "Unidad",
+      "estimatedCostColumn": "Costo estimado",
+      "alwaysOnboardShopping": "Checklist siempre a bordo"
     }
   },
   "admin": {
@@ -955,18 +961,43 @@
     },
     "tripsPage": {
       "title": "Reservas",
-      "subtitle": "Todas las reservas: borradores, enviadas y confirmadas.",
+      "subtitle": "Todas las reservas: borradores, enviadas, confirmadas y canceladas.",
       "searchPlaceholder": "Buscar por nombre o Ref#…",
       "empty": "No hay reservas que coincidan.",
-      "deleteConfirm": "¿Eliminar esta reserva? Esta acción no se puede deshacer.",
+      "deleteConfirm": "¿Eliminar permanentemente esta reserva? Esta acción no se puede deshacer.",
+      "cancelConfirm": "¿Cancelar esta reserva? El estado pasará a Cancelado.",
       "viewEdit": "Ver detalle / Editar",
+      "viewOrder": "Ver Orden",
+      "editTrip": "Editar Viaje",
+      "cancelTrip": "Cancelar",
       "delete": "Eliminar",
+      "crewShort": "trip.",
+      "editTitle": "Editar viaje",
+      "editSubtitle": "Actualizar reserva Ref #{ref}",
+      "datesUnavailable": "Esas fechas chocan con otro viaje enviado o confirmado.",
+      "saveError": "No se pudieron guardar los cambios del viaje.",
+      "fields": {
+        "startDate": "Fecha inicio",
+        "endDate": "Fecha fin",
+        "adults": "Adultos",
+        "children": "Niños",
+        "crew": "Tripulación",
+        "status": "Estatus"
+      },
+      "statuses": {
+        "draft": "Borrador",
+        "submitted": "Enviado",
+        "active": "Confirmado",
+        "completed": "Completado",
+        "settled": "Liquidado",
+        "cancelled": "Cancelado"
+      },
       "columns": {
         "ref": "Ref#",
-        "guest": "Huésped",
+        "guest": "Huésped principal",
         "dates": "Fechas",
-        "pax": "Pax",
-        "status": "Estado",
+        "pax": "Pasajeros",
+        "status": "Estatus",
         "actions": "Acciones"
       }
     },

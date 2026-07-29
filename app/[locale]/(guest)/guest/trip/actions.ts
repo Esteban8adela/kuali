@@ -10,6 +10,7 @@ import {
   finalizeTripSchema,
 } from "@/lib/validations/guest-wizard";
 import { calculateTripCostUsd } from "@/lib/pricing/calculate-trip-cost";
+import { getCrewCount } from "@/lib/pricing/crew";
 import { fetchPricingCatalog } from "@/lib/pricing/fetch-pricing-catalog";
 import { parseMenuOrder } from "@/lib/guest/menu-itinerary";
 import { clampWizardStep, normalizeBarOrder } from "@/lib/trip/wizard";
@@ -302,9 +303,16 @@ export async function saveBarStep(input: {
 /** Marks trip as submitted after guest reviews the order overview (step 6). */
 export async function confirmTripOrder(tripId: string) {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
   const { data: trip } = await supabase
     .from("trips")
-    .select("adult_count, child_count, menu_order, bar_order")
+    .select(
+      "adult_count, child_count, crew_count, menu_order, bar_order, start_date, end_date, locale, created_by"
+    )
     .eq("id", tripId)
     .single();
 
@@ -314,10 +322,15 @@ export async function confirmTripOrder(tripId: string) {
   const snacksData =
     snacksRaw && typeof snacksRaw === "object" ? (snacksRaw as Record<string, unknown>) : {};
 
+  const adultCount = trip?.adult_count ?? 0;
+  const childCount = trip?.child_count ?? 0;
+  const crewCount = trip?.crew_count ?? getCrewCount(adultCount, childCount);
+
   const totalUsd = calculateTripCostUsd({
     itinerary: parseMenuOrder(trip?.menu_order),
-    adultCount: trip?.adult_count ?? 0,
-    childCount: trip?.child_count ?? 0,
+    adultCount,
+    childCount,
+    crewCount,
     barOrder,
     snacksData,
     catalog,
@@ -334,6 +347,38 @@ export async function confirmTripOrder(tripId: string) {
 
   if (error) throw error;
   revalidatePath(`/`, "layout");
+
+  // Emails are best-effort — confirmation already succeeded in Supabase.
+  try {
+    const { sendChefAlertEmail, sendGuestConfirmationEmail } = await import("@/lib/mail");
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("id", trip?.created_by ?? user.id)
+      .maybeSingle();
+
+    const ref = tripId.slice(0, 8).toUpperCase();
+    const locale = trip?.locale === "es" ? "es" : "en";
+    const ctx = {
+      tripId,
+      ref,
+      guestName: profile?.full_name?.trim() || user.email || "Guest",
+      startDate: trip?.start_date ?? null,
+      endDate: trip?.end_date ?? null,
+      adultCount,
+      childCount,
+      crewCount,
+      estimatedTotalLabel: `$${totalUsd.toFixed(2)} USD`,
+    };
+
+    if (user.email) {
+      await sendGuestConfirmationEmail({ to: user.email, ctx, locale });
+    }
+    await sendChefAlertEmail({ ctx });
+  } catch (mailError) {
+    console.error("[confirmTripOrder] email dispatch failed", mailError);
+  }
+
   return { ok: true };
 }
 

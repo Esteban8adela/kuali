@@ -308,7 +308,8 @@ export function StepOrderOverview({ data, locale }: StepOrderOverviewProps) {
               </div>
             </dl>
             <OrderPriceBreakdown lines={data.priceBreakdown} locale={locale} />
-            <p className="mt-3 text-xs text-gray-500">{t("foodBudgetDisclaimer")}</p>
+            <p className="mt-3 text-xs text-[#1B3A4B]/80">{t("crewPortionsNote")}</p>
+            <p className="mt-2 text-xs text-gray-500">{t("foodBudgetDisclaimer")}</p>
             <p className="mt-2 text-sm text-neutral-600">{t("finalCostNote")}</p>
           </section>
 

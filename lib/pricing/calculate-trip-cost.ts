@@ -1,4 +1,4 @@
-import { extractBarBottleLines } from "@/lib/chef/format-service-order";
+import { getCrewCount } from "@/lib/pricing/crew";
 import type { MenuDayPlan, MenuMealBlock } from "@/lib/guest/menu-itinerary";
 import { parseSnacksPayload } from "@/lib/guest/snacks-selection";
 import type { PricingCatalog } from "@/lib/pricing/fetch-pricing-catalog";
@@ -7,6 +7,8 @@ export interface TripCostInput {
   itinerary: MenuDayPlan[];
   adultCount: number;
   childCount: number;
+  /** Defaults to getCrewCount(adults, children) when omitted. */
+  crewCount?: number;
   barOrder: Record<string, unknown>;
   snacksData: Record<string, unknown>;
   catalog: PricingCatalog;
@@ -28,27 +30,42 @@ function addDishCost(
   return total + priceCents(catalog, "dishPricesCents", dishId) * multiplier;
 }
 
+/** Adult guests + crew eat regular dishes; children eat kids menu portions. */
+export function resolveMealPortions(input: {
+  adultCount: number;
+  childCount: number;
+  crewCount?: number;
+}): { adultPortions: number; childPortions: number; crewCount: number } {
+  const crewCount = input.crewCount ?? getCrewCount(input.adultCount, input.childCount);
+  return {
+    adultPortions: Math.max(0, input.adultCount) + Math.max(0, crewCount),
+    childPortions: Math.max(0, input.childCount),
+    crewCount,
+  };
+}
+
 function mealDishCosts(
   meal: MenuMealBlock,
-  guestPax: number,
+  adultPortions: number,
+  childPortions: number,
   catalog: PricingCatalog
 ): number {
   let cents = 0;
-  const kids = meal.kidsMenuCount ?? 0;
+  const kidsOrdered = (meal.kidsMenuCount ?? 0) > 0;
 
   if (meal.key === "breakfast") {
-    cents = addDishCost(cents, meal.selected_dish_id, guestPax, catalog);
+    cents = addDishCost(cents, meal.selected_dish_id, adultPortions, catalog);
   } else if (meal.key === "lunch") {
-    cents = addDishCost(cents, meal.selected_appetizer_id, guestPax, catalog);
-    cents = addDishCost(cents, meal.selected_main_id, guestPax, catalog);
-    cents = addDishCost(cents, meal.selected_dessert_id, guestPax, catalog);
+    cents = addDishCost(cents, meal.selected_appetizer_id, adultPortions, catalog);
+    cents = addDishCost(cents, meal.selected_main_id, adultPortions, catalog);
+    cents = addDishCost(cents, meal.selected_dessert_id, adultPortions, catalog);
   } else if (meal.key === "dinner") {
-    cents = addDishCost(cents, meal.selected_dish_id, guestPax, catalog);
+    cents = addDishCost(cents, meal.selected_dish_id, adultPortions, catalog);
   }
 
-  if (kids > 0) {
-    cents = addDishCost(cents, meal.selected_kids_dish_id, kids, catalog);
-    cents = addDishCost(cents, meal.selected_kids_dessert_id, kids, catalog);
+  if (kidsOrdered && childPortions > 0) {
+    cents = addDishCost(cents, meal.selected_kids_dish_id, childPortions, catalog);
+    cents = addDishCost(cents, meal.selected_kids_dessert_id, childPortions, catalog);
   }
 
   return cents;
@@ -103,12 +120,12 @@ function barCost(barOrder: Record<string, unknown>, catalog: PricingCatalog): nu
 
 /** Returns total trip cost in USD dollars (from cent math). */
 export function calculateTripCostUsd(input: TripCostInput): number {
-  const guestPax = Math.max(0, input.adultCount) + Math.max(0, input.childCount);
+  const { adultPortions, childPortions } = resolveMealPortions(input);
   let totalCents = 0;
 
   for (const day of input.itinerary) {
     for (const meal of day.meals) {
-      totalCents += mealDishCosts(meal, guestPax, input.catalog);
+      totalCents += mealDishCosts(meal, adultPortions, childPortions, input.catalog);
     }
   }
 

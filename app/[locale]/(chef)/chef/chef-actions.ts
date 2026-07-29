@@ -8,6 +8,13 @@ import { parseMenuOrder, type MenuDayPlan } from "@/lib/guest/menu-itinerary";
 import { areTripDatesValid, normalizeDateOnlyInput } from "@/lib/trip/date-validation";
 import { normalizeBarOrder } from "@/lib/trip/wizard";
 import { calculateTripCostUsd } from "@/lib/pricing/calculate-trip-cost";
+import { getCrewCount } from "@/lib/pricing/crew";
+import {
+  aggregateMenuIngredients,
+  type AggregatedIngredientRow,
+  type DishRecipeForAggregation,
+} from "@/lib/chef/aggregate-menu-ingredients";
+import { localizedDishName } from "@/lib/catalog/utils";
 import { fetchPricingCatalog, type PricingCatalog } from "@/lib/pricing/fetch-pricing-catalog";
 import type { GuestPreferences, Trip } from "@/lib/types/database";
 
@@ -56,6 +63,7 @@ export interface ChefTripDetailsPayload {
   snacksData: Record<string, unknown>;
   tripCostUsd: number;
   pricingCatalog: PricingCatalog;
+  aggregatedIngredients: AggregatedIngredientRow[];
 }
 
 async function assertChefAccess() {
@@ -158,17 +166,52 @@ export async function getTripDetails(tripId: string): Promise<ChefTripDetailsPay
   const itinerary = parseMenuOrder(trip.menu_order);
   const dishIds = collectDishIdsFromItinerary(itinerary);
   const dishNames: Record<string, string> = {};
+  const dishesById: Record<string, DishRecipeForAggregation> = {};
 
   if (dishIds.length > 0) {
     const { data: dishes, error: dishesError } = await supabase
       .from("dishes")
-      .select("id, name")
+      .select(
+        `
+        id,
+        name,
+        name_en,
+        name_es,
+        dish_ingredients (
+          ingredient_id,
+          quantity_per_pax,
+          ingredients ( id, name, unit, cost_per_unit )
+        )
+      `
+      )
       .in("id", dishIds);
 
     if (dishesError) throw dishesError;
 
     for (const dish of dishes ?? []) {
-      dishNames[dish.id] = dish.name;
+      dishNames[dish.id] = localizedDishName(dish, "en");
+      const rawLines = (dish.dish_ingredients as Array<Record<string, unknown>>) ?? [];
+      dishesById[dish.id] = {
+        id: dish.id,
+        recipe: rawLines.map((line) => {
+          const ingredientRaw = line.ingredients;
+          const ingredient = Array.isArray(ingredientRaw)
+            ? (ingredientRaw[0] as Record<string, unknown> | undefined)
+            : (ingredientRaw as Record<string, unknown> | null);
+          return {
+            ingredient_id: line.ingredient_id as string,
+            quantity_per_pax: Number(line.quantity_per_pax),
+            ingredient: ingredient
+              ? {
+                  id: ingredient.id as string,
+                  name: ingredient.name as string,
+                  unit: ingredient.unit as string,
+                  cost_per_unit: Number(ingredient.cost_per_unit),
+                }
+              : null,
+          };
+        }),
+      };
     }
   }
 
@@ -179,15 +222,28 @@ export async function getTripDetails(tripId: string): Promise<ChefTripDetailsPay
       ? (snacksRaw as Record<string, unknown>)
       : {};
 
+  const adultCount = trip.adult_count ?? 0;
+  const childCount = trip.child_count ?? 0;
+  const crewCount = trip.crew_count ?? getCrewCount(adultCount, childCount);
+
   const pricingCatalog = await fetchPricingCatalog();
   const tripCostUsd = calculateTripCostUsd({
     itinerary,
-    adultCount: trip.adult_count ?? 0,
-    childCount: trip.child_count ?? 0,
+    adultCount,
+    childCount,
+    crewCount,
     barOrder,
     snacksData,
     catalog: pricingCatalog,
   });
+
+  const aggregatedIngredients = aggregateMenuIngredients(
+    itinerary,
+    dishesById,
+    adultCount,
+    childCount,
+    crewCount
+  );
 
   return {
     trip: trip as ChefTripDetailsPayload["trip"],
@@ -201,5 +257,6 @@ export async function getTripDetails(tripId: string): Promise<ChefTripDetailsPay
     snacksData,
     tripCostUsd,
     pricingCatalog,
+    aggregatedIngredients,
   };
 }

@@ -464,6 +464,7 @@ export function StepMenuSelection({
 
                             {mealKey === "breakfast" && (
                               <DishSinglePicker
+                                locale={locale}
                                 compact
                                 label={t("breakfastDish")}
                                 dishes={dishesByCategory.breakfast}
@@ -481,6 +482,7 @@ export function StepMenuSelection({
                             {mealKey === "lunch" && (
                               <>
                                 <DishSinglePicker
+                                  locale={locale}
                                   compact
                                   label={t("lunchAppetizers")}
                                   dishes={dishesByCategory.lunch_appetizer}
@@ -494,6 +496,7 @@ export function StepMenuSelection({
                                   optional
                                 />
                                 <DishSinglePicker
+                                  locale={locale}
                                   compact
                                   label={t("lunchMains")}
                                   dishes={dishesByCategory.lunch_main}
@@ -507,6 +510,7 @@ export function StepMenuSelection({
                                   required
                                 />
                                 <DishSinglePicker
+                                  locale={locale}
                                   compact
                                   label={t("lunchDessert")}
                                   dishes={dishesByCategory.lunch_dessert}
@@ -524,6 +528,7 @@ export function StepMenuSelection({
 
                             {mealKey === "dinner" && (
                               <DishSinglePicker
+                                locale={locale}
                                 compact
                                 label={t("dinnerDish")}
                                 dishes={dishesByCategory.dinner}
@@ -541,6 +546,7 @@ export function StepMenuSelection({
                             {childCount > 0 && meal.kidsMenuCount > 0 && (
                               <>
                                 <DishSinglePicker
+                                  locale={locale}
                                   compact
                                   label={t("kidsMenuMain")}
                                   dishes={dishesByCategory[kidsCategoryForMeal(mealKey)]}
@@ -555,6 +561,7 @@ export function StepMenuSelection({
                                 />
                                 {mealKey === "lunch" ? (
                                   <DishSinglePicker
+                                    locale={locale}
                                     compact
                                     label={t("kidsMenuDessert")}
                                     dishes={dishesByCategory.kids_lunch_dessert}
